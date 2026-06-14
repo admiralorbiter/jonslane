@@ -208,6 +208,12 @@ def seed_database():
         default_user = User(display_name="Guest DJ")
         db.session.add(default_user)
 
+    # Self-healing check to expand existing Dance-Pop & R&B Crate max BPM range from 120 to 136 (L3)
+    dance_pop_exist = Crate.query.filter_by(name="Dance-Pop & R&B Crate").first()
+    if dance_pop_exist and dance_pop_exist.max_bpm == 120:
+        dance_pop_exist.max_bpm = 136
+        db.session.commit()
+
     # Seed default Crates and Reference Tracks
     if not Crate.query.filter_by(name="Boom-Bap Hip Hop Crate").first():
         # Clear legacy crates to prevent key conflicts
@@ -226,7 +232,7 @@ def seed_database():
             name="Dance-Pop & R&B Crate",
             description="Mainstream 2000s/2010s radio and club hits. Detect minor variations on driving pop/R&B rhythms.",
             min_bpm=100,
-            max_bpm=120,
+            max_bpm=136,
             genre="dance-pop",
             difficulty="Medium",
         )

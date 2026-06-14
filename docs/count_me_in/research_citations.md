@@ -122,3 +122,84 @@ This document compiles the academic publications, MIR research, and professional
 *   **Summary:** Describes a tempo-invariant CNN model designed to detect the first beat of a bar (the downbeat) across a wide range of tempos.
 *   **Count Me In Application:** Contextual framework for designing V3 downbeat-detection trainers.
 *   **Follow-up Keywords:** Downbeat tracking, convolutional neural networks, tempo invariance.
+
+---
+
+## 5. Rhythm Pedagogy & Embodied Learning (Academy & Piano Lab)
+
+### [22] Gordon, E. E. (2007). *Learning Sequences in Music: A Contemporary Music Learning Theory*. GIA Publications.
+*   **Summary:** Gordon's Music Learning Theory introduces "audiation" — the ability to hear and comprehend music internally, even in the absence of sound. Argues that rhythm should be felt and imagined before it is labeled or notated. Identifies rhythm patterns (macrobeats, microbeats, divisions) as the building blocks of musical understanding.
+*   **Academy Application:** Grounds the "Hear → Move → Count → Name" pedagogy sequence. Justifies the invisible metronome lab (the user must audiate the beat when the click is muted). Supports anchor recall exercises where users recall a tempo from memory rather than listening to a reference.
+*   **Follow-up Keywords:** Audiation, music aptitude, rhythm pattern, tonal pattern, inner hearing.
+
+### [23] Jaques-Dalcroze, É. (1921). *Rhythm, Music and Education*. Translated by Harold F. Rubinstein. Dalcroze Society.
+*   **Summary:** Foundational text introducing Dalcroze Eurhythmics, a system of musical education where movement (walking, clapping, stepping, gesturing) precedes notation and abstract theory. Argues that rhythm is a bodily phenomenon first, and that a lack of physical coordination with rhythm is the root of most musical timing problems.
+*   **Academy Application:** Justifies the "Body Before Brain" mode at Level 0. Supports designing labs where users walk, clap on 2/4, and tap with two limbs before engaging with any BPM numbers or notation. Also supports the Piano Lab's LH/RH independence exercises.
+*   **Follow-up Keywords:** Eurhythmics, embodied cognition, rhythmic movement, solfège, plastique animée.
+
+### [24] London, J. (2012). *Hearing in Time: Psychological Aspects of Musical Meter* (2nd ed.). Oxford University Press.
+*   **Summary:** Develops a theory of meter as the entrainment of attention and action to rhythmic structure. Argues that meter is not just a notated signature but a dynamic cognitive and physical process of anticipation and synchronization. Discusses multiple valid pulse layers (tactus, measure, subdivision) and how listeners choose a preferred metrical level.
+*   **Academy Application:** Theoretical foundation for Level 3 (Meter & Downbeat) and Level 6 (Phrasing). Explains why the downbeat is a convergence point of multiple rhythmic expectations — not just the first beat of a bar. Supports teaching why 70 BPM and 140 BPM are both valid perceptual responses to the same piece.
+*   **Follow-up Keywords:** Meter, entrainment, tactus, metrical hierarchy, rhythmic expectation, polyrhythm.
+
+### [25] Gullings, K., et al. (2021). *Open Music Theory* (Version 2). Milne Open Textbooks.
+*   **Summary:** Open-access music theory textbook covering rhythm, meter, beat, subdivision, simple meter, compound meter, syncopation, and form. Written at an accessible level for beginners while maintaining theoretical rigor. Explicitly covers duple/triple/quadruple organization, the distinction between beat and subdivision, and rhythmic notation.
+*   **Academy Application:** Source material for Level 2 (Subdivide the Beat) and Level 3 (Meter & Downbeat) curriculum content. Definitions of quarter note, eighth note, sixteenth note, beat vs. subdivision, and 4/4 structure. Also covers pop rhythm patterns (tresillo, backbeat, syncopation) useful for Level 5 (Groove & Syncopation).
+*   **Follow-up Keywords:** Simple meter, compound meter, subdivision, beat, bar, syncopation, tresillo.
+
+---
+
+## 6. Learning Science (Spaced Repetition, Interleaving & Metacognition)
+
+### [26] Carpenter, S. K., Cepeda, N. J., Rohrer, D., Kang, S. H. K., & Pashler, H. (2012). Using Spacing to Enhance Diverse Forms of Learning: Review of Recent Research and Implications for Instruction. *Educational Psychology Review*, 24(3), 369–378.
+*   **Summary:** Comprehensive review finding that distributing practice over time (spaced practice) consistently produces better long-term retention than massed practice, across a wide range of domains including music. Combines spacing with retrieval practice ("desirable difficulties") to maximize memory consolidation.
+*   **Academy Application:** Core justification for the `AnchorSchedule` spaced repetition system. Specifically supports scheduling anchor recalls at expanding intervals (3 → 7 → 14 → 30 days) rather than drilling one anchor repeatedly in a single session. Provides the empirical case for making the review queue a first-class UI feature.
+*   **Follow-up Keywords:** Spaced practice, distributed practice, retrieval practice, desirable difficulties, memory consolidation.
+
+### [27] Kornell, N., & Bjork, R. A. (2008). Learning Concepts and Categories: Is Spacing the "Enemy of Induction"? *Psychological Science*, 19(6), 585–592.
+*   **Summary:** Demonstrates that interleaved practice (mixing different problem types or stimuli) produces better long-term learning and transfer than blocked practice (drilling one type until mastered), even though it feels harder during training. The "interleaving effect" is particularly strong for classification and discrimination tasks.
+*   **Academy Application:** Justifies mixing BPM ranges, genre crates, and input modes (numeric, tap, slider) within a session rather than grinding one crate. Supports the Academy design decision to include multiple skill types per session rather than letting users over-specialize. Explains why the game's cross-crate leaderboard and mixed-drill sessions improve learning even when they feel harder.
+*   **Follow-up Keywords:** Interleaved practice, blocked practice, discrimination learning, transfer, contextual interference.
+
+### [28] Hallam, S. (2001). The development of metacognition in musicians: Implications for education. *British Journal of Music Education*, 18(1), 27–39.
+*   **Summary:** Studies how expert musicians develop metacognitive awareness — the ability to monitor their own understanding, identify weaknesses, and regulate their practice strategies. Finds that metacognitive skill distinguishes expert-level practice from mere repetition, and that music education can and should explicitly develop it.
+*   **Academy Application:** Justifies reflection prompts ("What did you hear?", "What confused you?", "What will you try next?") as a formal part of each Academy session. Grounds the "Why Was I Wrong?" Diagnostic Engine as a metacognitive scaffold, not just feedback. Supports designing a practice journal or session log feature.
+*   **Follow-up Keywords:** Metacognition, self-regulated learning, expert practice, music education, monitoring.
+
+---
+
+## 7. MIDI, Instrument Interface & Motor Learning (Piano Lab)
+
+### [29] W3C Web MIDI API Specification. (2015, updated 2023). *Web MIDI API*. World Wide Web Consortium.
+*   **Summary:** W3C specification defining `navigator.requestMIDIAccess()`, MIDI input/output port enumeration, note-on/note-off message parsing, and timing guarantees for browser-based MIDI communication. Supported natively in Chrome and Edge; requires permission prompt and HTTPS context.
+*   **Piano Lab Application:** Technical grounding for the `MidiDeviceManager` JS module. Defines the API surface for detecting connected MIDI devices, selecting input ports, and converting note-on events (with high-resolution timestamp) to tap events for use in any existing lab. The MIDI timestamp (from `MIDIMessageEvent.timeStamp`) is directly comparable to `performance.now()` used in the existing tap-tempo system.
+*   **Follow-up Keywords:** Web MIDI, MIDIAccess, MIDIInput, note-on, MIDI timestamp, browser music.
+
+### [30] Bangert, M., & Altenmüller, E. O. (2003). Mapping perception to action in piano practice: A longitudinal DC-EEG study. *BMC Neuroscience*, 4(1), 26.
+*   **Summary:** Longitudinal neuroimaging study of adult piano learners showing that piano practice rapidly develops audio-motor co-representations — neural structures that link heard sounds with the motor actions that produce them. Even brief piano training (20 minutes of practice) produces measurable changes in how the brain processes music. The motor cortex becomes active when the musician simply listens to music they have practiced.
+*   **Piano Lab Application:** Justifies why MIDI piano input (real key presses) trains rhythm differently and potentially more effectively than keyboard or touchscreen tapping. Real instrument interaction engages audio-motor coupling, making tempo internalization more durable. Supports prioritizing MIDI input over keyboard simulation for all Piano Lab drills.
+*   **Follow-up Keywords:** Audio-motor integration, sensorimotor learning, piano neuroplasticity, co-representation, timing training.
+
+---
+
+## 8. Additions (Perceptual Learning, Motor Learning, Assessment & Practice)
+
+### [31] Goldstone, R. L. (1998). Perceptual Learning. *Annual Review of Psychology*, 49(1), 585-612.
+*   **Summary:** Reviews how experience shapes the way we perceive sensory inputs, describing processes like differentiation (distinguishing once-similar inputs) and unitization (treating complex patterns as single units).
+*   **Academy Application:** Grounding for the trainability of absolute tempo memory. Confirms that focused, structured perceptual practice (like identifying anchor tempos) enhances the resolution of auditory categories and discrimination thresholds.
+*   **Follow-up Keywords:** Perceptual learning, categorization, sensory tuning, auditory differentiation.
+
+### [32] Shea, J. B., & Morgan, R. L. (1979). Contextual interference effects on the acquisition, retention, and transfer of a motor skill. *Journal of Motor Behavior*, 11(3), 179-190.
+*   **Summary:** Seminal study establishing the "contextual interference effect," demonstrating that practicing motor tasks in a random or interleaved order leads to better long-term retention and transfer than practicing in a blocked order, despite causing slower initial acquisition.
+*   **Academy Application:** Motor learning support for interleaving practice drills and input methods (tapping vs keyboard) in the learning path. Complements cognitive category interleaving models.
+*   **Follow-up Keywords:** Contextual interference, motor learning, random practice, retention, motor schema.
+
+### [33] Black, P., & Wiliam, D. (1998). Assessment and classroom learning. *Assessment in Education: Principles, Policy & Practice*, 5(1), 7-74.
+*   **Summary:** Landmark meta-analysis demonstrating that high-quality formative assessment (providing descriptive, actionable diagnostic feedback rather than just grades or scores) significantly improves learning outcomes.
+*   **Academy Application:** Sets the pedagogical standard for the "Why Was I Wrong?" Diagnostic Engine, ensuring feedback is descriptive and guides the learner's attention to specific cognitive errors (like half-time bias or drift).
+*   **Follow-up Keywords:** Formative assessment, feedback loop, diagnostics, self-regulated learning.
+
+### [34] Ericsson, K. A., Krampe, R. T., & Tesch-Römer, C. (1993). The role of deliberate practice in the acquisition of expert performance. *Psychological Review*, 100(3), 363-406.
+*   **Summary:** Standard-setting framework showing that expert performance is the result of long-term "deliberate practice" — highly structured, effortful activity explicitly designed to improve specific weaknesses, accompanied by immediate feedback and repetition.
+*   **Academy Application:** Rationale for the year-long curriculum structure. Provides the theoretical framework for identifying weaknesses, logging focused attempts, and engaging in deliberate, structured repetition.
+*   **Follow-up Keywords:** Deliberate practice, expertise, domain-specific performance, skill acquisition.

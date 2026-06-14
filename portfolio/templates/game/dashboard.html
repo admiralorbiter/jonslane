@@ -131,7 +131,7 @@
                         <span id="cnt-wizard" class="rating-row-cnt">{{ wizard_count }} ({{ wizard_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-wizard" class="rating-bar-fill wizard" style="width: {{ wizard_pct }}%;"></div>
+                        <div id="bar-wizard" class="rating-bar-fill wizard" style="width: {{ wizard_pct }}%;" role="progressbar" aria-valuenow="{{ wizard_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Tempo Wizard percentage"></div>
                     </div>
                 </div>
 
@@ -147,7 +147,7 @@
                         <span id="cnt-ready" class="rating-row-cnt">{{ ready_count }} ({{ ready_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-ready" class="rating-bar-fill ready" style="width: {{ ready_pct }}%;"></div>
+                        <div id="bar-ready" class="rating-bar-fill ready" style="width: {{ ready_pct }}%;" role="progressbar" aria-valuenow="{{ ready_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="DJ-Ready percentage"></div>
                     </div>
                 </div>
 
@@ -163,7 +163,7 @@
                         <span id="cnt-solid" class="rating-row-cnt">{{ solid_count }} ({{ solid_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-solid" class="rating-bar-fill solid" style="width: {{ solid_pct }}%;"></div>
+                        <div id="bar-solid" class="rating-bar-fill solid" style="width: {{ solid_pct }}%;" role="progressbar" aria-valuenow="{{ solid_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Solid Ear percentage"></div>
                     </div>
                 </div>
 
@@ -179,7 +179,7 @@
                         <span id="cnt-metrical" class="rating-row-cnt">{{ metrical_count }} ({{ metrical_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-metrical" class="rating-bar-fill metrical" style="width: {{ metrical_pct }}%;"></div>
+                        <div id="bar-metrical" class="rating-bar-fill metrical" style="width: {{ metrical_pct }}%;" role="progressbar" aria-valuenow="{{ metrical_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Metrical Match percentage"></div>
                     </div>
                 </div>
 
@@ -195,7 +195,7 @@
                         <span id="cnt-getting" class="rating-row-cnt">{{ getting_count }} ({{ getting_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-getting" class="rating-bar-fill getting" style="width: {{ getting_pct }}%;"></div>
+                        <div id="bar-getting" class="rating-bar-fill getting" style="width: {{ getting_pct }}%;" role="progressbar" aria-valuenow="{{ getting_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Getting There percentage"></div>
                     </div>
                 </div>
 
@@ -211,15 +211,19 @@
                         <span id="cnt-needs" class="rating-row-cnt">{{ needs_count }} ({{ needs_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-needs" class="rating-bar-fill needs" style="width: {{ needs_pct }}%;"></div>
+                        <div id="bar-needs" class="rating-bar-fill needs" style="width: {{ needs_pct }}%;" role="progressbar" aria-valuenow="{{ needs_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Needs Practice percentage"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div style="text-align: center;">
-        <a href="/" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='var(--text-secondary)'">
+    <div style="text-align: center; display: flex; justify-content: center; gap: 20px; align-items: center; margin-top: 20px;">
+        <a href="/music" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='var(--text-secondary)'">
+            &larr; Music Hub
+        </a>
+        <span style="color: var(--text-secondary);">|</span>
+        <a href="/music" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='var(--text-secondary)'">
             &larr; Back to Portfolio
         </a>
     </div>

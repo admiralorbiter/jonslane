@@ -23,5 +23,5 @@ def test_music_page(client):
     response = client.get("/music")
     assert response.status_code == 200
     assert b"djon's Space" in response.data
-    assert b"Usher" in response.data
+    assert b"Lil Jon" in response.data
     assert b"Still D.R.E. x Moonlight" in response.data

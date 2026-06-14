@@ -11,7 +11,9 @@ class BpmAudioEngine {
         // Synthesizers
         this.kick = null;
         this.snare = null;
+        this.snareFilter = null;
         this.hat = null;
+        this.hatFilter = null;
         this.bass = null;
         this.chimeSynth = null;
         this.noiseGenerator = null;
@@ -31,122 +33,128 @@ class BpmAudioEngine {
 
     async init() {
         if (this.initialized) return;
+        if (this._initPromise) return this._initPromise;
 
-        // Start the Tone audio context if suspended
-        await Tone.start();
+        this._initPromise = (async () => {
+            // Start the Tone audio context if suspended
+            await Tone.start();
 
-        // Set up transition sweep generator
-        this.transitionFilter = new Tone.Filter({
-            type: "highpass",
-            frequency: 100,
-            Q: 1.5
-        }).toDestination();
+            // Set up transition sweep generator
+            this.transitionFilter = new Tone.Filter({
+                type: "highpass",
+                frequency: 100,
+                Q: 1.5
+            }).toDestination();
 
-        this.noiseGenerator = new Tone.Noise({
-            type: "white",
-            volume: -Infinity
-        }).connect(this.transitionFilter);
+            this.noiseGenerator = new Tone.Noise({
+                type: "white",
+                volume: -Infinity
+            }).connect(this.transitionFilter);
 
-        // 1. Kick: Membrane Synth for deep punchy sub-heavy kick
-        this.kick = new Tone.MembraneSynth({
-            envelope: {
-                attack: 0.001,
-                decay: 0.35,
-                sustain: 0,
-                release: 0.2
-            },
-            octaves: 6,
-            pitchDecay: 0.05
-        }).toDestination();
+            // 1. Kick: Membrane Synth for deep punchy sub-heavy kick
+            this.kick = new Tone.MembraneSynth({
+                envelope: {
+                    attack: 0.001,
+                    decay: 0.35,
+                    sustain: 0,
+                    release: 0.2
+                },
+                octaves: 6,
+                pitchDecay: 0.05
+            }).toDestination();
 
-        // 2. Snare / Clap: Short white noise decay through a bandpass filter
-        const snareFilter = new Tone.Filter({
-            type: "bandpass",
-            frequency: 1000,
-            Q: 2
-        }).toDestination();
+            // 2. Snare / Clap: Short white noise decay through a bandpass filter
+            this.snareFilter = new Tone.Filter({
+                type: "bandpass",
+                frequency: 1000,
+                Q: 2
+            }).toDestination();
 
-        this.snare = new Tone.NoiseSynth({
-            noise: {
-                type: "pink"
-            },
-            envelope: {
-                attack: 0.005,
-                decay: 0.1,
-                sustain: 0
-            }
-        }).connect(snareFilter);
+            this.snare = new Tone.NoiseSynth({
+                noise: {
+                    type: "pink"
+                },
+                envelope: {
+                    attack: 0.005,
+                    decay: 0.1,
+                    sustain: 0
+                }
+            }).connect(this.snareFilter);
 
-        // 3. Closed Hi-hat: Very short metallic-like noise peak
-        const hatFilter = new Tone.Filter({
-            type: "highpass",
-            frequency: 7000
-        }).toDestination();
+            // 3. Closed Hi-hat: Very short metallic-like noise peak
+            this.hatFilter = new Tone.Filter({
+                type: "highpass",
+                frequency: 7000
+            }).toDestination();
 
-        this.hat = new Tone.NoiseSynth({
-            noise: {
-                type: "white"
-            },
-            envelope: {
-                attack: 0.001,
-                decay: 0.03,
-                sustain: 0
-            }
-        }).connect(hatFilter);
+            this.hat = new Tone.NoiseSynth({
+                noise: {
+                    type: "white"
+                },
+                envelope: {
+                    attack: 0.001,
+                    decay: 0.03,
+                    sustain: 0
+                }
+            }).connect(this.hatFilter);
 
-        // 4. Bassline: Monophonic FM Synth for deep round bass tones
-        this.bass = new Tone.MonoSynth({
-            oscillator: {
-                type: "triangle"
-            },
-            filter: {
-                Q: 1,
+            // 4. Bassline: Monophonic FM Synth for deep round bass tones
+            this.bass = new Tone.MonoSynth({
+                oscillator: {
+                    type: "triangle"
+                },
+                filter: {
+                    Q: 1,
+                    type: "lowpass",
+                    frequency: 200
+                },
+                envelope: {
+                    attack: 0.02,
+                    decay: 0.2,
+                    sustain: 0.8,
+                    release: 0.3
+                },
+                filterEnvelope: {
+                    attack: 0.01,
+                    decay: 0.1,
+                    sustain: 0.5,
+                    baseFrequency: 100,
+                    octaves: 1.2
+                }
+            }).toDestination();
+
+            // 5. Chime/SFX: Polyphonic synth for success/failure feedback
+            this.chimeSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: {
+                    type: "sine"
+                },
+                envelope: {
+                    attack: 0.01,
+                    decay: 0.2,
+                    sustain: 0.3,
+                    release: 0.8
+                }
+            }).toDestination();
+
+            // 6. Real Song Preview Player & EQ Filters
+            this.clueFilter = new Tone.Filter({
                 type: "lowpass",
-                frequency: 200
-            },
-            envelope: {
-                attack: 0.02,
-                decay: 0.2,
-                sustain: 0.8,
-                release: 0.3
-            },
-            filterEnvelope: {
-                attack: 0.01,
-                decay: 0.1,
-                sustain: 0.5,
-                baseFrequency: 100,
-                octaves: 1.2
-            }
-        }).toDestination();
+                frequency: 20000
+            }).toDestination();
 
-        // 5. Chime/SFX: Polyphonic synth for success/failure feedback
-        this.chimeSynth = new Tone.PolySynth(Tone.Synth, {
-            oscillator: {
-                type: "sine"
-            },
-            envelope: {
-                attack: 0.01,
-                decay: 0.2,
-                sustain: 0.3,
-                release: 0.8
-            }
-        }).toDestination();
+            this.songPlayer = new Tone.Player({
+                autostart: false
+            }).connect(this.clueFilter);
 
-        // 6. Real Song Preview Player & EQ Filters
-        this.clueFilter = new Tone.Filter({
-            type: "lowpass",
-            frequency: 20000
-        }).toDestination();
+            // Set up analyzer for audio visualization
+            this.analyser = new Tone.Analyser("fft", 256);
+            Tone.Destination.connect(this.analyser);
 
-        this.songPlayer = new Tone.Player({
-            autostart: false
-        }).connect(this.clueFilter);
+            this.initialized = true;
+            this._initPromise = null;
+        })();
 
-        // Set up analyzer for audio visualization
-        this.analyser = new Tone.Analyser("fft", 256);
-        Tone.Destination.connect(this.analyser);
-
-        this.initialized = true;
+        return this._initPromise;
     }
 
     start(recipe) {
@@ -322,7 +330,7 @@ class BpmAudioEngine {
         this.transitionFilter.frequency.exponentialRampToValueAtTime(8000, now + 0.3);
         
         // Decay noise to absolute silence
-        this.noiseGenerator.volume.exponentialRampToValueAtTime(-Infinity, now + 0.4);
+        this.noiseGenerator.volume.linearRampToValueAtTime(-80, now + 0.4);
         
         setTimeout(() => {
             this.noiseGenerator.stop();
@@ -470,7 +478,9 @@ class BpmAudioEngine {
         }
         if (this.kick) this.kick.dispose();
         if (this.snare) this.snare.dispose();
+        if (this.snareFilter) this.snareFilter.dispose();
         if (this.hat) this.hat.dispose();
+        if (this.hatFilter) this.hatFilter.dispose();
         if (this.bass) this.bass.dispose();
         if (this.chimeSynth) this.chimeSynth.dispose();
         if (this.noiseGenerator) this.noiseGenerator.dispose();

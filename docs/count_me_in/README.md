@@ -56,3 +56,19 @@ The game is optimized for keyboard-only play to ensure zero-latency interaction:
 
 For the full list of references, see the [Research Bibliography](file:///c:/Users/admir/Github/jonslane/docs/count_me_in/research_citations.md).
 
+---
+
+## 🎓 Future Direction: Count Me In Academy
+
+Count Me In is designed to grow into a **year-long Rhythm Intelligence Academy** — a structured, research-grounded learning path that teaches four interconnected skills together:
+
+1. **Perception** — Hear pulse, tempo, meter, and downbeat
+2. **Motor control** — Tap, clap, count, and play in time
+3. **Music theory** — Understand beat, subdivision, meter, bar, phrase, syncopation
+4. **DJ/piano application** — Beatmatch, count phrases, practice with and without a metronome
+
+The planned curriculum has 8 progressive levels (Level 0: Find the Pulse → Level 7: Beatmatch & Drift) and incorporates three learning science principles: **spaced retrieval** (Carpenter et al., 2012), **interleaved practice** (Kornell & Bjork, 2008), and **metacognitive reflection** (Hallam, 2001).
+
+A companion **Piano Lab** module and **MIDI controller integration** are also designed, sharing the same user profile, audio engine, and scoring pipeline.
+
+For the full roadmap see [roadmap.md](file:///c:/Users/admir/Github/jonslane/docs/count_me_in/roadmap.md). For technical system designs see [technical_spec.md](file:///c:/Users/admir/Github/jonslane/docs/count_me_in/technical_spec.md).

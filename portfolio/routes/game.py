@@ -11,6 +11,23 @@ from portfolio.utils.security import generate_challenge_token, verify_challenge_
 game_bp = Blueprint("game", __name__, url_prefix="/game")
 
 
+# Module Constants
+VALID_ANCHOR_BPMS = [95, 120, 128, 140]
+
+
+class DummyCrate:
+    """Dummy Crate class to mimic Crate model properties in templates."""
+    def __init__(self, c_id, name, desc, diff, min_b, max_b, gen, ref_tracks):
+        self.id = c_id
+        self.name = name
+        self.description = desc
+        self.difficulty = diff
+        self.min_bpm = min_b
+        self.max_bpm = max_b
+        self.genre = gen
+        self.reference_tracks = ref_tracks
+
+
 @game_bp.after_request
 def add_header(response):
     """Add cache prevention headers to all game responses."""
@@ -31,13 +48,16 @@ def get_range_key(bpm):
     return "Fast (140+ BPM)"
 
 
-def get_unlocked_level(user_id, anchor_bpm):
+def get_unlocked_level(user_id, anchor_bpm, preloaded_attempts=None):
     """Determine the highest unlocked progression level (1-4) for a given user and anchor tempo."""
-    attempts = (
-        Attempt.query.filter_by(user_id=user_id, is_anchor=True, anchor_bpm=anchor_bpm)
-        .order_by(Attempt.created_at.desc())
-        .all()
-    )
+    if preloaded_attempts is not None:
+        attempts = preloaded_attempts
+    else:
+        attempts = (
+            Attempt.query.filter_by(user_id=user_id, is_anchor=True, anchor_bpm=anchor_bpm)
+            .order_by(Attempt.created_at.desc())
+            .all()
+        )
 
     # Calculate ARI over the last 10 attempts
     last_10 = attempts[:10]
@@ -164,28 +184,28 @@ def calculate_user_stats(user, attempts):
                     best_name = f"{range_name} (avg error {round(avg, 1)}%)"
         stats["best_range"] = best_name
 
-    # Compute anchor stats dynamically
-    for bpm in [95, 120, 128, 140]:
-        last_10 = (
-            Attempt.query.filter_by(user_id=user.id, is_anchor=True, anchor_bpm=bpm)
-            .order_by(Attempt.created_at.desc())
-            .limit(10)
-            .all()
-        )
+    # Compute anchor stats dynamically in memory to prevent N+4 query storm
+    anchor_attempts = [
+        a for a in attempts
+        if getattr(a, "is_anchor", False)
+    ]
+    anchor_attempts_desc = sorted(anchor_attempts, key=lambda x: x.created_at, reverse=True)
+
+    for bpm in VALID_ANCHOR_BPMS:
+        bpm_attempts_desc = [a for a in anchor_attempts_desc if a.anchor_bpm == bpm]
+        last_10 = bpm_attempts_desc[:10]
         ari = None
         if last_10:
             avg_pct_err = sum(a.percent_error for a in last_10) / len(last_10)
             ari = round(max(0.0, 100.0 - (avg_pct_err * 10.0)), 1)
 
-        unlocked_level = get_unlocked_level(user.id, bpm)
+        unlocked_level = get_unlocked_level(user.id, bpm, bpm_attempts_desc)
 
         # High streak for this anchor
-        attempts_anchor = Attempt.query.filter_by(
-            user_id=user.id, is_anchor=True, anchor_bpm=bpm
-        ).all()
+        attempts_anchor = list(reversed(bpm_attempts_desc))
         high_streak = 0
         current_streak = 0
-        for a in sorted(attempts_anchor, key=lambda x: x.created_at):
+        for a in attempts_anchor:
             if a.percent_error <= 5.0 or a.rating == "Metrical Match":
                 current_streak += 1
                 if current_streak > high_streak:
@@ -256,19 +276,14 @@ def validate_and_parse_attempt_data(att_data):
     try:
         guessed = float(att_data.get("guessed_bpm"))
         true_bpm = float(att_data.get("true_bpm"))
-        bpm_error = float(att_data.get("bpm_error"))
-        percent_error = float(att_data.get("percent_error"))
-        score = int(att_data.get("score"))
-        rating = str(att_data.get("rating"))
         crate_name = str(att_data.get("crate_name", "Unknown Crate"))
-        metrical_multiplier = float(att_data.get("metrical_multiplier", 1.0))
 
         # Parse anchor fields
         is_anchor = bool(att_data.get("is_anchor", False))
         anchor_bpm = att_data.get("anchor_bpm")
         if anchor_bpm is not None:
-            anchor_bpm = float(anchor_bpm)
-            if anchor_bpm not in [95.0, 120.0, 128.0, 140.0]:
+            anchor_bpm = int(float(anchor_bpm))
+            if anchor_bpm not in VALID_ANCHOR_BPMS:
                 return None
         anchor_level = att_data.get("anchor_level")
         if anchor_level is not None:
@@ -278,9 +293,6 @@ def validate_and_parse_attempt_data(att_data):
 
         # Support upper bound up to 400.0 BPM (e.g. Drum & Bass double-tempo)
         if not (1.0 <= guessed <= 400.0) or not (1.0 <= true_bpm <= 400.0):
-            return None
-        # Support percent errors up to 600.0% to prevent discarding syncs on poor guesses
-        if not (0.0 <= percent_error <= 600.0) or not (0 <= score <= 200):
             return None
 
         # Parse tap_stability securely for guests
@@ -293,6 +305,15 @@ def validate_and_parse_attempt_data(att_data):
             if math.isnan(val) or math.isinf(val) or not (0.0 <= val <= 5000.0):
                 return None
             tap_stability = round(val, 2)
+
+        # Parse clue_level (so we can calculate the score accurately)
+        clue_level = att_data.get("clue_level")
+        if clue_level is not None:
+            clue_level = int(clue_level)
+            if clue_level not in [1, 2, 3, 4]:
+                return None
+        else:
+            clue_level = 4
     except (ValueError, TypeError):
         return None
 
@@ -305,34 +326,40 @@ def validate_and_parse_attempt_data(att_data):
         "client_uuid": client_uuid,
         "guessed_bpm": guessed,
         "true_bpm": true_bpm,
-        "bpm_error": bpm_error,
-        "percent_error": percent_error,
-        "score": score,
-        "rating": rating,
         "crate_name": crate_name,
-        "metrical_multiplier": metrical_multiplier,
         "tap_stability": tap_stability,
         "is_anchor": is_anchor,
         "anchor_bpm": anchor_bpm,
         "anchor_level": anchor_level,
+        "clue_level": clue_level,
         "created_at": created_at_dt,
     }
 
 
 def recalculate_user_streaks(user):
     """Recalculate and persist chronological streaks for a user. Callers must commit transaction."""
-    all_attempts = Attempt.query.filter_by(user_id=user.id).order_by(Attempt.created_at.asc()).all()
-    current_streak = 0
-    max_streak = user.max_streak
+    # Bounded query to avoid full-table scan on huge histories.
+    recent_attempts = Attempt.query.filter_by(user_id=user.id)\
+        .order_by(Attempt.created_at.desc())\
+        .limit(500)\
+        .all()
 
-    for a in all_attempts:
-        # Check rating to support streak preservation on Metrical Matches
+    current_streak = 0
+    for a in recent_attempts:
         if a.percent_error <= 5.0 or a.rating == "Metrical Match":
             current_streak += 1
-            if current_streak > max_streak:
-                max_streak = current_streak
         else:
-            current_streak = 0
+            break
+
+    max_streak = user.max_streak
+    temp_streak = 0
+    for a in reversed(recent_attempts):
+        if a.percent_error <= 5.0 or a.rating == "Metrical Match":
+            temp_streak += 1
+            if temp_streak > max_streak:
+                max_streak = temp_streak
+        else:
+            temp_streak = 0
 
     user.current_streak = current_streak
     user.max_streak = max_streak
@@ -340,7 +367,7 @@ def recalculate_user_streaks(user):
 
 @game_bp.route("/play/anchor/<int:anchor_bpm>")
 def play_anchor(anchor_bpm):
-    if anchor_bpm not in [95, 120, 128, 140]:
+    if anchor_bpm not in VALID_ANCHOR_BPMS:
         from flask import abort
 
         abort(400, "Unsupported anchor tempo.")
@@ -419,18 +446,6 @@ def play_anchor(anchor_bpm):
 
     if active_track:
         recipe["originalBpm"] = active_track.bpm
-
-    # Dummy class to mimic Crate properties
-    class DummyCrate:
-        def __init__(self, c_id, name, desc, diff, min_b, max_b, gen, ref_tracks):
-            self.id = c_id
-            self.name = name
-            self.description = desc
-            self.difficulty = diff
-            self.min_bpm = min_b
-            self.max_bpm = max_b
-            self.genre = gen
-            self.reference_tracks = ref_tracks
 
     crate_obj = DummyCrate(
         0,
@@ -525,6 +540,10 @@ def play(crate_id):
 @game_bp.route("/submit", methods=["POST"])
 def submit():
     """Legacy submission route used by automated test suites."""
+    from flask import current_app, abort
+    if not current_app.config.get("TESTING"):
+        abort(404)
+
     data = request.get_json() or {}
     challenge_id = data.get("challenge_id")
     guess_val = data.get("guess")
@@ -753,6 +772,11 @@ def sync():
         if existing:
             continue
 
+        # Securely recalculate score and rating on the server side
+        score, rating, is_success, percent_error, bpm_error, metrical_multiplier = (
+            calculate_score_and_rating(parsed["guessed_bpm"], parsed["true_bpm"], parsed.get("clue_level", 4))
+        )
+
         # Use nested transaction to save each attempt atomically
         try:
             with db.session.begin_nested():
@@ -761,13 +785,13 @@ def sync():
                     challenge_id=None,
                     guessed_bpm=parsed["guessed_bpm"],
                     true_bpm=parsed["true_bpm"],
-                    bpm_error=parsed["bpm_error"],
-                    percent_error=parsed["percent_error"],
-                    score=parsed["score"],
-                    rating=parsed["rating"],
+                    bpm_error=bpm_error,
+                    percent_error=percent_error,
+                    score=score,
+                    rating=rating,
                     crate_name=parsed["crate_name"],
                     client_uuid=parsed["client_uuid"],
-                    metrical_multiplier=parsed["metrical_multiplier"],
+                    metrical_multiplier=metrical_multiplier,
                     tap_stability=parsed["tap_stability"],
                     is_anchor=parsed["is_anchor"],
                     anchor_bpm=parsed["anchor_bpm"],

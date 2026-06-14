@@ -41,6 +41,36 @@ This log is used to brainstorm new features, track project updates, and maintain
   - Freesound/Jamendo API integrations for query pulling.
   - Admin approval page to preview tracks, confirm licenses, and publish approved audio to challenges.
 
+### 2. Count Me In Academy (V4)
+- **Goal**: Restructure Count Me In as an 8-level **Rhythm Intelligence Academy** with a year-long structured learning path grounded in learning science (spaced repetition, interleaving, metacognition).
+- **Features:**
+  - Academy Hub page (`/academy`) with visual curriculum map, skill graph, and spaced review queue.
+  - 8 progressive levels (Find the Pulse → Tempo Anchors → Subdivide → Meter → Half-Time → Groove → Phrasing → Beatmatch).
+  - SM-2 spaced repetition scheduler for anchor recall reviews (`AnchorSchedule` model).
+  - "Why Was I Wrong?" Diagnostic Engine generating plain-English feedback on every attempt.
+  - Tempo Nudge Slider — a third input mode where users drag to match tempo by feel (Vigl et al., 2024).
+  - Invisible Metronome Lab — metronome mutes for 8 beats; user maintains internal clock.
+  - Personal BPM Memory Map — visual anchor dashboard with ARI scores and personal song tags.
+  - Metrical X-Ray Visualizer — educational overlay showing tatum/tactus/measure/phrase layers.
+- **Design doc:** See `docs/count_me_in/roadmap.md` V4 section.
+
+### 3. Piano Lab (V5)
+- **Goal**: Dedicated piano/instrument practice module (`/piano`) sharing the same user profile, audio engine, and Attempt model as Count Me In.
+- **Features:**
+  - Rhythm drills for piano: pulse, subdivision (LH quarters + RH eighths), invisible metronome, phrase counting.
+  - MIDI controller support via Web MIDI API — real key presses replace spacebar taps.
+  - Body Before Brain mode: walking, clapping, two-limb coordination exercises (Dalcroze-inspired).
+  - Piano + DJ Bridge labs connecting CMI skills (phrase counting, tempo anchors) to piano accompaniment patterns.
+- **Design doc:** See `docs/count_me_in/roadmap.md` V5 section and `docs/count_me_in/technical_spec.md` Sections 8–9.
+
+### 4. MIDI Device Manager
+- **Goal**: Shared JS module (`midi_manager.js`) enabling MIDI controller input across all rhythm labs.
+- **Features:**
+  - `navigator.requestMIDIAccess()` with graceful fallback for Firefox/Safari.
+  - MIDI note-on timestamp integration with existing tap-tempo pipeline (zero refactoring needed).
+  - Device picker UI surface.
+- **Design doc:** See `docs/count_me_in/technical_spec.md` Section 8.
+
 ---
 
 ## 📝 Ongoing Refinements

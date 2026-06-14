@@ -771,6 +771,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 score: finalScore,
                 rating: rating,
                 crate_name: crateName,
+                clue_level: currentClueLevel,
                 metrical_multiplier: metricalMultiplier,
                 tap_stability: currentTapStability,
                 is_anchor: window.CMI_CONFIG.isAnchor,
@@ -793,8 +794,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // Trigger vinyl deceleration stop and positive/negative chimes
-            stopPlayback(true);
+            // Trigger positive/negative chimes (stopPlayback(true) already called above)
             window.audioEngine.playChime(isSuccess);
 
             // Pop up the results
@@ -865,6 +865,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             tipEl.innerHTML = tipHtml;
             tipEl.style.display = "block";
+        }
+
+        // Show/hide guest registration nudge conditionally
+        const guestNudge = document.getElementById("guest-nudge");
+        if (guestNudge) {
+            const isGoodRating = ["Tempo Wizard", "DJ-Ready"].includes(attempt.rating);
+            if (window.CMI_CONFIG.isAuthenticated === false && isGoodRating) {
+                guestNudge.style.display = "block";
+            } else {
+                guestNudge.style.display = "none";
+            }
         }
 
         // Open Overlay Modal

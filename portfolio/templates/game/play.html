@@ -87,9 +87,9 @@
             <!-- Glassmorphic Mask Overlay -->
             <div id="glass-mask" class="glass-mask hidden-state">
                 <div class="calibration-hud" style="text-align: center; color: var(--neon-cyan); padding: 20px;">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Calibration Phase</div>
+                    <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Listen First</div>
                     <div id="calibration-timer-display" style="font-size: 2.5rem; font-weight: 700; font-family: monospace;">15s</div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px; max-width: 250px; line-height: 1.4;">Internalize the reference beat. Inputs locked.</div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px; max-width: 250px; line-height: 1.4;">Just feel the groove for a few seconds. You'll unlock your guess input shortly.</div>
                     <button type="button" id="skip-calibration-btn" class="btn-control" style="margin-top: 15px; padding: 6px 12px; font-size: 0.8rem; border-color: var(--neon-cyan); color: var(--neon-cyan); background: transparent; cursor: pointer;">Skip Calibration</button>
                 </div>
             </div>
@@ -179,13 +179,18 @@
 
             <div id="result-research-tip" class="result-research-tip" style="display: none;"></div>
 
+            <div id="guest-nudge" class="guest-nudge" style="display: none; margin-top: 15px; padding: 12px; background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 8px; font-size: 0.9rem; text-align: center; color: var(--text-primary); margin-bottom: 15px;">
+                💾 Playing as guest — scores saved locally only. <a href="{{ url_for('auth.login') }}" style="color: var(--neon-cyan); font-weight: 700; text-decoration: underline;">Create a free account &rarr;</a>
+            </div>
+
             <div class="btn-action-row">
                 {% if is_anchor %}
                     <a href="{{ url_for('game.play_anchor', anchor_bpm=anchor_bpm, level=anchor_level) }}" class="btn-action btn-next">Next Challenge &rarr;</a>
                 {% else %}
                     <a href="{{ url_for('game.play', crate_id=crate.id) }}" class="btn-action btn-next">Next Challenge &rarr;</a>
                 {% endif %}
-                <a href="{{ url_for('game.dashboard') }}" class="btn-action btn-exit">Lobby</a>
+                <a href="{{ url_for('main.music') }}" class="btn-action btn-exit">&larr; Music Hub</a>
+                <a href="{{ url_for('game.dashboard') }}" class="btn-action btn-exit">Dashboard</a>
             </div>
         </div>
     </div>
