@@ -78,7 +78,6 @@ class User(db.Model):
 class Crate(db.Model):
     """Database model for gameplay Crates."""
 
-    __bind_key__ = "count_me_in"
     __tablename__ = "crates"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -100,7 +99,6 @@ class Crate(db.Model):
 class Challenge(db.Model):
     """Database model for generated game challenges."""
 
-    __bind_key__ = "count_me_in"
     __tablename__ = "challenges"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -123,11 +121,10 @@ class Challenge(db.Model):
 class Attempt(db.Model):
     """Database model for user challenge attempts."""
 
-    __bind_key__ = "count_me_in"
     __tablename__ = "attempts"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     challenge_id = db.Column(
         db.Integer, db.ForeignKey("challenges.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -143,8 +140,14 @@ class Attempt(db.Model):
     metrical_multiplier = db.Column(db.Float, nullable=False, default=1.0)
     tap_stability = db.Column(db.Float, nullable=True)
     is_anchor = db.Column(db.Boolean, nullable=False, default=False)
-    anchor_bpm = db.Column(db.Float, nullable=True)
+    anchor_bpm = db.Column(db.Integer, nullable=True)
     anchor_level = db.Column(db.Integer, nullable=True)
+    module = db.Column(db.String(50), nullable=False, server_default="count_me_in")
+    skill_tag = db.Column(db.String(50), nullable=True)
+    input_method = db.Column(db.String(20), nullable=True)
+    phase_error_ms = db.Column(db.Float, nullable=True)
+    hand = db.Column(db.String(10), nullable=True)
+    phrase_length = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     @validates("tap_stability")
@@ -170,13 +173,14 @@ class Attempt(db.Model):
     __table_args__ = (
         db.Index("idx_attempts_user_created", "user_id", "created_at"),
         db.Index("idx_attempts_ari", "user_id", "is_anchor", "anchor_bpm", "created_at"),
+        db.Index("idx_attempts_skill_profile", "user_id", "module", "skill_tag", "percent_error"),
+        db.Index("idx_attempts_client_uuid", "client_uuid"),
     )
 
 
 class ReferenceTrack(db.Model):
     """Database model for reference songs within DJ crates."""
 
-    __bind_key__ = "count_me_in"
     __tablename__ = "reference_tracks"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -196,6 +200,30 @@ class ReferenceTrack(db.Model):
 
     def __repr__(self):
         return f"<ReferenceTrack {self.title} - {self.artist}>"
+
+
+class AnchorSchedule(db.Model):
+    """Database model for user spaced repetition schedule per anchor BPM."""
+
+    __tablename__ = "anchor_schedules"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    anchor_bpm = db.Column(db.Integer, nullable=False)
+    ease_factor = db.Column(db.Float, nullable=False, default=2.5)
+    interval_days = db.Column(db.Integer, nullable=False, default=1)
+    repetitions = db.Column(db.Integer, nullable=False, default=0)
+    next_review_at = db.Column(db.DateTime, nullable=True)
+    last_reviewed_at = db.Column(db.DateTime, nullable=True)
+    metrical_match_streak = db.Column(db.Integer, nullable=False, default=0)
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "anchor_bpm"),
+        db.Index("idx_schedules_due", "user_id", "next_review_at"),
+    )
+
+    def __repr__(self):
+        return f"<AnchorSchedule user={self.user_id} anchor={self.anchor_bpm}>"
 
 
 def seed_database():

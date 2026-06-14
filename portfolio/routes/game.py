@@ -2,7 +2,7 @@ import json
 import random
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for
 
 from portfolio import db
 from portfolio.models import Attempt, Challenge, Crate, ReferenceTrack, User
@@ -322,6 +322,33 @@ def validate_and_parse_attempt_data(att_data):
     except (ValueError, TypeError, AttributeError):
         created_at_dt = datetime.now(timezone.utc)
 
+    # Optional Academy properties
+    module = str(att_data.get("module", "count_me_in"))
+    skill_tag = att_data.get("skill_tag")
+    if skill_tag:
+        skill_tag = str(skill_tag)
+    input_method = att_data.get("input_method")
+    if input_method:
+        input_method = str(input_method)
+        
+    phase_error_ms = None
+    if att_data.get("phase_error_ms") is not None:
+        try:
+            phase_error_ms = float(att_data["phase_error_ms"])
+        except (ValueError, TypeError):
+            pass
+            
+    hand = att_data.get("hand")
+    if hand:
+        hand = str(hand)
+        
+    phrase_length = None
+    if att_data.get("phrase_length") is not None:
+        try:
+            phrase_length = int(att_data["phrase_length"])
+        except (ValueError, TypeError):
+            pass
+
     return {
         "client_uuid": client_uuid,
         "guessed_bpm": guessed,
@@ -333,6 +360,12 @@ def validate_and_parse_attempt_data(att_data):
         "anchor_level": anchor_level,
         "clue_level": clue_level,
         "created_at": created_at_dt,
+        "module": module,
+        "skill_tag": skill_tag,
+        "input_method": input_method,
+        "phase_error_ms": phase_error_ms,
+        "hand": hand,
+        "phrase_length": phrase_length,
     }
 
 
@@ -373,6 +406,7 @@ def play_anchor(anchor_bpm):
         abort(400, "Unsupported anchor tempo.")
 
     level_val = request.args.get("level", 1)
+    origin = request.args.get("origin", "")
     try:
         level = int(level_val)
         if level not in [1, 2, 3, 4]:
@@ -467,6 +501,7 @@ def play_anchor(anchor_bpm):
         anchor_bpm=anchor_bpm,
         anchor_level=level,
         active_track=active_track,
+        origin=origin,
     )
 
 
@@ -476,18 +511,17 @@ def dashboard():
 
     user_id = session.get("user_id")
     user = db.session.get(User, user_id) if user_id else None
+    if user:
+        return redirect(url_for("academy.index"))
 
     stats = None
-    if user:
-        attempts = Attempt.query.filter_by(user_id=user.id).all()
-        stats = calculate_user_stats(user, attempts)
-
     crates = Crate.query.all()
     return render_template("game/dashboard.html", crates=crates, stats=stats)
 
 
 @game_bp.route("/play/<int:crate_id>")
 def play(crate_id):
+    origin = request.args.get("origin", "")
     crate = db.session.get(Crate, crate_id)
     if not crate:
         from flask import abort
@@ -534,6 +568,7 @@ def play(crate_id):
         crate=crate,
         challenge_token=challenge_token,
         active_track=active_track,
+        origin=origin,
     )
 
 
@@ -635,6 +670,25 @@ def submit_attempt():
     clue_level_val = data.get("clue_level", 4)
     client_uuid = data.get("client_uuid")
 
+    module = data.get("module", "count_me_in")
+    skill_tag = data.get("skill_tag")
+    input_method = data.get("input_method")
+    
+    phase_error_ms = None
+    if data.get("phase_error_ms") is not None:
+        try:
+            phase_error_ms = float(data["phase_error_ms"])
+        except (ValueError, TypeError):
+            pass
+            
+    hand = data.get("hand")
+    phrase_length = None
+    if data.get("phrase_length") is not None:
+        try:
+            phrase_length = int(data["phrase_length"])
+        except (ValueError, TypeError):
+            pass
+
     if not client_uuid:
         return jsonify({"error": "Missing client UUID."}), 400
 
@@ -718,10 +772,21 @@ def submit_attempt():
             is_anchor=is_anchor,
             anchor_bpm=anchor_bpm,
             anchor_level=anchor_level,
+            module=module,
+            skill_tag=skill_tag,
+            input_method=input_method,
+            phase_error_ms=phase_error_ms,
+            hand=hand,
+            phrase_length=phrase_length,
             created_at=datetime.now(timezone.utc),
         )
         db.session.add(attempt)
         db.session.commit()
+        
+        # If it's an anchor challenge, trigger SRS schedule update
+        if is_anchor and anchor_bpm:
+            from portfolio.utils.srs import update_schedule_after_attempt
+            update_schedule_after_attempt(user.id, anchor_bpm, rating, attempt.created_at)
     except Exception:
         db.session.rollback()
         return jsonify({"error": "Internal database transaction failure."}), 500
@@ -759,6 +824,16 @@ def sync():
         return jsonify({"error": "Invalid attempts data format."}), 400
 
     synced_count = 0
+    new_attempts = []
+    anchor_attempts_map = {} # anchor_bpm -> list of percent_errors
+    
+    # 1. Bulk pre-query UUIDs to prevent N SELECT queries
+    uuids = [att.get("client_uuid") for att in attempts_data if isinstance(att, dict) and att.get("client_uuid")]
+    existing_uuids = set()
+    if uuids:
+        existing = db.session.query(Attempt.client_uuid).filter(Attempt.client_uuid.in_(uuids)).all()
+        existing_uuids = {r[0] for r in existing}
+        
     for att_data in attempts_data:
         if not isinstance(att_data, dict):
             continue
@@ -767,9 +842,8 @@ def sync():
         if not parsed:
             continue
 
-        # Prevent duplicate insertion
-        existing = Attempt.query.filter_by(client_uuid=parsed["client_uuid"]).first()
-        if existing:
+        # Prevent duplicate insertion using the in-memory set
+        if parsed["client_uuid"] in existing_uuids:
             continue
 
         # Securely recalculate score and rating on the server side
@@ -777,34 +851,57 @@ def sync():
             calculate_score_and_rating(parsed["guessed_bpm"], parsed["true_bpm"], parsed.get("clue_level", 4))
         )
 
-        # Use nested transaction to save each attempt atomically
         try:
-            with db.session.begin_nested():
-                attempt = Attempt(
-                    user_id=user.id,
-                    challenge_id=None,
-                    guessed_bpm=parsed["guessed_bpm"],
-                    true_bpm=parsed["true_bpm"],
-                    bpm_error=bpm_error,
-                    percent_error=percent_error,
-                    score=score,
-                    rating=rating,
-                    crate_name=parsed["crate_name"],
-                    client_uuid=parsed["client_uuid"],
-                    metrical_multiplier=metrical_multiplier,
-                    tap_stability=parsed["tap_stability"],
-                    is_anchor=parsed["is_anchor"],
-                    anchor_bpm=parsed["anchor_bpm"],
-                    anchor_level=parsed["anchor_level"],
-                    created_at=parsed["created_at"],
-                )
-                db.session.add(attempt)
-        except Exception:
-            continue
-        else:
+            attempt = Attempt(
+                user_id=user.id,
+                challenge_id=None,
+                guessed_bpm=parsed["guessed_bpm"],
+                true_bpm=parsed["true_bpm"],
+                bpm_error=bpm_error,
+                percent_error=percent_error,
+                score=score,
+                rating=rating,
+                crate_name=parsed["crate_name"],
+                client_uuid=parsed["client_uuid"],
+                metrical_multiplier=metrical_multiplier,
+                tap_stability=parsed["tap_stability"],
+                is_anchor=parsed["is_anchor"],
+                anchor_bpm=parsed["anchor_bpm"],
+                anchor_level=parsed["anchor_level"],
+                module=parsed["module"],
+                skill_tag=parsed["skill_tag"],
+                input_method=parsed["input_method"],
+                phase_error_ms=parsed["phase_error_ms"],
+                hand=parsed["hand"],
+                phrase_length=parsed["phrase_length"],
+                created_at=parsed["created_at"],
+            )
+            db.session.add(attempt)
+            new_attempts.append(attempt)
+            
+            # Track anchor info for seeding
+            if parsed["is_anchor"] and parsed["anchor_bpm"]:
+                bpm = parsed["anchor_bpm"]
+                if bpm not in anchor_attempts_map:
+                    anchor_attempts_map[bpm] = []
+                anchor_attempts_map[bpm].append(percent_error)
+            
             synced_count += 1
+        except Exception:
+            db.session.rollback()
+            continue
 
     if synced_count > 0:
+        db.session.commit()
+        # Seeding AnchorSchedule dynamically using the parsed statistics
+        try:
+            from portfolio.utils.srs import seed_schedule_from_history
+            for bpm, errs in anchor_attempts_map.items():
+                avg_err = sum(errs) / len(errs)
+                seed_schedule_from_history(user.id, bpm, avg_err)
+        except Exception:
+            pass
+            
         recalculate_user_streaks(user)
         db.session.commit()
 

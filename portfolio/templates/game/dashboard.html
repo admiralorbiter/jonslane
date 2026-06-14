@@ -90,7 +90,7 @@
                                     <button type="button" class="btn-level {% if lvl == 1 %}active{% endif %} {% if lvl > unlocked %}locked{% endif %}" 
                                             data-level="{{ lvl }}" 
                                             style="flex: 1; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.2s;"
-                                            {% if lvl > unlocked %}disabled title="Locked. Complete previous level to unlock."{% endif %}>
+                                            {% if lvl > unlocked %}data-locked="true" title="Locked. Complete previous level to unlock."{% endif %}>
                                         Lvl {{ lvl }}
                                     </button>
                                 {% endfor %}
@@ -216,6 +216,47 @@
                 </div>
             </div>
         </div>
+        
+        {% if not stats %}
+        <!-- Guest Academy Teaser Card -->
+        <div class="glass-card" style="margin-top: 30px; position: relative; overflow: hidden; padding: 25px; border: 1px solid rgba(0, 240, 255, 0.2); box-shadow: 0 0 20px rgba(0, 240, 255, 0.05);">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 14, 20, 0.65); backdrop-filter: blur(5px); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                <div style="font-size: 2rem; margin-bottom: 10px;">🔒</div>
+                <h4 style="color: var(--neon-cyan); font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0;">Unlock Rhythm Academy</h4>
+                <p style="color: var(--text-primary); font-size: 0.85rem; line-height: 1.5; margin: 0 0 20px 0; max-width: 280px;">
+                    Connect a free account to track your Spaced Repetition (SRS) schedule, access 8 professional levels, and unlock your dynamic Skill Radar.
+                </p>
+                <a href="{{ url_for('auth.login', next='/academy') }}" class="btn-game" style="text-decoration: none; padding: 8px 18px; font-size: 0.85rem; font-weight: 700; display: inline-block;">Connect Account</a>
+            </div>
+            
+            <!-- Mock Radar and Roadmap Visuals under the blur -->
+            <h3 style="font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; opacity: 0.3;">
+                Rhythm Intelligence
+            </h3>
+            <div style="display: flex; justify-content: center; margin-bottom: 20px; opacity: 0.2;">
+                <!-- Static Mock SVG Radar -->
+                <svg width="150" height="150" viewBox="0 0 120 120">
+                    <polygon points="60,20 100,50 85,90 35,90 20,50" fill="none" stroke="var(--text-secondary)" stroke-width="1" />
+                    <polygon points="60,40 80,55 72,75 48,75 40,55" fill="none" stroke="var(--text-secondary)" stroke-width="1" />
+                    <polygon points="60,30 90,52 80,82 45,78 30,55" fill="rgba(0, 240, 255, 0.4)" stroke="var(--neon-cyan)" stroke-width="1.5" />
+                </svg>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; opacity: 0.2;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span>Level 0: Find Pulse</span>
+                    <span style="color: var(--neon-cyan);">Mastered</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span>Level 1: Meter & Downbeat</span>
+                    <span>Locked</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span>Level 2: Subdivisions</span>
+                    <span>Locked</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <div style="text-align: center; display: flex; justify-content: center; gap: 20px; align-items: center; margin-top: 20px;">
@@ -226,6 +267,25 @@
         <a href="/music" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='var(--text-secondary)'">
             &larr; Back to Portfolio
         </a>
+    </div>
+
+    <!-- Custom Auth Gate Modal -->
+    <div id="auth-gate-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 15, 23, 0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="max-width: 450px; width: 90%; padding: 30px; border-radius: 12px; border: 1px solid var(--neon-cyan); box-shadow: 0 0 25px rgba(0, 240, 255, 0.15); display: flex; flex-direction: column; gap: 20px; text-align: center; position: relative;">
+            <button id="close-auth-modal" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
+            <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+            <h3 id="auth-modal-title" style="color: var(--neon-cyan); font-size: 1.3rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Access Locked Level</h3>
+            <p id="auth-modal-msg" style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.6; margin: 0;"></p>
+            
+            <!-- Action Row for Guests (Auth gate) -->
+            <div id="auth-modal-actions" style="display: none; gap: 15px; margin-top: 10px;">
+                <a href="/register?next=/game/dashboard" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; background: var(--neon-pink); color: #000; font-weight: 700; border-radius: 6px; font-size: 0.9rem;">Register</a>
+                <a href="/login?next=/game/dashboard" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; background: transparent; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); font-weight: 700; border-radius: 6px; font-size: 0.9rem;">Sign In</a>
+            </div>
+            
+            <!-- OK Button for progression locks -->
+            <button id="auth-modal-ok" style="display: none; width: 100%; padding: 10px; background: var(--neon-cyan); color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Got it!</button>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -476,7 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 if (lvl > unlockedLevel) {
                     btn.classList.add("locked");
-                    btn.disabled = true;
+                    btn.setAttribute("data-locked", "true");
                     if (lvl > 2) {
                         btn.setAttribute("title", "Sign in to unlock Level 3 and 4.");
                     } else {
@@ -491,6 +551,36 @@ document.addEventListener("DOMContentLoaded", () => {
 {% endif %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById("auth-gate-modal");
+    const msgEl = document.getElementById("auth-modal-msg");
+    const actionRow = document.getElementById("auth-modal-actions");
+    const okBtn = document.getElementById("auth-modal-ok");
+    const closeBtn = document.getElementById("close-auth-modal");
+    
+    function showAuthGateModal(message, isAuthGate = true) {
+        msgEl.textContent = message;
+        if (isAuthGate) {
+            actionRow.style.display = "flex";
+            okBtn.style.display = "none";
+        } else {
+            actionRow.style.display = "none";
+            okBtn.style.display = "block";
+        }
+        modal.style.display = "flex";
+    }
+    
+    function hideModal() {
+        modal.style.display = "none";
+    }
+    
+    if (closeBtn) closeBtn.addEventListener("click", hideModal);
+    if (okBtn) okBtn.addEventListener("click", hideModal);
+    
+    // Close modal on click outside
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) hideModal();
+    });
+
     // Setup interactive level selection for all anchor cards
     document.querySelectorAll(".anchor-card").forEach(card => {
         const levelBtns = card.querySelectorAll(".btn-level");
@@ -499,12 +589,22 @@ document.addEventListener("DOMContentLoaded", () => {
         
         levelBtns.forEach(btn => {
             btn.addEventListener("click", () => {
-                if (btn.classList.contains("locked") || btn.disabled) return;
+                const level = btn.getAttribute("data-level");
+                const isLocked = btn.getAttribute("data-locked") === "true" || btn.classList.contains("locked");
+                
+                if (isLocked) {
+                    const isGuest = document.body.getAttribute("data-authenticated") !== "true";
+                    if (isGuest && parseInt(level) > 2) {
+                        showAuthGateModal("Level " + level + " absolute memory training requires a free account to track your Spaced Repetition (SRS) schedule.", true);
+                    } else {
+                        showAuthGateModal("Level " + level + " is locked. Complete the previous level first to unlock.", false);
+                    }
+                    return;
+                }
                 
                 levelBtns.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
                 
-                const level = btn.getAttribute("data-level");
                 playBtn.setAttribute("href", `/game/play/anchor/${bpm}?level=${level}`);
             });
         });

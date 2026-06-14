@@ -29,6 +29,7 @@ class BpmAudioEngine {
         this.loopIds = [];
         this.analyser = null;
         this.rampRequestId = null;
+        this.playbackSessionId = 0;
     }
 
     async init() {
@@ -170,6 +171,10 @@ class BpmAudioEngine {
 
         this.stop(false, true); // Clean any active schedules immediately and synchronously
 
+        this.playbackSessionId++;
+        const currentSession = this.playbackSessionId;
+        this.playing = true;
+
         this.bpm = recipe.bpm || 120;
         this.genre = recipe.genre || "beginner";
         this.clueLevel = recipe.clueLevel !== undefined ? recipe.clueLevel : 4;
@@ -194,13 +199,18 @@ class BpmAudioEngine {
 
             // Load and play the preview URL
             this.songPlayer.load(this.previewUrl).then(() => {
+                if (currentSession !== this.playbackSessionId || !this.playing) {
+                    return;
+                }
                 const now = Tone.now();
                 Tone.Destination.volume.setValueAtTime(-40, now);
                 Tone.Destination.volume.linearRampToValueAtTime(0, now + 0.05);
 
                 this.songPlayer.start();
-                this.playing = true;
             }).catch(err => {
+                if (currentSession !== this.playbackSessionId || !this.playing) {
+                    return;
+                }
                 console.warn("Failed to load audio preview, falling back to synth loops:", err);
                 this.startSynthSequencer();
             });
@@ -476,18 +486,19 @@ class BpmAudioEngine {
             }
             this.analyser = null;
         }
-        if (this.kick) this.kick.dispose();
-        if (this.snare) this.snare.dispose();
-        if (this.snareFilter) this.snareFilter.dispose();
-        if (this.hat) this.hat.dispose();
-        if (this.hatFilter) this.hatFilter.dispose();
-        if (this.bass) this.bass.dispose();
-        if (this.chimeSynth) this.chimeSynth.dispose();
-        if (this.noiseGenerator) this.noiseGenerator.dispose();
-        if (this.transitionFilter) this.transitionFilter.dispose();
-        if (this.songPlayer) this.songPlayer.dispose();
-        if (this.clueFilter) this.clueFilter.dispose();
+        if (this.kick) { this.kick.dispose(); this.kick = null; }
+        if (this.snare) { this.snare.dispose(); this.snare = null; }
+        if (this.snareFilter) { this.snareFilter.dispose(); this.snareFilter = null; }
+        if (this.hat) { this.hat.dispose(); this.hat = null; }
+        if (this.hatFilter) { this.hatFilter.dispose(); this.hatFilter = null; }
+        if (this.bass) { this.bass.dispose(); this.bass = null; }
+        if (this.chimeSynth) { this.chimeSynth.dispose(); this.chimeSynth = null; }
+        if (this.noiseGenerator) { this.noiseGenerator.dispose(); this.noiseGenerator = null; }
+        if (this.transitionFilter) { this.transitionFilter.dispose(); this.transitionFilter = null; }
+        if (this.songPlayer) { this.songPlayer.dispose(); this.songPlayer = null; }
+        if (this.clueFilter) { this.clueFilter.dispose(); this.clueFilter = null; }
         this.initialized = false;
+        this._initPromise = null;
     }
 
     // --- GENRE PATTERNS ---
@@ -662,3 +673,144 @@ class BpmAudioEngine {
 
 // Instantiate and bind to window global
 window.audioEngine = new BpmAudioEngine();
+
+class InvisibleMetronomeController {
+    constructor(bpm, startAudioTime, audioContext = Tone.context) {
+        this.bpm = bpm;
+        this.startAudioTime = startAudioTime; // AudioContext currentTime when metronome starts (seconds)
+        this.beatIntervalMs = (60 / bpm) * 1000;
+        this.audioContext = audioContext;
+    }
+
+    /**
+     * Calculates signed phase error (ms) for a given tap.
+     * Negative: Rushing (early).
+     * Positive: Dragging (late).
+     * @param {number} tapTimestamp - DOMHighResTimeStamp from event (performance.now() scale)
+     */
+    getPhaseError(tapTimestamp) {
+        const perfNow = performance.now();
+        const audioNow = this.audioContext.currentTime;
+        
+        // 1. Clock translation offset
+        const clockOffset = perfNow - (audioNow * 1000);
+        
+        // 2. Hardware output latency compensation
+        const outputLatencyMs = (this.audioContext.rawContext.outputLatency || 0) * 1000;
+        
+        // 3. Translate metronome start time to performance.now() domain
+        const startPerfTime = (this.startAudioTime * 1000) + clockOffset + outputLatencyMs;
+        
+        // 4. Calculate time elapsed since metronome start
+        const elapsed = tapTimestamp - startPerfTime;
+        
+        // 5. Determine closest target beat
+        const closestBeatIndex = Math.round(elapsed / this.beatIntervalMs);
+        const targetBeatPerfTime = startPerfTime + (closestBeatIndex * this.beatIntervalMs);
+        
+        // 6. Return signed error in milliseconds
+        return tapTimestamp - targetBeatPerfTime;
+    }
+}
+
+window.InvisibleMetronomeController = InvisibleMetronomeController;
+
+class MidiDeviceManager {
+    constructor() {
+        this.access = null;
+        this.inputs = [];
+        this.onNoteOnCallback = null;
+        this.onNoteOffCallback = null;
+    }
+
+    async init() {
+        if (!navigator.requestMIDIAccess) {
+            throw new Error("Web MIDI API not supported in this browser.");
+        }
+        try {
+            this.access = await navigator.requestMIDIAccess();
+            this.access.onstatechange = (e) => {
+                this.updateInputs();
+            };
+            this.updateInputs();
+        } catch (err) {
+            throw new Error("MIDI access request failed: " + err.message);
+        }
+    }
+
+    updateInputs() {
+        if (!this.access) return;
+        // Unbind from old inputs to prevent multiple listeners
+        this.inputs.forEach(input => {
+            input.onmidimessage = null;
+        });
+        this.inputs = [];
+
+        const inputsIterator = this.access.inputs.values();
+        for (let input = inputsIterator.next(); input && !input.done; input = inputsIterator.next()) {
+            const dev = input.value;
+            this.inputs.push(dev);
+            this.registerInput(dev);
+        }
+    }
+
+    registerInput(inputDevice) {
+        inputDevice.onmidimessage = (event) => {
+            const statusByte = event.data[0];
+
+            // Discard system real-time messages (0xF8 - 0xFF) to prevent main thread choking
+            // e.g. 0xF8 = MIDI Clock, 0xFE = Active Sensing
+            if (statusByte >= 0xF8) {
+                return;
+            }
+
+            const command = statusByte & 0xF0;
+            const note = event.data[1];
+            const velocity = event.data[2];
+            const timestamp = event.timeStamp; // performance.now() domain timestamp
+
+            if (command === 0x90 && velocity > 0) { // Note On
+                if (this.onNoteOnCallback) {
+                    this.onNoteOnCallback(note, velocity, timestamp);
+                }
+            } else if (command === 0x80 || (command === 0x90 && velocity === 0)) { // Note Off
+                if (this.onNoteOffCallback) {
+                    this.onNoteOffCallback(note, velocity, timestamp);
+                }
+            }
+        };
+    }
+
+    onNoteOn(callback) {
+        this.onNoteOnCallback = callback;
+    }
+
+    onNoteOff(callback) {
+        this.onNoteOffCallback = callback;
+    }
+
+    getConnectedDevices() {
+        return this.inputs.map(dev => ({
+            id: dev.id,
+            name: dev.name,
+            manufacturer: dev.manufacturer
+        }));
+    }
+
+    dispose() {
+        // Nullify all connection handlers to avoid memory leaks (M10)
+        if (this.access) {
+            this.access.onstatechange = null;
+            this.access = null;
+        }
+        this.inputs.forEach(input => {
+            input.onmidimessage = null;
+        });
+        this.inputs = [];
+        this.onNoteOnCallback = null;
+        this.onNoteOffCallback = null;
+    }
+}
+
+window.MidiDeviceManager = MidiDeviceManager;
+

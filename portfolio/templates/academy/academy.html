@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Jon's Lane | Rhythm Academy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
+<style>
+    /* Academy Slate / Charcoal Aesthetics Override */
+    body {
+        background-color: #0B0E14;
+        color: #E5E7EB;
+        font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .academy-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    .academy-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 30px;
+    }
+    .slate-card {
+        background: #171B26;
+        border: 1px solid #282F42;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .slate-card:hover {
+        border-color: #3B82F6;
+    }
+    .academy-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+    .academy-subtitle {
+        color: #9CA3AF;
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+    }
+    /* Timeline / Roadmap Styling */
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 15px;
+        bottom: 15px;
+        width: 3px;
+        background: #282F42;
+    }
+    .timeline-node {
+        position: relative;
+        margin-bottom: 30px;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -26px;
+        top: 6px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #1F2937;
+        border: 3px solid #4B5563;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+    .timeline-node.unlocked .timeline-dot {
+        background: #3B82F6;
+        border-color: #3B82F6;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+    }
+    .timeline-node.mastered .timeline-dot {
+        background: #10B981;
+        border-color: #10B981;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+    }
+    .timeline-content {
+        background: #1E2536;
+        border: 1px solid #2D3748;
+        border-radius: 8px;
+        padding: 16px 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .timeline-content:hover {
+        background: #232C40;
+        border-color: #4A5568;
+    }
+    .timeline-node.locked .timeline-content {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .timeline-node.locked .timeline-content:hover {
+        background: #1E2536;
+        border-color: #2D3748;
+    }
+    .level-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .level-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+    .level-badge.locked { background: #374151; color: #9CA3AF; }
+    .level-badge.unlocked { background: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .level-badge.mastered { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    
+    .level-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #F3F4F6;
+    }
+    .level-details {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #2D3748;
+        display: none;
+    }
+    .btn-action-hub {
+        display: inline-block;
+        background: #3B82F6;
+        color: #FFFFFF;
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        margin-top: 10px;
+        transition: background-color 0.2s;
+    }
+    .btn-action-hub:hover {
+        background: #2563EB;
+    }
+    /* Radar Chart Container */
+    .radar-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+    }
+    .radar-chart {
+        width: 100%;
+        max-width: 320px;
+        height: auto;
+    }
+    .radar-poly {
+        fill: rgba(59, 130, 246, 0.25);
+        stroke: #3B82F6;
+        stroke-width: 2.5;
+        filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.6));
+        transition: all 0.5s ease-out;
+    }
+    .radar-grid {
+        stroke: #2D3748;
+        stroke-width: 0.8;
+    }
+    .radar-axis {
+        stroke: #4A5568;
+        stroke-width: 1;
+    }
+    .radar-label {
+        fill: #9CA3AF;
+        font-size: 9px;
+        font-weight: 600;
+        font-family: inherit;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="academy-container">
+    <header style="text-align: center; margin-bottom: 40px;">
+        <h1 class="academy-title">Rhythm Intelligence Academy</h1>
+        <p class="academy-subtitle">Master absolute tempo memory and sensorimotor synchronization</p>
+    </header>
+
+    <div class="academy-grid">
+        <!-- Left Column: Curriculum Progression Roadmap -->
+        <div>
+            <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; color: #F3F4F6;">
+                Curriculum Progression
+            </h3>
+            
+            {% set levels = [
+                {"id": 0, "name": "Find the Pulse", "desc": "Develop basic tempo synchronization and pulse entrainment. Tap along to the groove and maintain stable inter-onset intervals.", "gate": "Tap Consistency SD <= 50ms over 4 of the last 5 attempts across 2 days.", "play_url": url_for('game.play_anchor', anchor_bpm=120) ~ "?level=1&origin=academy"},
+                {"id": 1, "name": "Meter & Downbeat", "desc": "Internalize bars and downbeats. Align your tap to Beat 1 (downbeat) with low phase error.", "gate": "Downbeat Phase Error <= 60ms over 4 of the last 5 attempts across 2 days.", "play_url": url_for('game.play_anchor', anchor_bpm=120) ~ "?level=2&origin=academy"},
+                {"id": 2, "name": "Rhythmic Subdivisions", "desc": "Practice stable performance on quarter, eighth, and sixteenth subdivisions.", "gate": "Subdivision Tap Consistency SD <= 45ms over 4 of the last 5 attempts across 2 days.", "play_url": url_for('game.play_anchor', anchor_bpm=120) ~ "?level=3&origin=academy"},
+                {"id": 3, "name": "Metrical Ambiguity", "desc": "Calibrate for half-time, double-time, and octave tempo shifts without losing the primary pulse.", "gate": "Accuracy Deviation <= 3.0% over 4 of the last 5 attempts across 2 days.", "play_url": url_for('game.play_anchor', anchor_bpm=120) ~ "?level=4&origin=academy"},
+                {"id": 4, "name": "Absolute Tempo Recall (SRS)", "desc": "Establish absolute tempo memory. Test your recall of target anchor tempos using Spaced Repetition (SRS).", "gate": "Average Anchor Recall Index (ARI) >= 85 over the last 10 attempts.", "play_url": "#reviews-panel"},
+                {"id": 5, "name": "Groove & Syncopation", "desc": "Adapt your motor timing to offbeats, syncopated rhythms, and complex genre feels.", "gate": "Syncopated Tap Consistency SD <= 40ms.", "play_url": ""},
+                {"id": 6, "name": "Phrasing & Loop Alignment", "desc": "Track structured form boundaries and alignment drift across 4, 8, and 16-bar phrase blocks.", "gate": "Phrase Loop Alignment Error <= 75ms.", "play_url": ""},
+                {"id": 7, "name": "Professional Beatmatch & Drift", "desc": "Adjust audio speed and phase drift in real-time, matching two rhythms with high accuracy.", "gate": "Final Nudge Phase Drift <= 40ms.", "play_url": ""}
+            ] %}
+            
+            <div class="timeline">
+                {% for lvl in levels %}
+                {% set status = stats.progression[lvl.id] if stats else "locked" %}
+                <div class="timeline-node {{ status }}" data-id="{{ lvl.id }}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content" onclick="toggleDetails({{ lvl.id }})">
+                        <div class="level-meta">
+                            <span class="level-badge {{ status }}">{{ status }}</span>
+                            <span style="font-size: 0.8rem; color: #9CA3AF;">Level {{ lvl.id }}</span>
+                        </div>
+                        <div class="level-name">{{ lvl.name }}</div>
+                        <p style="color: #9CA3AF; font-size: 0.88rem; margin: 8px 0 0 0; line-height: 1.4;">{{ lvl.desc }}</p>
+                        
+                        <div class="level-details" id="details-{{ lvl.id }}">
+                            <div style="font-size: 0.82rem; color: #9CA3AF; margin-bottom: 12px; background: rgba(59, 130, 246, 0.05); padding: 8px 12px; border-radius: 4px; border-left: 2.5px solid #3B82F6;">
+                                🎯 <strong>Mastery Gate:</strong> {{ lvl.gate }}
+                            </div>
+                            {% if status != "locked" and lvl.play_url %}
+                                {% if lvl.id == 4 %}
+                                <a href="#due-reviews-card" class="btn-action-hub">Review Anchor Queues</a>
+                                {% else %}
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <a href="{{ url_for('game.play_anchor', anchor_bpm=95) }}?level={{ lvl.id + 1 }}&origin=academy" class="btn-action-hub" style="background: #1F2937; border: 1px solid #4B5563;">95 BPM</a>
+                                    <a href="{{ url_for('game.play_anchor', anchor_bpm=120) }}?level={{ lvl.id + 1 }}&origin=academy" class="btn-action-hub">120 BPM</a>
+                                    <a href="{{ url_for('game.play_anchor', anchor_bpm=128) }}?level={{ lvl.id + 1 }}&origin=academy" class="btn-action-hub" style="background: #1F2937; border: 1px solid #4B5563;">128 BPM</a>
+                                    <a href="{{ url_for('game.play_anchor', anchor_bpm=140) }}?level={{ lvl.id + 1 }}&origin=academy" class="btn-action-hub" style="background: #1F2937; border: 1px solid #4B5563;">140 BPM</a>
+                                </div>
+                                {% endif %}
+                            {% elif status == "locked" %}
+                            <span style="font-size: 0.82rem; color: #EF4444; font-weight: 600;">🔒 Complete previous levels to unlock this drill.</span>
+                            {% else %}
+                            <span style="font-size: 0.82rem; color: #9CA3AF;">Interactive labs for this level will launch in the next updates.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Column: Stats & Radar Chart -->
+        <div>
+            <!-- Radar Chart Card -->
+            <div class="slate-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #282F42; padding-bottom: 8px;">
+                    Rhythm Skill Profile
+                </h3>
+                <div class="radar-container">
+                    <svg viewBox="0 0 220 220" class="radar-chart">
+                        <!-- Background Grid Rings -->
+                        <circle cx="110" cy="110" r="70" class="radar-grid" fill="none" />
+                        <circle cx="110" cy="110" r="52.5" class="radar-grid" fill="none" />
+                        <circle cx="110" cy="110" r="35" class="radar-grid" fill="none" />
+                        <circle cx="110" cy="110" r="17.5" class="radar-grid" fill="none" />
+                        
+                        <!-- Axis Lines -->
+                        <!-- 0 deg (top): Pulse -->
+                        <line x1="110" y1="110" x2="110" y2="40" class="radar-axis" />
+                        <!-- 72 deg: Anchor -->
+                        <line x1="110" y1="110" x2="176.5" y2="89" class="radar-axis" />
+                        <!-- 144 deg: Subdivision -->
+                        <line x1="110" y1="110" x2="151.1" y2="166.5" class="radar-axis" />
+                        <!-- 216 deg: Downbeat -->
+                        <line x1="110" y1="110" x2="68.8" y2="166.5" class="radar-axis" />
+                        <!-- 288 deg: Ambiguity -->
+                        <line x1="110" y1="110" x2="43.4" y2="89" class="radar-axis" />
+                        
+                        <!-- The Dynamic Polygon -->
+                        <polygon id="radar-poly" points="110,110 110,110 110,110 110,110 110,110" class="radar-poly" />
+                        
+                        <!-- Axis Labels -->
+                        <text x="110" y="28" text-anchor="middle" class="radar-label">Pulse</text>
+                        <text x="183" y="93" text-anchor="start" class="radar-label">Anchor Memory</text>
+                        <text x="156" y="177" text-anchor="start" class="radar-label">Subdivision</text>
+                        <text x="64" y="177" text-anchor="end" class="radar-label">Downbeat</text>
+                        <text x="37" y="93" text-anchor="end" class="radar-label">Ambiguity</text>
+                    </svg>
+                </div>
+                <div style="font-size: 0.8rem; color: #9CA3AF; text-align: center; margin-top: 10px;">
+                    Stats derived dynamically from your last 50 attempts.
+                </div>
+            </div>
+
+            <!-- SRS Anchor Due Reviews -->
+            <div class="slate-card" id="due-reviews-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #282F42; padding-bottom: 8px;">
+                    SRS Anchor Reviews
+                </h3>
+                {% if due_anchors %}
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {% for item in due_anchors %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); padding: 12px; border-radius: 8px;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: #F3F4F6;">{{ item.anchor_bpm }} BPM Anchor</div>
+                            <div style="font-size: 0.75rem; color: #9CA3AF; margin-top: 2px;">Overdue: {{ item.days_overdue|round(1) }} days</div>
+                        </div>
+                        <a href="{{ url_for('game.play_anchor', anchor_bpm=item.anchor_bpm) }}?level=4&origin=academy" class="btn-action-hub" style="margin-top: 0; padding: 6px 12px; font-size: 0.8rem;">Review</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 15px; color: #9CA3AF; font-size: 0.9rem;">
+                    🎉 All anchors reviewed and up to date! Next review scheduled soon.
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sandbox Crate Library -->
+            <div class="slate-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #282F42; padding-bottom: 8px;">
+                    Sandbox Crate Freeplay
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    {% for crate in crates %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #282F42; padding-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 0.9rem; font-weight: 600; color: #E5E7EB;">{{ crate.name }}</span>
+                            <span style="font-size: 0.7rem; color: #9CA3AF; margin-left: 8px;">{{ crate.difficulty }}</span>
+                        </div>
+                        <a href="{{ url_for('game.play', crate_id=crate.id) }}?origin=academy" style="color: #3B82F6; text-decoration: none; font-size: 0.85rem; font-weight: 700;">Play</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Piano Lab Melodic Integration -->
+            <div class="slate-card" style="opacity: 0.7; border-style: dashed;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: #D1D5DB;">
+                    🎹 Piano Lab Melodic Track
+                </h3>
+                <p style="font-size: 0.82rem; color: #9CA3AF; line-height: 1.5; margin: 0;">
+                    Melodic and pitch training modules are currently locked. Build your rhythmic core foundation in Count Me In first. Piano Lab integration launches in the next phase!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle roadmap level details expansion drawer
+    function toggleDetails(levelId) {
+        const details = document.getElementById(`details-${levelId}`);
+        const node = document.querySelector(`.timeline-node[data-id="${levelId}"]`);
+        
+        if (node.classList.contains('locked')) return; // locked levels can't expand
+
+        const isDisplayed = details.style.display === 'block';
+        
+        // Collapse all others
+        document.querySelectorAll('.level-details').forEach(el => el.style.display = 'none');
+        
+        // Toggle this one
+        details.style.display = isDisplayed ? 'none' : 'block';
+    }
+
+    // Dynamic client-side SVG radar chart coordination
+    async function loadRadarChart() {
+        try {
+            const response = await fetch('/academy/api/skills');
+            if (response.ok) {
+                const skills = await response.json();
+                
+                // Map skills to values (default to 0 if missing)
+                const pulse = skills.pulse_entrainment || 0;
+                const anchor = skills.absolute_tempo_memory || 0;
+                const subdiv = skills.subdivision_stability || 0;
+                const downbeat = skills.downbeat_alignment || 0;
+                const ambiguity = skills.metrical_ambiguity || 0;
+
+                // Center coordinates
+                const cx = 110;
+                const cy = 110;
+                const maxRadius = 70;
+
+                // Helper to compute coordinate for an axis (angle in radians)
+                function getPoint(value, angleRad) {
+                    const r = (value / 100) * maxRadius;
+                    const x = cx + r * Math.cos(angleRad);
+                    const y = cy + r * Math.sin(angleRad);
+                    return `${x.toFixed(1)},${y.toFixed(1)}`;
+                }
+
+                // 5 Axes angles in radians:
+                // 1. Pulse (Top: 270 deg / -90 deg -> -pi/2)
+                const p1 = getPoint(pulse, -Math.PI / 2);
+                // 2. Anchor Memory (72 deg -> -pi/2 + 2*pi/5 = -pi/10)
+                const p2 = getPoint(anchor, -Math.PI / 10);
+                // 3. Subdivision (144 deg -> -pi/2 + 4*pi/5 = 3*pi/10)
+                const p3 = getPoint(subdiv, 3 * Math.PI / 10);
+                // 4. Downbeat (216 deg -> -pi/2 + 6*pi/5 = 7*pi/10)
+                const p4 = getPoint(downbeat, 7 * Math.PI / 10);
+                // 5. Ambiguity (288 deg -> -pi/2 + 8*pi/5 = 11*pi/10)
+                const p5 = getPoint(ambiguity, 11 * Math.PI / 10);
+
+                // Update polygon points
+                const poly = document.getElementById('radar-poly');
+                if (poly) {
+                    poly.setAttribute('points', `${p1} ${p2} ${p3} ${p4} ${p5}`);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load radar chart metrics:', err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadRadarChart();
+        
+        // Auto-expand the highest unlocked level details
+        const unlockedNodes = document.querySelectorAll('.timeline-node.unlocked, .timeline-node.mastered');
+        if (unlockedNodes.length > 0) {
+            const lastUnlocked = unlockedNodes[unlockedNodes.length - 1];
+            const levelId = lastUnlocked.getAttribute('data-id');
+            toggleDetails(levelId);
+        }
+    });
+</script>
+{% endblock %}

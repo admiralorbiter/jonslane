@@ -68,6 +68,7 @@
         </header>
 
         <form method="POST" action="{{ url_for('auth.login') }}">
+            <input type="hidden" name="next" value="{{ next }}">
             <div class="form-group">
                 <label for="email" class="form-label">Email Address</label>
                 <input type="email" id="email" name="email" class="form-input" required autocomplete="email" placeholder="dj@example.com">
@@ -82,7 +83,7 @@
         </form>
 
         <div class="auth-footer">
-            Don't have an account? <a href="{{ url_for('auth.register') }}">Initialize Here</a>
+            Don't have an account? <a href="{{ url_for('auth.register') }}?next={{ next }}">Initialize Here</a>
         </div>
     </div>
 </div>

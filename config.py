@@ -38,7 +38,6 @@ class TestingConfig(Config):
 
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
-    SQLALCHEMY_BINDS = {"count_me_in": "sqlite:///:memory:"}
 
 
 class ProductionConfig(Config):

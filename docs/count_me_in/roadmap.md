@@ -87,13 +87,13 @@ The curriculum is structured into progressive levels. Levels 2 and 3 run as para
 | Level | Name / Track | Core Skill | Primary Metric & Mastery Gate | Qualifying Criteria |
 |---|---|---|---|---|
 | **0** | Find the Pulse | Feel recurring beat, understand BPM | **Tap Stability:** Standard Deviation of inter-onset intervals (IOI) $\le 50\text{ ms}$ | 5 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
-| **1** | Tempo Anchors | Absolute tempo memory for anchors | **Anchor Recall Index (ARI):** $\text{ARI} \ge 85.0$ on each of 95, 120, 128, 140 BPM | Calculated over last 10 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
-| **2** | Rhythmic Structure A: Within the Beat | Quarter/eighth/sixteenth subdivision | **Subdivided Tap Stability:** SD $\le 45\text{ ms}$ on subdivision taps | 5 consecutive attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
-| **3** | Rhythmic Structure B: Across Beats | Bar, beat 1, downbeat alignment | **Downbeat Phase Error:** Average phase error $\le 40\text{ ms}$ | 5 consecutive attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
-| **4** | Half-Time/Double-Time | Tactus vs. measure, metrical ambiguity | **Metrical-Match Accuracy:** Deviation $\le 3.0\%$ on metrical targets | 5 consecutive attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
-| **5** | Groove & Syncopation | Genre feel, tresillo, offbeat syncopation | **Syncopated Tap Stability:** SD $\le 40\text{ ms}$ on offbeat taps | 5 consecutive attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
-| **6** | Phrasing | 4/8/16-bar phrase structure, form | **Phrase Loop Deviation:** Alignment error $\le 30\text{ ms}$ | 3 consecutive attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
-| **7** | Beatmatch & Drift | Phase vs. BPM, pitch fader nudge | **Pitch Nudge Drift:** Final phase drift $\le 20\text{ ms}$ | 3 consecutive attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
+| **1** | Meter & Downbeat | Bar, beat 1, downbeat alignment | **Downbeat Phase Error:** Average phase error $\le 60\text{ ms}$ | 5 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
+| **2** | Rhythmic Subdivisions | Quarter/eighth/sixteenth subdivision | **Subdivided Tap Stability:** SD $\le 45\text{ ms}$ on subdivision taps | 5 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
+| **3** | Metrical Ambiguity | Tactus vs. measure, half/double time | **Metrical-Match Accuracy:** Deviation $\le 3.0\%$ on metrical targets | 5 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
+| **4** | Tempo Anchors & SRS | Absolute tempo memory for anchors | **Anchor Recall Index (ARI):** $\text{ARI} \ge 85.0$ on each of 95, 120, 128, 140 BPM | Calculated over last 10 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
+| **5** | Groove & Syncopation | Genre feel, tresillo, offbeat syncopation | **Syncopated Tap Stability:** SD $\le 40\text{ ms}$ on offbeat taps | 5 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
+| **6** | Phrasing | 4/8/16-bar phrase structure, form | **Phrase Loop Deviation:** Alignment error $\le 75\text{ ms}$ | 3 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
+| **7** | Beatmatch & Drift | Phase vs. BPM, pitch fader nudge | **Pitch Nudge Drift:** Final phase drift $\le 40\text{ ms}$ | 3 attempts across $\ge 2$ sessions, $\ge 24\text{ hours}$ apart |
 
 #### 4.2 Spaced Repetition Scheduling
 *   New `AnchorSchedule` table: stores `ease_factor`, `interval_days`, `repetitions`, `next_review_at` per (user, anchor_bpm).

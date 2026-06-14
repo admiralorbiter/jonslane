@@ -185,12 +185,12 @@
 
             <div class="btn-action-row">
                 {% if is_anchor %}
-                    <a href="{{ url_for('game.play_anchor', anchor_bpm=anchor_bpm, level=anchor_level) }}" class="btn-action btn-next">Next Challenge &rarr;</a>
+                    <a href="{{ url_for('game.play_anchor', anchor_bpm=anchor_bpm, level=anchor_level) }}{% if origin %}?origin={{ origin }}{% endif %}" class="btn-action btn-next">Next Challenge &rarr;</a>
                 {% else %}
-                    <a href="{{ url_for('game.play', crate_id=crate.id) }}" class="btn-action btn-next">Next Challenge &rarr;</a>
+                    <a href="{{ url_for('game.play', crate_id=crate.id) }}{% if origin %}?origin={{ origin }}{% endif %}" class="btn-action btn-next">Next Challenge &rarr;</a>
                 {% endif %}
                 <a href="{{ url_for('main.music') }}" class="btn-action btn-exit">&larr; Music Hub</a>
-                <a href="{{ url_for('game.dashboard') }}" class="btn-action btn-exit">Dashboard</a>
+                <a href="{% if origin == 'academy' %}{{ url_for('academy.index') }}{% else %}{{ url_for('game.dashboard') }}{% endif %}" class="btn-action btn-exit">Dashboard</a>
             </div>
         </div>
     </div>

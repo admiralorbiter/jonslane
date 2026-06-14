@@ -42,12 +42,6 @@ def create_app(config_name="development"):
 
     app.config.from_object(config_by_name[config_name])
 
-    # Configure database binds for project decoupling (Count Me In game database) if not already set
-    if not app.config.get("SQLALCHEMY_BINDS"):
-        app.config["SQLALCHEMY_BINDS"] = {
-            "count_me_in": f"sqlite:///{os.path.join(app.instance_path, 'count_me_in.db')}"
-        }
-
     # Ensure the instance folder exists for SQLite db storage
     try:
         os.makedirs(app.instance_path)
@@ -62,10 +56,12 @@ def create_app(config_name="development"):
     from portfolio.routes.auth import auth_bp
     from portfolio.routes.game import game_bp
     from portfolio.routes.main import main_bp
+    from portfolio.routes.academy import academy_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(game_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(academy_bp)
 
     # Inject current_user dynamically into all templates
     @app.context_processor

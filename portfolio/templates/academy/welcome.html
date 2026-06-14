@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Jon's Lane | Welcome to Rhythm Academy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
+<style>
+    body {
+        background-color: #0B0E14;
+        color: #E5E7EB;
+        font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .welcome-container {
+        max-width: 600px;
+        margin: 100px auto;
+        padding: 40px;
+        background: #171B26;
+        border: 1px solid #282F42;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    .welcome-title {
+        font-size: 2.4rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+    .welcome-text {
+        font-size: 1.05rem;
+        line-height: 1.6;
+        color: #9CA3AF;
+        margin-bottom: 30px;
+    }
+    .btn-placement {
+        display: inline-block;
+        background: #10B981;
+        color: #FFFFFF;
+        font-weight: 700;
+        font-size: 1.05rem;
+        padding: 12px 28px;
+        border-radius: 8px;
+        text-decoration: none;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        transition: all 0.2s;
+    }
+    .btn-placement:hover {
+        background: #059669;
+        box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <div style="font-size: 4rem; margin-bottom: 20px;">🎓</div>
+    <h1 class="welcome-title">Welcome, {{ user.display_name }}!</h1>
+    <p class="welcome-text">
+        You have successfully unlocked access to the <strong>Rhythm Intelligence Academy</strong>! 
+        Your guest practice history (if any) has been retroactively synced and processed securely server-side.
+    </p>
+    <p class="welcome-text" style="font-size: 0.95rem; margin-top: -15px;">
+        To establish your baseline skill coordinates on the radar chart and unlock your first curriculum node, take the short rhythm placement test.
+    </p>
+    <div style="margin-top: 40px; margin-bottom: 20px;">
+        <a href="{{ url_for('game.play_anchor', anchor_bpm=120) }}?level=1&origin=academy" class="btn-placement">
+            Take Placement Test (1 Min) &rarr;
+        </a>
+    </div>
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('academy.index') }}" style="color: #9CA3AF; text-decoration: none; font-size: 0.9rem; font-weight: 600;">
+            Skip, go to Academy Dashboard &rarr;
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -16,8 +16,14 @@ def register():
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     """Log in an existing user."""
+    next_page = request.args.get("next") or request.form.get("next") or ""
+    
+    # Secure validation of next redirect target to prevent Open Redirects
+    is_safe = next_page.startswith("/") and not next_page.startswith("//") and not next_page.startswith("\\")
+    redirect_target = next_page if is_safe else url_for("game.dashboard")
+
     if session.get("user_id"):
-        return redirect(url_for("game.dashboard"))
+        return redirect(redirect_target)
 
     if request.method == "POST":
         email = request.form.get("email", "").strip()
@@ -25,12 +31,12 @@ def login():
 
         if not email or not password:
             flash("Email and password are required.", "error")
-            return render_template("auth/login.html")
+            return render_template("auth/login.html", next=next_page)
 
         user = User.query.filter_by(email=email).first()
         if not user or not user.check_password(password):
             flash("Invalid email or password.", "error")
-            return render_template("auth/login.html")
+            return render_template("auth/login.html", next=next_page)
 
         # Establish session
         session.clear()
@@ -38,9 +44,9 @@ def login():
         session.permanent = True
 
         flash(f"Connected as {user.display_name}!", "success")
-        return redirect(url_for("game.dashboard"))
+        return redirect(redirect_target)
 
-    return render_template("auth/login.html")
+    return render_template("auth/login.html", next=next_page)
 
 
 @auth_bp.route("/logout")
