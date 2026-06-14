@@ -115,6 +115,111 @@ class GameTestCase(unittest.TestCase):
         attempts = Attempt.query.all()
         self.assertEqual(len(attempts), 3)
 
+    def test_submit_attempt_unauthenticated(self):
+        """Test that unauthenticated requests to /game/api/attempt return 401."""
+        response = self.client.post(
+            "/game/api/attempt",
+            data=json.dumps({"guess": 120.0, "challenge_token": "fake-token"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 401)
+        data = json.loads(response.data.decode("utf-8"))
+        self.assertIn("error", data)
+
+    def test_submit_attempt_missing_params(self):
+        """Test that /game/api/attempt returns 400 on missing arguments."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        response = self.client.post(
+            "/game/api/attempt",
+            data=json.dumps({"guess": 120.0}), # missing challenge_token
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_submit_attempt_invalid_bounds(self):
+        """Test that /game/api/attempt returns 400 on invalid guess value or clue level."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        # Guess out of bounds (< 1.0)
+        response = self.client.post(
+            "/game/api/attempt",
+            data=json.dumps({"guess": 0.5, "challenge_token": "some-token"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_submit_attempt_invalid_token(self):
+        """Test that /game/api/attempt returns 400 for an invalid/expired token."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        response = self.client.post(
+            "/game/api/attempt",
+            data=json.dumps({"guess": 120.0, "challenge_token": "invalid-token-signature"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data.decode("utf-8"))
+        self.assertEqual(data["error"], "Invalid or expired challenge token.")
+
+    def test_submit_attempt_success_and_duplicate(self):
+        """Test successful direct attempt submission and duplicate prevention via UUID."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        from portfolio.utils.security import generate_challenge_token
+
+        # Generate a valid token for 120.0 BPM
+        token = generate_challenge_token(120.0, "House Crate")
+
+        # Submit close guess (120.5 BPM) -> error = 0.5 BPM (0.42%) -> Wizard (100 pts)
+        payload = {
+            "guess": 120.5,
+            "challenge_token": token,
+            "clue_level": 4,
+            "client_uuid": "test-attempt-uuid-123"
+        }
+
+        response = self.client.post(
+            "/game/api/attempt",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data.decode("utf-8"))
+
+        self.assertEqual(data["true_bpm"], 120.0)
+        self.assertEqual(data["guessed_bpm"], 120.5)
+        self.assertEqual(data["bpm_error"], 0.5)
+        self.assertEqual(data["percent_error"], 0.42)
+        self.assertEqual(data["rating"], "Tempo Wizard")
+        self.assertEqual(data["score"], 100)
+        self.assertEqual(data["streak"], 1)
+
+        # Check attempt was saved in database
+        attempt = Attempt.query.filter_by(client_uuid="test-attempt-uuid-123").first()
+        self.assertIsNotNone(attempt)
+        self.assertEqual(attempt.user_id, user.id)
+        self.assertEqual(attempt.crate_name, "House Crate")
+        self.assertIsNone(attempt.challenge_id) # Direct attempts have no challenge_id
+
+        # Submit the same uuid again -> should fail with 409 Conflict
+        response_dup = self.client.post(
+            "/game/api/attempt",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response_dup.status_code, 409)
+        data_dup = json.loads(response_dup.data.decode("utf-8"))
+        self.assertEqual(data_dup["error"], "Attempt already recorded.")
+
 
 if __name__ == "__main__":
     unittest.main()

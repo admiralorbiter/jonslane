@@ -22,8 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
     let recipe = null;
     let visualizerFrameId = null;
     let currentClueLevel = 4; // Default to full beat
-    let cachedGradient = null;
     let isBraking = false;
+    let isSubmitting = false;
+
+    // Outer visualizer state
+    let cachedWidth = 0;
+    let cachedHeight = 80;
+    let cachedGradient = null;
 
     // Read recipe data embedded in the page
     const recipeMeta = document.getElementById("recipe-meta");
@@ -44,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Clue buttons
     clueBadges.forEach(badge => {
         badge.addEventListener("click", () => {
+            if (isSubmitting) return;
             const level = parseInt(badge.getAttribute("data-level"));
             setClueLevel(level);
         });
@@ -64,8 +70,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Keyboard Hotkeys
     document.addEventListener("keydown", (e) => {
-        // Skip hotkeys if user is currently typing in the guess input field
-        if (document.activeElement === guessInput) return;
+        // Skip hotkeys if user is currently typing in the guess input field or submitting
+        if (document.activeElement === guessInput || isSubmitting) return;
 
         if (e.code === "Space") {
             e.preventDefault();
@@ -98,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     async function startPlayback() {
-        if (!recipe || isBraking) return;
+        if (!recipe || isBraking || isSubmitting) return;
 
         // Initialize and resume Tone context on user interaction
         await window.audioEngine.init();
@@ -187,9 +193,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- CLIENT SIDE LOCAL STORAGE SCORING ---
+    // --- SUBMIT GUESS ---
 
     function submitGuess() {
+        if (isSubmitting) return;
+
         const guessVal = parseFloat(guessInput.value);
         if (isNaN(guessVal) || guessVal <= 0) {
             alert("Please enter a valid numeric BPM guess.");
@@ -198,101 +206,161 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!recipe || isBraking) return;
 
-        const trueBpm = recipe.bpm;
-        const bpmError = guessVal - trueBpm;
-        const absError = Math.abs(bpmError);
-        const percentError = (absError / trueBpm) * 100;
-
-        // Clue multipliers
-        // 1 = Kick only (0.5x), 2 = Kick+Snare (0.6x), 3 = Kick+Snare+Hat (0.75x), 4 = Full (1.0x)
-        const multipliers = { 1: 0.5, 2: 0.6, 3: 0.75, 4: 1.0 };
-        const multiplier = multipliers[currentClueLevel] || 1.0;
-
-        // Scoring & Rating
-        let baseScore = 10;
-        let rating = "Needs Practice";
-        let isSuccess = false;
-
-        if (percentError < 1.0) {
-            rating = "Tempo Wizard";
-            baseScore = 100;
-            isSuccess = true;
-        } else if (percentError <= 3.0) {
-            rating = "DJ-Ready";
-            baseScore = 75;
-            isSuccess = true;
-        } else if (percentError <= 5.0) {
-            rating = "Solid Ear";
-            baseScore = 50;
-            isSuccess = true;
-        } else if (percentError <= 8.0) {
-            rating = "Getting There";
-            baseScore = 25;
-        }
-
-        const finalScore = Math.round(baseScore * multiplier);
-
-        // Retrieve local streak metrics
-        let currentStreak = parseInt(localStorage.getItem("count_me_in_streak")) || 0;
-        let maxStreak = parseInt(localStorage.getItem("count_me_in_max_streak")) || 0;
-
-        if (isSuccess) {
-            currentStreak += 1;
-            if (currentStreak > maxStreak) {
-                maxStreak = currentStreak;
-            }
-        } else {
-            currentStreak = 0;
-        }
-
-        // Save back local streaks
-        localStorage.setItem("count_me_in_streak", currentStreak.toString());
-        localStorage.setItem("count_me_in_max_streak", maxStreak.toString());
-
-        // Save Attempt to localStorage history (Capped at 1,000 entries)
-        const attempts = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
-
-        // Generate UUID placeholder
+        // Generate attempt UUID
         const attemptUuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        const crateName = document.querySelector(".cyber-title").textContent.trim();
 
-        const newAttempt = {
-            client_uuid: attemptUuid,
-            guessed_bpm: Number(guessVal.toFixed(1)),
-            true_bpm: trueBpm,
-            bpm_error: Number(bpmError.toFixed(1)),
-            percent_error: Number(percentError.toFixed(2)),
-            score: finalScore,
-            rating: rating,
-            crate_name: crateName,
-            created_at: new Date().toISOString()
-        };
+        // Fetch auth metadata
+        const userMeta = document.getElementById("user-meta");
+        const isAuthenticated = userMeta && userMeta.getAttribute("data-authenticated") === "true";
+        const challengeToken = userMeta ? userMeta.getAttribute("data-challenge-token") : "";
+        const crateName = userMeta ? userMeta.getAttribute("data-crate-name") : "Unknown Crate";
 
-        attempts.push(newAttempt);
+        if (isAuthenticated) {
+            // AUTHENTICATED PATH - Saves directly to SQLite via API, bypasses localStorage
+            isSubmitting = true;
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+            guessInput.disabled = true;
+            clueBadges.forEach(btn => btn.disabled = true);
 
-        // Limit window to 1,000 attempts to prevent main-thread blockage
-        if (attempts.length > 1000) {
-            attempts.shift(); // Remove oldest
-        }
+            // Stop playback immediately for responsive UX
+            stopPlayback(true);
 
-        try {
-            localStorage.setItem("count_me_in_attempts", JSON.stringify(attempts));
-        } catch (e) {
-            if (e.name === "QuotaExceededError") {
-                console.warn("LocalStorage quota exceeded! Slicing logs down to last 200 items.");
-                localStorage.setItem("count_me_in_attempts", JSON.stringify(attempts.slice(-200)));
+            const payload = {
+                guess: Number(guessVal.toFixed(1)),
+                challenge_token: challengeToken,
+                clue_level: currentClueLevel,
+                client_uuid: attemptUuid
+            };
+
+            fetch("/game/api/attempt", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async response => {
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || (response.status === 401 ? "Unauthorized" : "Server Error"));
+                }
+                return response.json();
+            })
+            .then(data => {
+                isSubmitting = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit Guess";
+                guessInput.disabled = false;
+                clueBadges.forEach(btn => btn.disabled = false);
+
+                // Play chime
+                const isSuccess = ["Tempo Wizard", "DJ-Ready", "Solid Ear"].includes(data.rating);
+                window.audioEngine.playChime(isSuccess);
+
+                // Show results
+                showResults(data, data.streak);
+            })
+            .catch(err => {
+                isSubmitting = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit Guess";
+                guessInput.disabled = false;
+                clueBadges.forEach(btn => btn.disabled = false);
+
+                console.error("Submission failed:", err);
+                alert(err.message === "Unauthorized" 
+                    ? "Your session has expired. Please log in again to save your score." 
+                    : `Submission failed: ${err.message}`);
+            });
+
+        } else {
+            // GUEST PATH - Saves in browser localStorage
+            const trueBpm = recipe.bpm;
+            const bpmError = guessVal - trueBpm;
+            const absError = Math.abs(bpmError);
+            const percentError = (absError / trueBpm) * 100;
+
+            const multipliers = { 1: 0.5, 2: 0.6, 3: 0.75, 4: 1.0 };
+            const multiplier = multipliers[currentClueLevel] || 1.0;
+
+            let baseScore = 10;
+            let rating = "Needs Practice";
+            let isSuccess = false;
+
+            if (percentError < 1.0) {
+                rating = "Tempo Wizard";
+                baseScore = 100;
+                isSuccess = true;
+            } else if (percentError <= 3.0) {
+                rating = "DJ-Ready";
+                baseScore = 75;
+                isSuccess = true;
+            } else if (percentError <= 5.0) {
+                rating = "Solid Ear";
+                baseScore = 50;
+                isSuccess = true;
+            } else if (percentError <= 8.0) {
+                rating = "Getting There";
+                baseScore = 25;
             }
+
+            const finalScore = Math.round(baseScore * multiplier);
+
+            // Retrieve local streak metrics
+            let currentStreak = parseInt(localStorage.getItem("count_me_in_streak")) || 0;
+            let maxStreak = parseInt(localStorage.getItem("count_me_in_max_streak")) || 0;
+
+            if (isSuccess) {
+                currentStreak += 1;
+                if (currentStreak > maxStreak) {
+                    maxStreak = currentStreak;
+                }
+            } else {
+                currentStreak = 0;
+            }
+
+            // Save back local streaks
+            localStorage.setItem("count_me_in_streak", currentStreak.toString());
+            localStorage.setItem("count_me_in_max_streak", maxStreak.toString());
+
+            const attempts = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
+            const newAttempt = {
+                client_uuid: attemptUuid,
+                guessed_bpm: Number(guessVal.toFixed(1)),
+                true_bpm: trueBpm,
+                bpm_error: Number(bpmError.toFixed(1)),
+                percent_error: Number(percentError.toFixed(2)),
+                score: finalScore,
+                rating: rating,
+                crate_name: crateName,
+                created_at: new Date().toISOString()
+            };
+
+            attempts.push(newAttempt);
+
+            if (attempts.length > 1000) {
+                attempts.shift();
+            }
+
+            try {
+                localStorage.setItem("count_me_in_attempts", JSON.stringify(attempts));
+            } catch (e) {
+                if (e.name === "QuotaExceededError") {
+                    localStorage.setItem("count_me_in_attempts", JSON.stringify(attempts.slice(-200)));
+                }
+            }
+
+            // Trigger vinyl deceleration stop and positive/negative chimes
+            stopPlayback(true);
+            window.audioEngine.playChime(isSuccess);
+
+            // Pop up the results
+            showResults(newAttempt, currentStreak);
+
+            // Trigger immediate data sync if user is logged in
+            syncLocalAttempts();
         }
-
-        // Trigger vinyl deceleration stop and positive/negative chimes
-        stopPlayback(true);
-        window.audioEngine.playChime(isSuccess);
-
-        // Pop up the results
-        showResults(newAttempt, currentStreak);
-
-        // Trigger immediate data sync if user is logged in
-        syncLocalAttempts();
     }
 
     function showResults(attempt, currentStreak) {
@@ -330,6 +398,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- VISUALIZER DRAW LOOP (HIGH-DPI & OPTIMIZED GRADIENTS) ---
 
+    // Responsive High-DPI resizing
+    const resizeCanvas = () => {
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+
+        canvas.width = rect.width * dpr;
+        canvas.height = 80 * dpr;
+        ctx.scale(dpr, dpr);
+
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = "80px";
+
+        cachedWidth = rect.width;
+        cachedHeight = 80;
+
+        // Pre-compile Visualizer Gradient outside of the requestAnimationFrame loop
+        cachedGradient = ctx.createLinearGradient(0, 80, 0, 0);
+        cachedGradient.addColorStop(0, "#00f0ff"); // Neon Cyan
+        cachedGradient.addColorStop(1, "#ff0055"); // Neon Pink
+    };
+
+    if (canvas) {
+        resizeCanvas();
+        let resizeTimeout;
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeCanvas, 150);
+        });
+    }
+
     function startVisualizer() {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
@@ -338,41 +438,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
-
-        let cachedWidth = 0;
-        let cachedHeight = 80;
-
-        // Responsive High-DPI resizing
-        const resizeCanvas = () => {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-
-            canvas.width = rect.width * dpr;
-            canvas.height = 80 * dpr;
-            ctx.scale(dpr, dpr);
-
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = "80px";
-
-            cachedWidth = rect.width;
-            cachedHeight = 80;
-
-            // Pre-compile Visualizer Gradient outside of the requestAnimationFrame loop
-            cachedGradient = ctx.createLinearGradient(0, 80, 0, 0);
-            cachedGradient.addColorStop(0, "#00f0ff"); // Neon Cyan
-            cachedGradient.addColorStop(1, "#ff0055"); // Neon Pink
-        };
-        resizeCanvas();
-
-        // Bind debounced window resize
-        let resizeTimeout;
-        const onResize = () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                resizeCanvas();
-            }, 150);
-        };
-        window.addEventListener("resize", onResize);
 
         const draw = () => {
             if (!visualizerFrameId && visualizerFrameId !== 0) return;
@@ -393,6 +458,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Draw frequency bars
             ctx.fillStyle = cachedGradient || "#00f0ff";
             for (let i = 0; i < bufferLength; i++) {
+                if (x >= w) break; // Optimization: don't render off-screen columns
                 barHeight = dataArray[i];
                 const heightVal = (barHeight / 255) * h * 0.8;
                 ctx.fillRect(x, h - heightVal, barWidth - 2, heightVal);
@@ -406,10 +472,11 @@ document.addEventListener("DOMContentLoaded", () => {
     function clearCanvas() {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
-        const w = canvas.width / (window.devicePixelRatio || 1);
-        const h = 80;
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = "#0d0f12";
-        ctx.fillRect(0, 0, w, h);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
     }
 
     // --- TRANSACTIONAL LOCAL STORAGE SYNC ---
@@ -459,3 +526,4 @@ document.addEventListener("DOMContentLoaded", () => {
     // Trigger sync on page load if authenticated
     syncLocalAttempts();
 });
+

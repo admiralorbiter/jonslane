@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, render_template, request
 
 from portfolio import db
 from portfolio.models import Attempt, Challenge, Crate, User
+from portfolio.utils.security import generate_challenge_token, verify_challenge_token
 
 game_bp = Blueprint("game", __name__, url_prefix="/game")
 
@@ -84,17 +85,23 @@ def calculate_user_stats(user, attempts):
     return stats
 
 
-def calculate_score_and_rating(percent_error):
-    """Return (score, rating, is_success) for a given percent error."""
+def calculate_score_and_rating(percent_error, clue_level=4):
+    """Return (score, rating, is_success) for a given percent error, applying clue multipliers."""
+    multipliers = {1: 0.5, 2: 0.6, 3: 0.75, 4: 1.0}
+    multiplier = multipliers.get(clue_level, 1.0)
+
     if percent_error < 1.0:
-        return 100, "Tempo Wizard", True
-    if percent_error <= 3.0:
-        return 75, "DJ-Ready", True
-    if percent_error <= 5.0:
-        return 50, "Solid Ear", True
-    if percent_error <= 8.0:
-        return 25, "Getting There", False
-    return 10, "Needs Practice", False
+        base_score, rating, is_success = 100, "Tempo Wizard", True
+    elif percent_error <= 3.0:
+        base_score, rating, is_success = 75, "DJ-Ready", True
+    elif percent_error <= 5.0:
+        base_score, rating, is_success = 50, "Solid Ear", True
+    elif percent_error <= 8.0:
+        base_score, rating, is_success = 25, "Getting There", False
+    else:
+        base_score, rating, is_success = 10, "Needs Practice", False
+
+    return round(base_score * multiplier), rating, is_success
 
 
 def validate_and_parse_attempt_data(att_data):
@@ -138,7 +145,7 @@ def validate_and_parse_attempt_data(att_data):
 
 
 def recalculate_user_streaks(user):
-    """Recalculate and persist chronological streaks for a user."""
+    """Recalculate and persist chronological streaks for a user. Callers must commit transaction."""
     all_attempts = Attempt.query.filter_by(user_id=user.id).order_by(Attempt.created_at.asc()).all()
     current_streak = 0
     max_streak = user.max_streak
@@ -153,7 +160,6 @@ def recalculate_user_streaks(user):
 
     user.current_streak = current_streak
     user.max_streak = max_streak
-    db.session.commit()
 
 
 @game_bp.route("/dashboard")
@@ -161,7 +167,7 @@ def dashboard():
     from flask import session
 
     user_id = session.get("user_id")
-    user = User.query.get(user_id) if user_id else None
+    user = db.session.get(User, user_id) if user_id else None
 
     stats = None
     if user:
@@ -174,10 +180,16 @@ def dashboard():
 
 @game_bp.route("/play/<int:crate_id>")
 def play(crate_id):
-    crate = Crate.query.get_or_404(crate_id)
+    crate = db.session.get(Crate, crate_id)
+    if not crate:
+        from flask import abort
+        abort(404)
 
     # Generate random true BPM
     true_bpm = round(random.uniform(crate.min_bpm, crate.max_bpm), 1)
+
+    # Generate a timed, cryptographically signed play token
+    challenge_token = generate_challenge_token(true_bpm, crate.name)
 
     # Generate a simple beat recipe JSON depending on genre
     # In Tone.js, this tells it what instruments and notes to schedule
@@ -192,11 +204,17 @@ def play(crate_id):
         recipe["elements"] = ["kick", "snare", "hihat_roll", "clap"]
         recipe["half_time"] = True
 
-    return render_template("game/play.html", recipe_json=json.dumps(recipe), crate=crate)
+    return render_template(
+        "game/play.html",
+        recipe_json=json.dumps(recipe),
+        crate=crate,
+        challenge_token=challenge_token
+    )
 
 
 @game_bp.route("/submit", methods=["POST"])
 def submit():
+    """Legacy submission route used by automated test suites."""
     data = request.get_json() or {}
     challenge_id = data.get("challenge_id")
     guess_val = data.get("guess")
@@ -209,7 +227,10 @@ def submit():
     except ValueError:
         return jsonify({"error": "Guess must be a valid number"}), 400
 
-    challenge = Challenge.query.get_or_404(challenge_id)
+    challenge = db.session.get(Challenge, challenge_id)
+    if not challenge:
+        return jsonify({"error": "Challenge not found"}), 404
+
     true_bpm = challenge.true_bpm
 
     bpm_error = guess - true_bpm
@@ -223,7 +244,7 @@ def submit():
     from flask import session
 
     user_id = session.get("user_id")
-    user = User.query.get(user_id) if user_id else None
+    user = db.session.get(User, user_id) if user_id else None
     if not user:
         user = User.query.first()
         if not user:
@@ -267,6 +288,97 @@ def submit():
     )
 
 
+@game_bp.route("/api/attempt", methods=["POST"])
+def submit_attempt():
+    """Submit a gameplay attempt directly to SQLite database for signed-in users."""
+    from flask import session
+
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required."}), 401
+
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    data = request.get_json() or {}
+    guess_val = data.get("guess")
+    challenge_token = data.get("challenge_token")
+    clue_level_val = data.get("clue_level", 4)
+    client_uuid = data.get("client_uuid")
+
+    if guess_val is None or not challenge_token:
+        return jsonify({"error": "Missing guess or challenge token."}), 400
+
+    try:
+        guess = float(guess_val)
+        clue_level = int(clue_level_val)
+        if not (1.0 <= guess <= 300.0) or clue_level not in [1, 2, 3, 4]:
+            return jsonify({"error": "Invalid guess or clue level bounds."}), 400
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid data format."}), 400
+
+    # Cryptographically verify the play token
+    challenge_data = verify_challenge_token(challenge_token)
+    if not challenge_data:
+        return jsonify({"error": "Invalid or expired challenge token."}), 400
+
+    true_bpm = challenge_data["true_bpm"]
+    crate_name = challenge_data["crate_name"]
+
+    # Check for duplicate client UUID to prevent double submissions
+    if client_uuid:
+        existing = Attempt.query.filter_by(client_uuid=client_uuid).first()
+        if existing:
+            return jsonify({"error": "Attempt already recorded."}), 409
+
+    # Calculate metrics
+    bpm_error = guess - true_bpm
+    abs_error = abs(bpm_error)
+    percent_error = (abs_error / true_bpm) * 100
+
+    score, rating, is_success = calculate_score_and_rating(percent_error, clue_level)
+
+    # Update user streak
+    if is_success:
+        user.current_streak += 1
+        if user.current_streak > user.max_streak:
+            user.max_streak = user.current_streak
+    else:
+        user.current_streak = 0
+
+    try:
+        attempt = Attempt(
+            user_id=user.id,
+            challenge_id=None,
+            guessed_bpm=round(guess, 1),
+            true_bpm=true_bpm,
+            bpm_error=round(bpm_error, 1),
+            percent_error=round(percent_error, 2),
+            score=score,
+            rating=rating,
+            crate_name=crate_name,
+            client_uuid=client_uuid,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.session.add(attempt)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({"error": "Internal database transaction failure."}), 500
+
+    return jsonify({
+        "true_bpm": true_bpm,
+        "guessed_bpm": round(guess, 1),
+        "bpm_error": round(bpm_error, 1),
+        "percent_error": round(percent_error, 2),
+        "rating": rating,
+        "score": score,
+        "streak": user.current_streak,
+        "max_streak": user.max_streak
+    }), 201
+
+
 @game_bp.route("/api/sync", methods=["POST"])
 def sync():
     """Sync client-side local storage attempts to database."""
@@ -276,7 +388,7 @@ def sync():
     if not user_id:
         return jsonify({"error": "Authentication required to sync data."}), 401
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return jsonify({"error": "User not found."}), 404
 
@@ -294,25 +406,31 @@ def sync():
         if existing:
             continue
 
-        attempt = Attempt(
-            user_id=user.id,
-            challenge_id=None,
-            guessed_bpm=parsed["guessed_bpm"],
-            true_bpm=parsed["true_bpm"],
-            bpm_error=parsed["bpm_error"],
-            percent_error=parsed["percent_error"],
-            score=parsed["score"],
-            rating=parsed["rating"],
-            crate_name=parsed["crate_name"],
-            client_uuid=parsed["client_uuid"],
-            created_at=parsed["created_at"],
-        )
-        db.session.add(attempt)
-        synced_count += 1
+        # Use nested transaction to save each attempt atomically
+        try:
+            with db.session.begin_nested():
+                attempt = Attempt(
+                    user_id=user.id,
+                    challenge_id=None,
+                    guessed_bpm=parsed["guessed_bpm"],
+                    true_bpm=parsed["true_bpm"],
+                    bpm_error=parsed["bpm_error"],
+                    percent_error=parsed["percent_error"],
+                    score=parsed["score"],
+                    rating=parsed["rating"],
+                    crate_name=parsed["crate_name"],
+                    client_uuid=parsed["client_uuid"],
+                    created_at=parsed["created_at"],
+                )
+                db.session.add(attempt)
+        except Exception:
+            continue
+        else:
+            synced_count += 1
 
     if synced_count > 0:
-        db.session.commit()
         recalculate_user_streaks(user)
+        db.session.commit()
 
     return jsonify(
         {
@@ -322,3 +440,4 @@ def sync():
             "max_streak": user.max_streak,
         }
     )
+

@@ -55,7 +55,7 @@ class User(db.Model):
     max_streak = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
-    attempts = db.relationship("Attempt", backref="user", lazy=True, cascade="all, delete-orphan")
+    attempts = db.relationship("Attempt", backref="user", lazy=True, cascade="all, delete-orphan", passive_deletes=True)
 
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -88,7 +88,7 @@ class Crate(db.Model):
     genre = db.Column(db.String(50), nullable=False)  # house, hip-hop, trap, beginner
     difficulty = db.Column(db.String(50), nullable=False, default="Medium")
 
-    challenges = db.relationship("Challenge", backref="crate", lazy=True)
+    challenges = db.relationship("Challenge", backref="crate", lazy=True, cascade="all, delete-orphan", passive_deletes=True)
 
     def __repr__(self):
         return f"<Crate {self.name}>"
@@ -100,13 +100,13 @@ class Challenge(db.Model):
     __tablename__ = "challenges"
 
     id = db.Column(db.Integer, primary_key=True)
-    crate_id = db.Column(db.Integer, db.ForeignKey("crates.id"), nullable=False)
+    crate_id = db.Column(db.Integer, db.ForeignKey("crates.id", ondelete="CASCADE"), nullable=False, index=True)
     true_bpm = db.Column(db.Float, nullable=False)
     genre = db.Column(db.String(50), nullable=False)
     beat_recipe_json = db.Column(db.Text, nullable=True)  # custom JSON for synthesizers
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
-    attempts = db.relationship("Attempt", backref="challenge", lazy=True)
+    attempts = db.relationship("Attempt", backref="challenge", lazy=True, cascade="all", passive_deletes=True)
 
     def __repr__(self):
         return f"<Challenge true_bpm={self.true_bpm}>"
@@ -118,8 +118,8 @@ class Attempt(db.Model):
     __tablename__ = "attempts"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("challenges.id"), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("challenges.id", ondelete="SET NULL"), nullable=True, index=True)
     guessed_bpm = db.Column(db.Float, nullable=False)
     true_bpm = db.Column(db.Float, nullable=False)
     bpm_error = db.Column(db.Float, nullable=False)
@@ -131,47 +131,18 @@ class Attempt(db.Model):
     crate_name = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
+    __table_args__ = (
+        db.Index("idx_attempts_user_created", "user_id", "created_at"),
+    )
+
     def __repr__(self):
         return f"<Attempt guess={self.guessed_bpm} true={self.true_bpm}>"
 
 
 def seed_database():
     """Seed the database with initial Crates and a default guest user if needed."""
-    from sqlalchemy import text
-
     from portfolio import db
     from portfolio.models import Crate, User
-
-    # Raw SQL schema checks to execute alterations if columns are missing (simple DB migration)
-    try:
-        db.session.execute(text("SELECT email FROM users LIMIT 1"))
-    except Exception:
-        db.session.rollback()
-        try:
-            db.session.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR(120)"))
-            db.session.execute(
-                text("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
-            )
-            db.session.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-
-    try:
-        db.session.execute(text("SELECT client_uuid FROM attempts LIMIT 1"))
-    except Exception:
-        db.session.rollback()
-        try:
-            db.session.execute(text("ALTER TABLE attempts ADD COLUMN client_uuid VARCHAR(100)"))
-            db.session.execute(
-                text(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_attempts_client_uuid ON attempts(client_uuid)"
-                )
-            )
-            db.session.execute(text("ALTER TABLE attempts ADD COLUMN crate_name VARCHAR(100)"))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
 
     # Seed Default User if not exists
     if not User.query.first():
@@ -210,3 +181,4 @@ def seed_database():
             db.session.add(crate)
 
     db.session.commit()
+

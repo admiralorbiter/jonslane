@@ -33,6 +33,7 @@ def login():
             return render_template("auth/login.html")
 
         # Establish session
+        session.clear()
         session["user_id"] = user.id
         session.permanent = True
 
