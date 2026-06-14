@@ -65,3 +65,26 @@ If a specific sub-project requires a completely different style (e.g., a retro t
 </style>
 {% endblock %}
 ```
+
+---
+
+## 🎧 Hybrid Client-Server Pattern (e.g., "Count Me In")
+
+For interactive, zero-latency applications like the BPM ear trainer, we employ a hybrid architecture where the server manages metadata configurations while the browser orchestrates audio engines, canvas loops, and temporary storage:
+
+### 1. Zero-Database Client Gameplay
+- The Flask backend fetches static configurations (like `Crate` categories and boundaries) and renders them.
+- Procedural challenge recipe details (target BPM, genre instruments) are randomized on-the-fly when loading `/game/play/<id>` and injected into DOM data attributes (`id="recipe-meta"`), bypassing server-side database writes during active gameplay.
+
+### 2. Browser LocalStorage State Engine
+- Attempt logs, accuracy metrics, and streak counts are computed directly in client JavaScript and cached under `localStorage` namespaces (`count_me_in_attempts`, `count_me_in_streak`).
+- To keep JSON parsing latency below 5ms (preventing main-thread blocking), the local attempts history is capped to a **sliding window of 1,000 records**.
+
+### 3. Web Audio (Tone.js) Lifecycle Management
+- **Autoplay Compliance**: Audio context initializes only after explicit user interaction (e.g. clicking "Play Groove").
+- **Resource Disposal**: When navigating away or stopping playback, the custom engine calls `.dispose()` on all active synth nodes and loops to free Web Audio memory.
+- **Background Throttling**: Tab changes (`visibilitychange` listener) automatically suspend the loops to conserve client battery.
+
+### 4. Future Auth & Synchronization Path
+- The database `Attempt` schema includes `client_uuid` (unique) and nullable `challenge_id` columns.
+- Upon implementing the authentication system, a bulk `POST` endpoint at `/game/api/sync` will accept the client's `localStorage` JSON history, match UUIDs to avoid duplicates, write attempts to SQLite, and chronologically compute user streaks.

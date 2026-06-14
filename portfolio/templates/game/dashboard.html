@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Count Me In | BPM Ear-Training Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="game-container">
+    <header style="text-align: center; margin-bottom: 50px;">
+        <h1 class="cyber-title">Count Me In</h1>
+        <p class="cyber-subtitle">Pro BPM Ear-Training Bootcamp</p>
+    </header>
+
+    <!-- Stats Panel -->
+    <div class="stats-grid">
+        <div class="glass-card stat-box">
+            <div class="stat-lbl">Total Drills</div>
+            <div id="stat-total-attempts" class="stat-val">0</div>
+        </div>
+        <div class="glass-card stat-box">
+            <div class="stat-lbl">Average Error</div>
+            <div id="stat-avg-error" class="stat-val">0.0 <span style="font-size: 1rem; color: var(--text-secondary);">BPM</span></div>
+        </div>
+        <div class="glass-card stat-box">
+            <div class="stat-lbl">Percent Accuracy</div>
+            <div id="stat-accuracy" class="stat-val">100.0%</div>
+        </div>
+        <div class="glass-card stat-box streak">
+            <div class="stat-lbl">Active Streak</div>
+            <div id="stat-streak" class="stat-val">0 / 0</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-bottom: 50px;">
+        <!-- Crates Section -->
+        <div>
+            <h2 class="crates-title">Available Crates</h2>
+            <div class="crates-grid">
+                {% for crate in crates %}
+                <div class="glass-card crate-card">
+                    <div>
+                        <div class="crate-header">
+                            <span class="crate-name">{{ crate.name }}</span>
+                            <span class="difficulty-badge {{ crate.difficulty.lower() }}">{{ crate.difficulty }}</span>
+                        </div>
+                        <p class="crate-desc">{{ crate.description }}</p>
+                        <div class="crate-meta">
+                            Range: {{ crate.min_bpm }} - {{ crate.max_bpm }} BPM | Style: {{ crate.genre.upper() }}
+                        </div>
+                    </div>
+                    <a href="{{ url_for('game.play', crate_id=crate.id) }}" class="btn-game">Select Crate</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Rating Performance Breakdown -->
+        <div class="glass-card">
+            <h3 style="font-size: 1.2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                Performance Breakdown
+            </h3>
+
+            <div class="stat-lbl" style="margin-bottom: 5px;">Best Tempo Zone</div>
+            <div id="stat-best-range" style="font-size: 1.1rem; font-weight: 700; color: var(--neon-cyan); font-family: monospace; margin-bottom: 30px;">
+                N/A
+            </div>
+
+            <div class="rating-progress-container">
+                <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 15px; letter-spacing: 1px;">
+                    Rating Distribution
+                </h4>
+
+                <div class="rating-row">
+                    <div class="rating-row-header">
+                        <span class="rating-row-lbl">Tempo Wizard</span>
+                        <span id="cnt-wizard" class="rating-row-cnt">0 (0%)</span>
+                    </div>
+                    <div class="rating-bar-bg">
+                        <div id="bar-wizard" class="rating-bar-fill wizard" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="rating-row">
+                    <div class="rating-row-header">
+                        <span class="rating-row-lbl">DJ-Ready</span>
+                        <span id="cnt-ready" class="rating-row-cnt">0 (0%)</span>
+                    </div>
+                    <div class="rating-bar-bg">
+                        <div id="bar-ready" class="rating-bar-fill ready" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="rating-row">
+                    <div class="rating-row-header">
+                        <span class="rating-row-lbl">Solid Ear</span>
+                        <span id="cnt-solid" class="rating-row-cnt">0 (0%)</span>
+                    </div>
+                    <div class="rating-bar-bg">
+                        <div id="bar-solid" class="rating-bar-fill solid" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="rating-row">
+                    <div class="rating-row-header">
+                        <span class="rating-row-lbl">Getting There</span>
+                        <span id="cnt-getting" class="rating-row-cnt">0 (0%)</span>
+                    </div>
+                    <div class="rating-bar-bg">
+                        <div id="bar-getting" class="rating-bar-fill getting" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="rating-row">
+                    <div class="rating-row-header">
+                        <span class="rating-row-lbl">Needs Practice</span>
+                        <span id="cnt-needs" class="rating-row-cnt">0 (0%)</span>
+                    </div>
+                    <div class="rating-bar-bg">
+                        <div id="bar-needs" class="rating-bar-fill needs" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="/" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='var(--text-secondary)'">
+            &larr; Back to Portfolio
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Read local history from LocalStorage
+    const attempts = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
+    const currentStreak = parseInt(localStorage.getItem("count_me_in_streak")) || 0;
+    const maxStreak = parseInt(localStorage.getItem("count_me_in_max_streak")) || 0;
+
+    const total = attempts.length;
+
+    // Elements
+    const totalEl = document.getElementById("stat-total-attempts");
+    const errorEl = document.getElementById("stat-avg-error");
+    const accuracyEl = document.getElementById("stat-accuracy");
+    const streakEl = document.getElementById("stat-streak");
+    const bestRangeEl = document.getElementById("stat-best-range");
+
+    // Hydrate streaks and counts
+    if (streakEl) streakEl.textContent = `${currentStreak} / ${maxStreak}`;
+    if (totalEl) totalEl.textContent = total;
+
+    const breakdown = {
+        "Tempo Wizard": 0,
+        "DJ-Ready": 0,
+        "Solid Ear": 0,
+        "Getting There": 0,
+        "Needs Practice": 0
+    };
+
+    if (total > 0) {
+        let sumError = 0;
+        let sumPctError = 0;
+
+        // Tempo range categorizations
+        const ranges = {
+            "Slow (60-90 BPM)": [],
+            "Mid (90-120 BPM)": [],
+            "Dance (120-140 BPM)": [],
+            "Fast (140+ BPM)": []
+        };
+
+        attempts.forEach(a => {
+            sumError += Math.abs(a.bpm_error);
+            sumPctError += a.percent_error;
+
+            if (breakdown[a.rating] !== undefined) {
+                breakdown[a.rating]++;
+            }
+
+            // Categorize attempts into ranges
+            if (a.true_bpm < 90) {
+                ranges["Slow (60-90 BPM)"].push(a.percent_error);
+            } else if (a.true_bpm < 120) {
+                ranges["Mid (90-120 BPM)"].push(a.percent_error);
+            } else if (a.true_bpm < 140) {
+                ranges["Dance (120-140 BPM)"].push(a.percent_error);
+            } else {
+                ranges["Fast (140+ BPM)"].push(a.percent_error);
+            }
+        });
+
+        const avgError = (sumError / total).toFixed(1);
+        const avgPctError = (sumPctError / total);
+        const accuracy = (100.0 - avgPctError).toFixed(1);
+
+        if (errorEl) errorEl.innerHTML = `${avgError} <span style="font-size: 1rem; color: var(--text-secondary);">BPM</span>`;
+        if (accuracyEl) accuracyEl.textContent = `${accuracy}%`;
+
+        // Calculate best tempo range
+        let bestAvg = Infinity;
+        let bestName = "N/A";
+        for (const [name, errors] of Object.entries(ranges)) {
+            if (errors.length > 0) {
+                const avg = errors.reduce((s, e) => s + e, 0) / errors.length;
+                if (avg < bestAvg) {
+                    bestAvg = avg;
+                    bestName = `${name} (avg error ${avg.toFixed(1)}%)`;
+                }
+            }
+        }
+        if (bestRangeEl) bestRangeEl.textContent = bestName;
+    } else {
+        if (errorEl) errorEl.innerHTML = `0.0 <span style="font-size: 1rem; color: var(--text-secondary);">BPM</span>`;
+        if (accuracyEl) accuracyEl.textContent = "100.0%";
+        if (bestRangeEl) bestRangeEl.textContent = "N/A";
+    }
+
+    // Hydrate Rating Distribution progress bars dynamically
+    const ratingsMap = {
+        "Tempo Wizard": { cnt: "cnt-wizard", bar: "bar-wizard" },
+        "DJ-Ready": { cnt: "cnt-ready", bar: "bar-ready" },
+        "Solid Ear": { cnt: "cnt-solid", bar: "bar-solid" },
+        "Getting There": { cnt: "cnt-getting", bar: "bar-getting" },
+        "Needs Practice": { cnt: "cnt-needs", bar: "bar-needs" }
+    };
+
+    for (const [name, config] of Object.entries(ratingsMap)) {
+        const count = breakdown[name] || 0;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+
+        const cntElem = document.getElementById(config.cnt);
+        const barElem = document.getElementById(config.bar);
+
+        if (cntElem) cntElem.textContent = `${count} (${pct}%)`;
+        if (barElem) barElem.style.width = `${pct}%`;
+    }
+});
+</script>
+{% endblock %}

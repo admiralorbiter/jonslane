@@ -7,8 +7,13 @@
 <section class="hero" style="min-height: 70vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 1rem;">
     <span class="hero-subtitle">Workspace</span>
     <h1 class="hero-title">Jon's Lane</h1>
-    <p class="hero-description" style="max-width: 500px; margin-bottom: 0;">
+    <p class="hero-description" style="max-width: 500px; margin-bottom: 2rem;">
         A personal environment for building web projects, technical experiments, and research.
     </p>
+    <div>
+        <a href="{{ url_for('game.dashboard') }}" style="display: inline-block; padding: 14px 28px; font-weight: 800; text-transform: uppercase; text-decoration: none; border-radius: 8px; background: linear-gradient(135deg, #00f0ff, #0072ff); color: #000; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4); font-size: 0.9rem; letter-spacing: 1px; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+            Launch "Count Me In"
+        </a>
+    </div>
 </section>
 {% endblock %}

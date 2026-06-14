@@ -26,8 +26,10 @@ def create_app(config_name="development"):
     db.init_app(app)
 
     # Register blueprints
+    from portfolio.routes.game import game_bp
     from portfolio.routes.main import main_bp
 
     app.register_blueprint(main_bp)
+    app.register_blueprint(game_bp)
 
     return app

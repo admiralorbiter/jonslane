@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Count Me In | Play Crate: {{ crate.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hidden Metadata for JS Engine -->
+<div id="challenge-meta" data-id="0" style="display: none;"></div>
+<div id="recipe-meta" data-recipe="{{ recipe_json }}" style="display: none;"></div>
+
+<div class="game-container">
+    <header style="text-align: center; margin-bottom: 40px;">
+        <span class="difficulty-badge {{ crate.difficulty.lower() }}" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 20px;">
+            {{ crate.difficulty }}
+        </span>
+        <h1 class="cyber-title" style="margin-top: 15px; font-size: 2.2rem;">{{ crate.name }}</h1>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 10px auto 0; font-size: 0.95rem;">
+            Listen closely to the groove and guess the BPM. Tempo range: {{ crate.min_bpm }} - {{ crate.max_bpm }} BPM.
+        </p>
+    </header>
+
+    <div class="play-deck">
+        <!-- Deck A: Turntable & Audio controls -->
+        <div class="glass-card deck-section">
+            <h3 style="font-size: 0.9rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 2px; margin-bottom: 20px; text-align: center;">
+                Audio Deck
+            </h3>
+
+            <div class="vinyl-container">
+                <div class="vinyl-wrapper">
+                    <div class="vinyl-shine"></div>
+                    <div class="vinyl-record" id="vinyl-record"></div>
+                </div>
+                <canvas id="visualizer" class="visualizer-canvas"></canvas>
+            </div>
+
+            <div class="controls-row">
+                <button class="btn-control btn-play" id="play-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Play Groove [Space]
+                </button>
+                <button class="btn-control btn-stop" id="stop-btn" style="display: none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Stop Audio [Space]
+                </button>
+            </div>
+        </div>
+
+        <!-- Deck B: Guess Input & Clues -->
+        <div class="glass-card deck-section guess-panel">
+            <div class="guess-display">
+                <div class="guess-label">Input Guess BPM</div>
+                <input type="number" step="0.1" min="1" max="300" id="guess-input" class="guess-input" placeholder="---" autocomplete="off" required>
+            </div>
+
+            <button class="btn-submit" id="submit-btn">Submit Guess</button>
+
+            <!-- Clue Reveal Layer -->
+            <div class="clue-box">
+                <div class="clue-title">Clue Reveal Layers</div>
+                <div class="clues-list">
+                    <div class="clue-badge" data-level="1"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[1]</span> Kick Only (0.5x)</div>
+                    <div class="clue-badge" data-level="2"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[2]</span> Kick + Snare (0.6x)</div>
+                    <div class="clue-badge" data-level="3"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[3]</span> Kick + Snare + Hat (0.75x)</div>
+                    <div class="clue-badge active" data-level="4"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[4]</span> Full Groove (1.0x)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal Overlay -->
+    <div class="result-overlay" id="result-overlay">
+        <div class="glass-card result-content">
+            <span class="stat-lbl" style="display: block; margin-bottom: 5px;">Your Rating</span>
+            <div id="result-rating" class="result-rating">DJ-Ready</div>
+
+            <div class="comparison-box">
+                <div class="comparison-item">
+                    <span class="comparison-lbl">True BPM</span>
+                    <span class="comparison-val" id="true-bpm-val" style="color: var(--neon-cyan);">--</span>
+                </div>
+                <div class="comparison-item">
+                    <span class="comparison-lbl">Your Guess</span>
+                    <span class="comparison-val" id="guessed-bpm-val">--</span>
+                </div>
+            </div>
+
+            <div class="result-metric">Error Deviation: <span id="error-val" style="font-family: monospace;">--</span></div>
+            <div class="result-metric">Percent Error: <span id="error-pct-val" style="font-family: monospace;">--</span></div>
+            <div class="result-metric">Score Earned: <span id="score-val" style="color: var(--neon-yellow); font-family: monospace;">0</span> pts</div>
+            <div class="result-metric" style="margin-top: 15px; font-weight: 700;">Current Streak: <span id="streak-val" style="color: var(--neon-pink); font-family: monospace;">0</span></div>
+
+            <div class="btn-action-row">
+                <a href="{{ url_for('game.play', crate_id=crate.id) }}" class="btn-action btn-next">Next Challenge &rarr;</a>
+                <a href="{{ url_for('game.dashboard') }}" class="btn-action btn-exit">Lobby</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include Tone.js and game modules -->
+<script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
+<script src="{{ url_for('static', filename='js/audio_engine.js') }}"></script>
+<script src="{{ url_for('static', filename='js/game.js') }}"></script>
+{% endblock %}
