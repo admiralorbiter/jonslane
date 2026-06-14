@@ -6,17 +6,22 @@ This document details the engineering specifications of the "Count Me In" BPM ea
 
 ## 1. Client-Side Web Audio Engine (`audio_engine.js`)
 
-The synthesizer orchestration is built on top of **Tone.js (v14)**. 
+The synthesizer orchestration and streaming engine are built on top of **Tone.js (v14)**.
 
-### Audio Node Lifecycle
-1. **Autoplay Compliance**: Web Audio context is initialized/resumed only after an explicit user interaction (clicking the "Play Groove" button or triggering the `[Space]` hotkey).
-2. **Dynamic Clue Muting**: The engine schedules four separate channels (Kick, Snare, Hi-hat, Bass/Percussion). When the player selects a clue level, the engine changes output gains in real time:
-   * Level 1: Kick gains = 1.0, others = 0.0
-   * Level 2: Kick & Snare = 1.0, others = 0.0
-   * Level 3: Kick, Snare, Hi-hat = 1.0, Perc = 0.0
-   * Level 4: All channels = 1.0
-3. **Deceleration Brake on Guess**: On submission, the engine schedules a rapid exponential decay of the master tempo (`Tone.Transport.bpm.rampTo`) over `450ms` to simulate a vinyl record stopping.
-4. **Visibility & Background Throttling**: Tab changes (`visibilitychange` listener) automatically suspend audio playback and loops to conserve device battery.
+### 1.1 Audio Node Lifecycle & Preview Streaming
+1. **Autoplay Compliance**: The Web Audio context is initialized/resumed only after an explicit user interaction (clicking "Play Groove", triggering `[Space]`, or keyboard hotkeys).
+2. **iTunes Preview Streaming**: The engine queries the public iTunes API using the reference track's artist and title to fetch a 30-second audio preview.
+3. **Pitch-Shifted BPM Matching**: The streamed audio is matched to the target BPM by adjusting its playback speed:
+   $$\text{playbackRate} = \frac{\text{target BPM}}{\text{original BPM}}$$
+   Since Tone.js `Player.playbackRate` is a primitive numeric property (rather than an AudioParam/Signal), it is set directly.
+4. **Turntable slowing/spinning animations**: Vinyl brake and spin-up effects are simulated using high-frequency `requestAnimationFrame` loops to step `playbackRate` smoothly over 300ms/450ms.
+5. **Clue EQ Filters**: Instead of muting stems, the preview track is routed through a `Tone.Filter` with cutoff frequencies based on the clue level:
+   * Level 1: $150\text{ Hz}$ lowpass (deep sub-bass/pocket kick only)
+   * Level 2: $1000\text{ Hz}$ lowpass (rhythm section and vocal body)
+   * Level 3: $5000\text{ Hz}$ lowpass (removes top-end hi-hats and air)
+   * Level 4: $20000\text{ Hz}$ lowpass (unfiltered, full track)
+6. **Local Synth Fallback**: If the preview URL fails to resolve, load, or decode, the engine automatically falls back to local Tone.js synthesized sequencers (House, Trap, Pop-Punk, or Beginner).
+7. **Visibility & Background Throttling**: Tab changes (`visibilitychange` listener) automatically suspend audio playback to conserve CPU and device battery.
 
 ---
 

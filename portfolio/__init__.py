@@ -12,13 +12,12 @@ naming_convention = {
     "uq": "uq_%(table_name)s_%(column_0_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    "pk": "pk_%(table_name)s"
+    "pk": "pk_%(table_name)s",
 }
 
 # Initialize extensions
 db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention))
 migrate = Migrate()
-
 
 
 @event.listens_for(Engine, "connect")
@@ -43,10 +42,11 @@ def create_app(config_name="development"):
 
     app.config.from_object(config_by_name[config_name])
 
-    # Configure database binds for project decoupling (Count Me In game database)
-    app.config["SQLALCHEMY_BINDS"] = {
-        "count_me_in": f"sqlite:///{os.path.join(app.instance_path, 'count_me_in.db')}"
-    }
+    # Configure database binds for project decoupling (Count Me In game database) if not already set
+    if not app.config.get("SQLALCHEMY_BINDS"):
+        app.config["SQLALCHEMY_BINDS"] = {
+            "count_me_in": f"sqlite:///{os.path.join(app.instance_path, 'count_me_in.db')}"
+        }
 
     # Ensure the instance folder exists for SQLite db storage
     try:
@@ -79,4 +79,3 @@ def create_app(config_name="development"):
         return dict(current_user=current_user)
 
     return app
-

@@ -1,6 +1,14 @@
 # Jon's Portfolio & Research Workspace
 
-Welcome to my personal portfolio and research workspace! This project is built to showcase custom web projects, technical research, and experiments. It is designed to start simple and scale easily over time as new sections, pages, and tools are added.
+Welcome to my personal portfolio and research workspace! This project is built to showcase custom web projects, technical research, and experiments.
+
+Currently, it features **Count Me In**, a scientifically grounded BPM ear-training program for DJs and musicians.
+
+### 🎧 Count Me In features:
+* **Tap Tempo Input**: Estimate tempo by tapping keys or clicking a tap pad, capturing timing consistency (motor stability).
+* **Anchor Tempo Training**: A structured level progression mode designed to build long-term absolute tempo memory (Levitin & Cook, 1996) around stable reference anchors (95, 120, 128, 140 BPM).
+* **Genre-Specific DJ Crates**: Play across boom-bap hip hop, dance-pop & R&B, trap & dubstep, and pop-punk & indie rock crates, dynamically streaming real-world 30-second audio previews from the iTunes API, pitch-shifted and EQ-filtered to match clue levels.
+* **Automatic Offline Fallback**: Seamlessly falls back to local synthesized Tone.js loops if network is unavailable.
 
 ## 🛠️ Tech Stack
 

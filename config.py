@@ -38,6 +38,7 @@ class TestingConfig(Config):
 
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_BINDS = {"count_me_in": "sqlite:///:memory:"}
 
 
 class ProductionConfig(Config):
@@ -49,7 +50,6 @@ class ProductionConfig(Config):
     # Enforce SECRET_KEY in production env
     if not os.environ.get("SECRET_KEY") and os.environ.get("FLASK_ENV") == "production":
         raise RuntimeError("CRITICAL: SECRET_KEY environment variable is required in production!")
-
 
 
 # Map configuration keys to environment strings

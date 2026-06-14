@@ -17,9 +17,16 @@ class BpmAudioEngine {
         this.noiseGenerator = null;
         this.transitionFilter = null;
 
+        // Real Audio Preview player & filter
+        this.songPlayer = null;
+        this.clueFilter = null;
+        this.previewUrl = null;
+        this.originalBpm = null;
+
         // Loop IDs for scheduling
         this.loopIds = [];
         this.analyser = null;
+        this.rampRequestId = null;
     }
 
     async init() {
@@ -125,6 +132,16 @@ class BpmAudioEngine {
             }
         }).toDestination();
 
+        // 6. Real Song Preview Player & EQ Filters
+        this.clueFilter = new Tone.Filter({
+            type: "lowpass",
+            frequency: 20000
+        }).toDestination();
+
+        this.songPlayer = new Tone.Player({
+            autostart: false
+        }).connect(this.clueFilter);
+
         // Set up analyzer for audio visualization
         this.analyser = new Tone.Analyser("fft", 256);
         Tone.Destination.connect(this.analyser);
@@ -138,20 +155,61 @@ class BpmAudioEngine {
             return;
         }
 
+        if (this.rampRequestId) {
+            cancelAnimationFrame(this.rampRequestId);
+            this.rampRequestId = null;
+        }
+
         this.stop(false, true); // Clean any active schedules immediately and synchronously
 
         this.bpm = recipe.bpm || 120;
         this.genre = recipe.genre || "beginner";
         this.clueLevel = recipe.clueLevel !== undefined ? recipe.clueLevel : 4;
+        this.previewUrl = recipe.previewUrl || null;
+        this.originalBpm = recipe.originalBpm || null;
 
         // Ensure Tone.js Transport BPM is reset
         Tone.Transport.bpm.value = this.bpm;
 
+        if (this.previewUrl && this.songPlayer) {
+            // Real audio preview mode
+            const rate = this.bpm / (this.originalBpm || 120);
+            this.songPlayer.playbackRate = rate;
+
+            // Apply lowpass clue filtering (simulates muting stems dynamically)
+            let cutoff = 20000;
+            if (this.clueLevel === 1) cutoff = 150;       // Sub-bass only
+            else if (this.clueLevel === 2) cutoff = 1000;  // Rhythm/vocal body
+            else if (this.clueLevel === 3) cutoff = 5000;  // Removes high cymbals
+
+            this.clueFilter.frequency.value = cutoff;
+
+            // Load and play the preview URL
+            this.songPlayer.load(this.previewUrl).then(() => {
+                const now = Tone.now();
+                Tone.Destination.volume.setValueAtTime(-40, now);
+                Tone.Destination.volume.linearRampToValueAtTime(0, now + 0.05);
+
+                this.songPlayer.start();
+                this.playing = true;
+            }).catch(err => {
+                console.warn("Failed to load audio preview, falling back to synth loops:", err);
+                this.startSynthSequencer();
+            });
+        } else {
+            // Synth loop mode
+            this.startSynthSequencer();
+        }
+    }
+
+    startSynthSequencer() {
         // Schedule sequencer based on genre
-        if (this.genre === "house") {
+        if (this.genre === "house" || this.genre === "dance-pop") {
             this.scheduleHouse();
         } else if (this.genre === "trap") {
             this.scheduleTrap();
+        } else if (this.genre === "pop-punk") {
+            this.schedulePopPunk();
         } else {
             this.scheduleBeginner();
         }
@@ -167,17 +225,45 @@ class BpmAudioEngine {
     }
 
     stop(withBrake = false, forceSync = false) {
+        if (this.rampRequestId) {
+            cancelAnimationFrame(this.rampRequestId);
+            this.rampRequestId = null;
+        }
+
         const now = Tone.now();
         if (withBrake && this.playing) {
             const originalBpm = this.bpm;
 
-            // Decelerate turntable to 20 BPM over 0.45 seconds
-            Tone.Transport.bpm.rampTo(20, 0.45);
+            // Decelerate (vinyl slowdown)
+            if (this.previewUrl && this.songPlayer) {
+                const startRate = this.songPlayer.playbackRate;
+                const targetRate = 20 / (this.originalBpm || 120);
+                const duration = 450; // ms
+                const startTime = performance.now();
+                const animateRamp = (nowTime) => {
+                    const elapsed = nowTime - startTime;
+                    if (elapsed < duration) {
+                        const progress = elapsed / duration;
+                        this.songPlayer.playbackRate = startRate + (targetRate - startRate) * progress;
+                        this.rampRequestId = requestAnimationFrame(animateRamp);
+                    } else {
+                        this.songPlayer.playbackRate = targetRate;
+                    }
+                };
+                this.rampRequestId = requestAnimationFrame(animateRamp);
+            } else {
+                Tone.Transport.bpm.rampTo(20, 0.45);
+            }
+
             // Fade out master volume
             Tone.Destination.volume.setValueAtTime(Tone.Destination.volume.value, now);
             Tone.Destination.volume.linearRampToValueAtTime(-40, now + 0.45);
 
             const stopAction = () => {
+                if (this.songPlayer) {
+                    this.songPlayer.stop();
+                    this.songPlayer.playbackRate = 1.0;
+                }
                 Tone.Transport.stop();
                 Tone.Transport.cancel();
 
@@ -198,6 +284,10 @@ class BpmAudioEngine {
             }
         } else {
             const stopAction = () => {
+                if (this.songPlayer) {
+                    this.songPlayer.stop();
+                    this.songPlayer.playbackRate = 1.0;
+                }
                 Tone.Transport.stop();
                 Tone.Transport.cancel();
 
@@ -244,15 +334,42 @@ class BpmAudioEngine {
     transitionToTest(targetBpm, callback) {
         if (!this.playing) return;
 
+        if (this.rampRequestId) {
+            cancelAnimationFrame(this.rampRequestId);
+            this.rampRequestId = null;
+        }
+
         // Turntable deceleration brake ramp
-        Tone.Transport.bpm.rampTo(20, 0.3);
+        const now = Tone.now();
+        if (this.previewUrl && this.songPlayer) {
+            const startRate = this.songPlayer.playbackRate;
+            const targetRate = 20 / (this.originalBpm || 120);
+            const duration = 300; // ms
+            const startTime = performance.now();
+            const animateRamp = (nowTime) => {
+                const elapsed = nowTime - startTime;
+                if (elapsed < duration) {
+                    const progress = elapsed / duration;
+                    this.songPlayer.playbackRate = startRate + (targetRate - startRate) * progress;
+                    this.rampRequestId = requestAnimationFrame(animateRamp);
+                } else {
+                    this.songPlayer.playbackRate = targetRate;
+                }
+            };
+            this.rampRequestId = requestAnimationFrame(animateRamp);
+        } else {
+            Tone.Transport.bpm.rampTo(20, 0.3);
+        }
 
         // Fade out master volume
-        const now = Tone.now();
         Tone.Destination.volume.setValueAtTime(Tone.Destination.volume.value, now);
         Tone.Destination.volume.linearRampToValueAtTime(-40, now + 0.3);
 
         setTimeout(() => {
+            if (this.songPlayer) {
+                this.songPlayer.stop();
+                this.songPlayer.playbackRate = 1.0;
+            }
             Tone.Transport.stop();
             Tone.Transport.cancel();
             this.loopIds.forEach(id => Tone.Transport.clear(id));
@@ -264,19 +381,59 @@ class BpmAudioEngine {
             // Play the acoustic cleanser sweep
             this.playTransitionSFX(() => {
                 this.bpm = targetBpm;
-                Tone.Transport.bpm.value = 40; // start low
-                
-                if (this.genre === "house") this.scheduleHouse();
-                else if (this.genre === "trap") this.scheduleTrap();
-                else this.scheduleBeginner();
 
-                // Fade in master volume during spin up
-                const nowSpin = Tone.now();
-                Tone.Destination.volume.setValueAtTime(-40, nowSpin);
-                Tone.Destination.volume.linearRampToValueAtTime(0, nowSpin + 0.45);
+                if (this.previewUrl && this.songPlayer) {
+                    const rate = targetBpm / (this.originalBpm || 120);
+                    this.songPlayer.playbackRate = rate;
 
-                Tone.Transport.start();
-                Tone.Transport.bpm.rampTo(targetBpm, 0.45);
+                    // Clue filter level
+                    let cutoff = 20000;
+                    if (this.clueLevel === 1) cutoff = 150;
+                    else if (this.clueLevel === 2) cutoff = 1000;
+                    else if (this.clueLevel === 3) cutoff = 5000;
+                    this.clueFilter.frequency.value = cutoff;
+
+                    // Fade in master volume during spin up
+                    const nowSpin = Tone.now();
+                    Tone.Destination.volume.setValueAtTime(-40, nowSpin);
+                    Tone.Destination.volume.linearRampToValueAtTime(0, nowSpin + 0.45);
+
+                    this.songPlayer.start();
+                    // optional: ramp the playback rate up from low speed to mimic spin-up
+                    if (this.rampRequestId) {
+                        cancelAnimationFrame(this.rampRequestId);
+                        this.rampRequestId = null;
+                    }
+                    const startSpinRate = 40 / (this.originalBpm || 120);
+                    const durationSpin = 450; // ms
+                    const startTimeSpin = performance.now();
+                    const animateSpin = (nowTime) => {
+                        const elapsed = nowTime - startTimeSpin;
+                        if (elapsed < durationSpin) {
+                            const progress = elapsed / durationSpin;
+                            this.songPlayer.playbackRate = startSpinRate + (rate - startSpinRate) * progress;
+                            this.rampRequestId = requestAnimationFrame(animateSpin);
+                        } else {
+                            this.songPlayer.playbackRate = rate;
+                        }
+                    };
+                    this.rampRequestId = requestAnimationFrame(animateSpin);
+                } else {
+                    Tone.Transport.bpm.value = 40; // start low
+                    
+                    if (this.genre === "house" || this.genre === "dance-pop") this.scheduleHouse();
+                    else if (this.genre === "trap") this.scheduleTrap();
+                    else if (this.genre === "pop-punk") this.schedulePopPunk();
+                    else this.scheduleBeginner();
+
+                    // Fade in master volume during spin up
+                    const nowSpin = Tone.now();
+                    Tone.Destination.volume.setValueAtTime(-40, nowSpin);
+                    Tone.Destination.volume.linearRampToValueAtTime(0, nowSpin + 0.45);
+
+                    Tone.Transport.start();
+                    Tone.Transport.bpm.rampTo(targetBpm, 0.45);
+                }
                 
                 if (callback) callback();
             });
@@ -318,6 +475,8 @@ class BpmAudioEngine {
         if (this.chimeSynth) this.chimeSynth.dispose();
         if (this.noiseGenerator) this.noiseGenerator.dispose();
         if (this.transitionFilter) this.transitionFilter.dispose();
+        if (this.songPlayer) this.songPlayer.dispose();
+        if (this.clueFilter) this.clueFilter.dispose();
         this.initialized = false;
     }
 
@@ -440,6 +599,54 @@ class BpmAudioEngine {
         hatLoop.start("0:0:0");
 
         this.loopIds.push(kickLoop.id, snareLoop.id, hatLoop.id);
+    }
+
+    schedulePopPunk() {
+        // Syncopated rock kick
+        const kickPattern = [1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0];
+        let kickStep = 0;
+        const kickLoop = new Tone.Loop(time => {
+            if (kickPattern[kickStep]) {
+                this.kick.triggerAttackRelease("C1", "8n", time);
+            }
+            kickStep = (kickStep + 1) % 16;
+        }, "16n");
+
+        // Snare drum on 2 and 4
+        let snareStep = 0;
+        const snareLoop = new Tone.Loop(time => {
+            if ((snareStep === 4 || snareStep === 12) && this.clueLevel >= 2) {
+                this.snare.triggerAttackRelease("16n", time);
+            }
+            snareStep = (snareStep + 1) % 16;
+        }, "16n");
+
+        // Driving 8th-note Hi-hats
+        let hatStep = 0;
+        const hatLoop = new Tone.Loop(time => {
+            if (hatStep % 2 === 0 && this.clueLevel >= 3) {
+                this.hat.triggerAttackRelease("16n", time);
+            }
+            hatStep = (hatStep + 1) % 16;
+        }, "16n");
+
+        // Driving Pop-Punk Bassline (C - G - Am - F progression in C major)
+        let bassStep = 0;
+        const bassNotes = ["C1", "C1", "G1", "G1", "A1", "A1", "F1", "F1"];
+        const bassLoop = new Tone.Loop(time => {
+            if (this.clueLevel >= 4 && bassStep % 2 === 0) {
+                const note = bassNotes[Math.floor(bassStep / 2) % bassNotes.length];
+                this.bass.triggerAttackRelease(note, "8n", time);
+            }
+            bassStep = (bassStep + 1) % 16;
+        }, "16n");
+
+        kickLoop.start("0:0:0");
+        snareLoop.start("0:0:0");
+        hatLoop.start("0:0:0");
+        bassLoop.start("0:0:0");
+
+        this.loopIds.push(kickLoop.id, snareLoop.id, hatLoop.id, bassLoop.id);
     }
 }
 

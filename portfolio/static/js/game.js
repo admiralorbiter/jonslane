@@ -57,6 +57,95 @@ document.addEventListener("DOMContentLoaded", () => {
         recipe = JSON.parse(recipeMeta.getAttribute("data-recipe"));
     }
 
+    // Fetch iTunes audio preview for active track if defined
+    if (window.CMI_CONFIG && window.CMI_CONFIG.activeTrack && window.CMI_CONFIG.activeTrack.title) {
+        const activeTrack = window.CMI_CONFIG.activeTrack;
+        const loaderIndicator = document.getElementById("audio-loading-indicator");
+        if (loaderIndicator) loaderIndicator.style.display = "block";
+
+        const query = `${activeTrack.artist} ${activeTrack.title}`;
+        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=1&media=music`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    recipe.previewUrl = data.results[0].previewUrl;
+                    console.log("iTunes preview URL resolved:", recipe.previewUrl);
+                } else {
+                    console.warn("No iTunes results found for:", query);
+                }
+            })
+            .catch(err => {
+                console.error("Error fetching iTunes preview:", err);
+            })
+            .finally(() => {
+                if (loaderIndicator) loaderIndicator.style.display = "none";
+            });
+    }
+
+    // Toggle reference tracks drawer click handlers
+    const referenceDrawer = document.getElementById("reference-drawer");
+    const toggleDrawerBtn = document.getElementById("toggle-drawer-btn");
+    const closeDrawerBtn = document.getElementById("close-drawer-btn");
+
+    function toggleDrawer() {
+        if (referenceDrawer) {
+            referenceDrawer.classList.toggle("active");
+            announceStatus(referenceDrawer.classList.contains("active") ? "Reference tracks drawer opened." : "Reference tracks drawer closed.");
+        }
+    }
+
+    if (toggleDrawerBtn) {
+        toggleDrawerBtn.addEventListener("click", toggleDrawer);
+    }
+    if (closeDrawerBtn) {
+        closeDrawerBtn.addEventListener("click", toggleDrawer);
+    }
+
+    // Keyboard hotkey [H] to toggle drawer
+    window.addEventListener("keydown", (e) => {
+        if (document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+            if (e.key.toLowerCase() === "h") {
+                e.preventDefault();
+                toggleDrawer();
+            }
+        }
+    });
+
+    // Highlight closest reference track in drawer when user types a guess
+    function highlightClosestReference(guessVal) {
+        const guessBpm = parseFloat(guessVal);
+        if (isNaN(guessBpm) || !referenceDrawer) return;
+
+        const trackItems = referenceDrawer.querySelectorAll(".drawer-track-item");
+        let closestItem = null;
+        let minDiff = Infinity;
+
+        trackItems.forEach(item => {
+            item.classList.remove("highlighted-song");
+            const bpm = parseFloat(item.getAttribute("data-bpm"));
+            if (!isNaN(bpm)) {
+                const diff = Math.abs(bpm - guessBpm);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestItem = item;
+                }
+            }
+        });
+
+        if (closestItem && minDiff <= 10) {
+            closestItem.classList.add("highlighted-song");
+            closestItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    }
+
+    if (guessInput) {
+        guessInput.addEventListener("input", (e) => {
+            highlightClosestReference(e.target.value);
+        });
+    }
+
     // Initialize play button
     if (playBtn) {
         playBtn.addEventListener("click", startPlayback);

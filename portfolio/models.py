@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+
 from sqlalchemy.orm import validates
 
 from portfolio import db
@@ -88,7 +89,9 @@ class Crate(db.Model):
     genre = db.Column(db.String(50), nullable=False)  # house, hip-hop, trap, beginner
     difficulty = db.Column(db.String(50), nullable=False, default="Medium")
 
-    challenges = db.relationship("Challenge", backref="crate", lazy=True, cascade="all, delete-orphan", passive_deletes=True)
+    challenges = db.relationship(
+        "Challenge", backref="crate", lazy=True, cascade="all, delete-orphan", passive_deletes=True
+    )
 
     def __repr__(self):
         return f"<Crate {self.name}>"
@@ -101,13 +104,17 @@ class Challenge(db.Model):
     __tablename__ = "challenges"
 
     id = db.Column(db.Integer, primary_key=True)
-    crate_id = db.Column(db.Integer, db.ForeignKey("crates.id", ondelete="CASCADE"), nullable=False, index=True)
+    crate_id = db.Column(
+        db.Integer, db.ForeignKey("crates.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     true_bpm = db.Column(db.Float, nullable=False)
     genre = db.Column(db.String(50), nullable=False)
     beat_recipe_json = db.Column(db.Text, nullable=True)  # custom JSON for synthesizers
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
-    attempts = db.relationship("Attempt", backref="challenge", lazy=True, cascade="all", passive_deletes=True)
+    attempts = db.relationship(
+        "Attempt", backref="challenge", lazy=True, cascade="all", passive_deletes=True
+    )
 
     def __repr__(self):
         return f"<Challenge true_bpm={self.true_bpm}>"
@@ -121,7 +128,9 @@ class Attempt(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False, index=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("challenges.id", ondelete="SET NULL"), nullable=True, index=True)
+    challenge_id = db.Column(
+        db.Integer, db.ForeignKey("challenges.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     guessed_bpm = db.Column(db.Float, nullable=False)
     true_bpm = db.Column(db.Float, nullable=False)
     bpm_error = db.Column(db.Float, nullable=False)
@@ -142,19 +151,20 @@ class Attempt(db.Model):
     def validate_tap_stability(self, key, value):
         if value is None:
             return None
-        
+
         try:
             val_float = float(value)
         except (TypeError, ValueError) as e:
             raise ValueError("tap_stability must be a valid float.") from e
-            
+
         import math
+
         if math.isnan(val_float) or math.isinf(val_float):
             raise ValueError("tap_stability cannot be NaN or Infinity.")
-            
+
         if not (0.0 <= val_float <= 5000.0):
             raise ValueError("tap_stability must be between 0.0 and 5000.0 ms.")
-            
+
         return val_float
 
     __table_args__ = (
@@ -162,50 +172,232 @@ class Attempt(db.Model):
         db.Index("idx_attempts_ari", "user_id", "is_anchor", "anchor_bpm", "created_at"),
     )
 
+
+class ReferenceTrack(db.Model):
+    """Database model for reference songs within DJ crates."""
+
+    __bind_key__ = "count_me_in"
+    __tablename__ = "reference_tracks"
+
+    id = db.Column(db.Integer, primary_key=True)
+    crate_id = db.Column(
+        db.Integer, db.ForeignKey("crates.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title = db.Column(db.String(150), nullable=False)
+    artist = db.Column(db.String(150), nullable=False)
+    bpm = db.Column(db.Integer, nullable=False)
+
+    crate = db.relationship(
+        "Crate",
+        backref=db.backref(
+            "reference_tracks", lazy=True, cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
+
     def __repr__(self):
-        return f"<Attempt guess={self.guessed_bpm} true={self.true_bpm}>"
+        return f"<ReferenceTrack {self.title} - {self.artist}>"
 
 
 def seed_database():
-    """Seed the database with initial Crates and a default guest user if needed."""
+    """Seed the database with initial Crates, Reference Songs, and a default guest user if needed."""
     from portfolio import db
-    from portfolio.models import Crate, User
+    from portfolio.models import Crate, ReferenceTrack, User
 
     # Seed Default User if not exists
     if not User.query.first():
         default_user = User(display_name="Guest DJ")
         db.session.add(default_user)
 
-    # Seed default Crates if they don't exist
-    if not Crate.query.first():
-        crates = [
-            Crate(
-                name="Beginner Crate",
-                description="A gentle introduction to tempo training. Straightforward metronomic grooves with a clearly defined pulse to help you get started.",
-                min_bpm=100,
-                max_bpm=120,
-                genre="beginner",
-                difficulty="Easy",
-            ),
-            Crate(
-                name="House Crate",
-                description="The backbone of dance music. Steady 4-to-the-floor rhythms between 118 and 132 BPM. Train your ear to feel minor tempo variations.",
-                min_bpm=118,
-                max_bpm=132,
-                genre="house",
-                difficulty="Medium",
-            ),
-            Crate(
-                name="Half-Time Trap Crate",
-                description="Warning: Syncopation ahead! Trap beats can feel like a slow 70 BPM drag or a double-time 140 BPM rush. Spot the ambiguity.",
-                min_bpm=65,
-                max_bpm=80,
-                genre="trap",
-                difficulty="Hard",
-            ),
+    # Seed default Crates and Reference Tracks
+    if not Crate.query.filter_by(name="Boom-Bap Hip Hop Crate").first():
+        # Clear legacy crates to prevent key conflicts
+        ReferenceTrack.query.delete()
+        Crate.query.delete()
+
+        hip_hop = Crate(
+            name="Boom-Bap Hip Hop Crate",
+            description="Mid-tempo classic and modern boom-bap grooves. Train your pocket rhythm on iconic hip hop beats.",
+            min_bpm=90,
+            max_bpm=99,
+            genre="hip-hop",
+            difficulty="Easy",
+        )
+        dance_pop = Crate(
+            name="Dance-Pop & R&B Crate",
+            description="Mainstream 2000s/2010s radio and club hits. Detect minor variations on driving pop/R&B rhythms.",
+            min_bpm=100,
+            max_bpm=120,
+            genre="dance-pop",
+            difficulty="Medium",
+        )
+        trap = Crate(
+            name="Dubstep & Trap Crate",
+            description="Bass-heavy half-time and double-time syncopation. Spot the metrical ambiguity between 135 and 145 BPM.",
+            min_bpm=135,
+            max_bpm=145,
+            genre="trap",
+            difficulty="Hard",
+        )
+        pop_punk = Crate(
+            name="Pop-Punk & Indie Rock Crate",
+            description="High-energy, fast-tempo rock and punk anthems. Focus on driving rhythms between 140 and 180 BPM.",
+            min_bpm=140,
+            max_bpm=180,
+            genre="pop-punk",
+            difficulty="Hard",
+        )
+
+        db.session.add_all([hip_hop, dance_pop, trap, pop_punk])
+        db.session.flush()  # Populate IDs
+
+        # 1. Hip Hop Tracks
+        hip_hop_tracks = [
+            {"title": "Nuthin' but a 'G' Thang", "artist": "Dr. Dre ft. Snoop Dogg", "bpm": 95},
+            {"title": "C.R.E.A.M.", "artist": "Wu-Tang Clan", "bpm": 95},
+            {"title": "Ms. Jackson", "artist": "Outkast", "bpm": 95},
+            {"title": "Gangsta's Paradise", "artist": "Coolio", "bpm": 95},
+            {"title": "99 Problems", "artist": "Jay-Z", "bpm": 95},
+            {"title": "Shook Ones, Pt. II", "artist": "Mobb Deep", "bpm": 94},
+            {"title": "Sure Shot", "artist": "Beastie Boys", "bpm": 98},
+            {"title": "Gin and Juice", "artist": "Snoop Dogg", "bpm": 95},
+            {"title": "Killing Me Softly", "artist": "The Fugees", "bpm": 92},
+            {"title": "No Diggity", "artist": "Blackstreet", "bpm": 93},
+            {"title": "Gold Digger", "artist": "Kanye West ft. Jamie Foxx", "bpm": 93},
+            {"title": "Empire State of Mind", "artist": "Jay-Z ft. Alicia Keys", "bpm": 93},
+            {"title": "Drop It Like It's Hot", "artist": "Snoop Dogg ft. Pharrell", "bpm": 93},
+            {
+                "title": "Buy U a Drank (Shawty Snappin')",
+                "artist": "T-Pain ft. Yung Joc",
+                "bpm": 93,
+            },
+            {"title": "Hate It or Love It", "artist": "The Game ft. 50 Cent", "bpm": 98},
+            {"title": "Thrift Shop", "artist": "Macklemore & Ryan Lewis", "bpm": 95},
+            {"title": "Nice For What", "artist": "Drake", "bpm": 95},
+            {"title": "Blue World", "artist": "Mac Miller", "bpm": 95},
+            {"title": "Lean Back", "artist": "Terror Squad", "bpm": 96},
+            {"title": "Locked Up", "artist": "Akon", "bpm": 96},
+            {"title": "Touch It", "artist": "Busta Rhymes", "bpm": 97},
+            {"title": "Just A Lil Bit", "artist": "50 Cent", "bpm": 97},
+            {"title": "Stand Up", "artist": "Ludacris", "bpm": 96},
+            {"title": "Ass Like That", "artist": "Eminem", "bpm": 95},
+            {"title": "Beautiful", "artist": "Snoop Dogg ft. Pharrell", "bpm": 97},
         ]
-        for crate in crates:
-            db.session.add(crate)
+        for t in hip_hop_tracks:
+            db.session.add(
+                ReferenceTrack(
+                    crate_id=hip_hop.id, title=t["title"], artist=t["artist"], bpm=t["bpm"]
+                )
+            )
+
+        # 2. Dance-Pop & R&B Tracks
+        dance_pop_tracks = [
+            {"title": "Yeah!", "artist": "Usher ft. Lil Jon & Ludacris", "bpm": 105},
+            {"title": "Party Rock Anthem", "artist": "LMFAO", "bpm": 130},
+            {"title": "Shots", "artist": "LMFAO ft. Lil Jon", "bpm": 128},
+            {"title": "Sandstorm", "artist": "Darude", "bpm": 136},
+            {"title": "Hollaback Girl", "artist": "Gwen Stefani", "bpm": 110},
+            {"title": "SexyBack", "artist": "Justin Timberlake", "bpm": 117},
+            {"title": "Promiscuous", "artist": "Nelly Furtado ft. Timbaland", "bpm": 114},
+            {"title": "Hips Don't Lie", "artist": "Shakira ft. Wyclef Jean", "bpm": 100},
+            {"title": "Crazy In Love", "artist": "Beyoncé", "bpm": 99},
+            {"title": "Can't Feel My Face", "artist": "The Weeknd", "bpm": 108},
+            {"title": "Rude Boy", "artist": "Rihanna", "bpm": 102},
+            {"title": "Gimme More", "artist": "Britney Spears", "bpm": 113},
+            {"title": "1, 2 Step", "artist": "Ciara ft. Petey Pablo", "bpm": 113},
+            {"title": "Uptown Funk", "artist": "Mark Ronson ft. Bruno Mars", "bpm": 115},
+            {"title": "Let's Get It Started", "artist": "Black Eyed Peas", "bpm": 105},
+            {"title": "Bootylicious", "artist": "Destiny's Child", "bpm": 104},
+            {"title": "Want to Want Me", "artist": "Jason Derulo", "bpm": 114},
+            {"title": "Sorry", "artist": "Justin Bieber", "bpm": 100},
+            {"title": "Telephone", "artist": "Lady Gaga ft. Beyoncé", "bpm": 122},
+            {"title": "Get Busy", "artist": "Sean Paul", "bpm": 100},
+            {"title": "One Dance", "artist": "Drake ft. Wizkid & Kyla", "bpm": 104},
+            {"title": "Get Lucky", "artist": "Daft Punk ft. Pharrell Williams", "bpm": 116},
+            {"title": "Can't Stop the Feeling!", "artist": "Justin Timberlake", "bpm": 113},
+            {"title": "Fade", "artist": "Kanye West", "bpm": 120},
+            {"title": "Levels", "artist": "Avicii", "bpm": 128},
+        ]
+        for t in dance_pop_tracks:
+            db.session.add(
+                ReferenceTrack(
+                    crate_id=dance_pop.id, title=t["title"], artist=t["artist"], bpm=t["bpm"]
+                )
+            )
+
+        # 3. Dubstep & Trap Tracks
+        trap_tracks = [
+            {"title": "Scary Monsters and Nice Sprites", "artist": "Skrillex", "bpm": 140},
+            {"title": "Harlem Shake", "artist": "Baauer", "bpm": 140},
+            {"title": "I Can't Stop", "artist": "Flux Pavilion", "bpm": 140},
+            {"title": "Promises", "artist": "Nero", "bpm": 140},
+            {"title": "Cinema (Skrillex Remix)", "artist": "Benny Benassi", "bpm": 140},
+            {"title": "Too Close", "artist": "Alex Clare", "bpm": 140},
+            {"title": "Bonfire", "artist": "Knife Party", "bpm": 140},
+            {"title": "Where Are Ü Now", "artist": "Jack Ü ft. Justin Bieber", "bpm": 140},
+            {"title": "Who Gon Stop Me", "artist": "Kanye West & Jay-Z", "bpm": 140},
+            {
+                "title": "Crave You (Adventure Club Remix)",
+                "artist": "Flight Facilities",
+                "bpm": 140,
+            },
+            {"title": "Mosh Pit", "artist": "Flosstradamus", "bpm": 140},
+            {"title": "Core", "artist": "RL Grime", "bpm": 140},
+            {"title": "Mask Off", "artist": "Future", "bpm": 150},
+            {"title": "Panda", "artist": "Desiigner", "bpm": 145},
+            {"title": "Alone", "artist": "Marshmello", "bpm": 142},
+            {"title": "Like A Bitch", "artist": "Zomboy", "bpm": 140},
+            {"title": "Centipede", "artist": "Knife Party", "bpm": 140},
+            {"title": "Sweet Shop", "artist": "Doctor P", "bpm": 140},
+            {"title": "Shotgun", "artist": "Yellow Claw", "bpm": 140},
+            {"title": "Higher Ground", "artist": "TNGHT", "bpm": 142},
+            {"title": "Dum Dee Dum", "artist": "Keys N Krates", "bpm": 140},
+            {"title": "Lullabies (Adventure Club Remix)", "artist": "Yuna", "bpm": 140},
+            {"title": "Take Ü There", "artist": "Jack Ü ft. Kiesza", "bpm": 140},
+            {"title": "Eyes on Fire (Zeds Dead Remix)", "artist": "Blue Foundation", "bpm": 140},
+            {"title": "Bangarang", "artist": "Skrillex ft. Sirah", "bpm": 110},
+        ]
+        for t in trap_tracks:
+            db.session.add(
+                ReferenceTrack(crate_id=trap.id, title=t["title"], artist=t["artist"], bpm=t["bpm"])
+            )
+
+        # 4. Pop-Punk Tracks
+        pop_punk_tracks = [
+            {"title": "Mr. Brightside", "artist": "The Killers", "bpm": 148},
+            {"title": "Sugar, We're Goin Down", "artist": "Fall Out Boy", "bpm": 162},
+            {"title": "Thnks fr th Mmrs", "artist": "Fall Out Boy", "bpm": 155},
+            {"title": "That's What You Get", "artist": "Paramore", "bpm": 165},
+            {"title": "All The Small Things", "artist": "Blink-182", "bpm": 149},
+            {"title": "What's My Age Again?", "artist": "Blink-182", "bpm": 158},
+            {"title": "Holiday", "artist": "Green Day", "bpm": 147},
+            {"title": "The Middle", "artist": "Jimmy Eat World", "bpm": 162},
+            {"title": "Dear Maria, Count Me In", "artist": "All Time Low", "bpm": 181},
+            {"title": "Sk8er Boi", "artist": "Avril Lavigne", "bpm": 150},
+            {"title": "Girlfriend", "artist": "Avril Lavigne", "bpm": 164},
+            {"title": "Ocean Avenue", "artist": "Yellowcard", "bpm": 174},
+            {"title": "Take Me Out", "artist": "Franz Ferdinand", "bpm": 142},
+            {"title": "1901", "artist": "Phoenix", "bpm": 144},
+            {"title": "Dirty Little Secret", "artist": "The All-American Rejects", "bpm": 144},
+            {
+                "title": "My Songs Know What You Did in the Dark",
+                "artist": "Fall Out Boy",
+                "bpm": 152,
+            },
+            {"title": "I Write Sins Not Tragedies", "artist": "Panic! At The Disco", "bpm": 170},
+            {"title": "American Idiot", "artist": "Green Day", "bpm": 186},
+            {"title": "Fat Lip", "artist": "Sum 41", "bpm": 170},
+            {"title": "I'm Not Okay (I Promise)", "artist": "My Chemical Romance", "bpm": 179},
+            {"title": "Somebody Told Me", "artist": "The Killers", "bpm": 138},
+            {"title": "Lifestyles of the Rich & Famous", "artist": "Good Charlotte", "bpm": 171},
+            {"title": "The Anthem", "artist": "Good Charlotte", "bpm": 176},
+            {"title": "Welcome to the Black Parade", "artist": "My Chemical Romance", "bpm": 97},
+            {"title": "Seven Nation Army", "artist": "The White Stripes", "bpm": 124},
+        ]
+        for t in pop_punk_tracks:
+            db.session.add(
+                ReferenceTrack(
+                    crate_id=pop_punk.id, title=t["title"], artist=t["artist"], bpm=t["bpm"]
+                )
+            )
 
     db.session.commit()
-

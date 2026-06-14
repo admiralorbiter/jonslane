@@ -2,7 +2,7 @@ import json
 import unittest
 
 from portfolio import create_app, db
-from portfolio.models import Attempt, Challenge, Crate, User, seed_database
+from portfolio.models import Attempt, Challenge, Crate, ReferenceTrack, User, seed_database
 
 
 class GameTestCase(unittest.TestCase):
@@ -27,7 +27,7 @@ class GameTestCase(unittest.TestCase):
         response = self.client.get("/game/dashboard")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Count Me In", response.data)
-        self.assertIn(b"House Crate", response.data)
+        self.assertIn(b"Dance-Pop &amp; R&amp;B Crate", response.data)
 
         # Verify default Guest DJ user was created
         user = User.query.first()
@@ -36,8 +36,8 @@ class GameTestCase(unittest.TestCase):
 
     def test_play_route_renders_recipe(self):
         """Test play route renders the challenge recipe JSON in the DOM."""
-        # Get house crate ID
-        crate = Crate.query.filter_by(genre="house").first()
+        # Get dance-pop crate ID
+        crate = Crate.query.filter_by(genre="dance-pop").first()
         self.assertIsNotNone(crate)
 
         # Trigger play route
@@ -55,20 +55,20 @@ class GameTestCase(unittest.TestCase):
 
         # Verify recipe JSON properties
         recipe = json.loads(recipe_str)
-        self.assertEqual(recipe["genre"], "house")
+        self.assertEqual(recipe["genre"], "dance-pop")
         self.assertTrue(crate.min_bpm <= recipe["bpm"] <= crate.max_bpm)
         self.assertIn("kick", recipe["elements"])
 
     def test_submit_guess_flow(self):
         """Test guess submission calculations, scoring, and streaks."""
-        crate = Crate.query.filter_by(genre="house").first()
+        crate = Crate.query.filter_by(genre="dance-pop").first()
 
         # Explicitly create a challenge with a fixed true BPM (e.g. 120 BPM)
         challenge = Challenge(
             crate_id=crate.id,
             true_bpm=120.0,
-            genre="house",
-            beat_recipe_json=json.dumps({"genre": "house", "bpm": 120.0, "elements": ["kick"]}),
+            genre="dance-pop",
+            beat_recipe_json=json.dumps({"genre": "dance-pop", "bpm": 120.0, "elements": ["kick"]}),
         )
         db.session.add(challenge)
         db.session.commit()
@@ -134,7 +134,7 @@ class GameTestCase(unittest.TestCase):
 
         response = self.client.post(
             "/game/api/attempt",
-            data=json.dumps({"guess": 120.0}), # missing challenge_token
+            data=json.dumps({"guess": 120.0}),  # missing challenge_token
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
@@ -148,7 +148,13 @@ class GameTestCase(unittest.TestCase):
         # Guess out of bounds (< 1.0)
         response = self.client.post(
             "/game/api/attempt",
-            data=json.dumps({"guess": 0.5, "challenge_token": "some-token", "client_uuid": "test-uuid-bounds-check"}),
+            data=json.dumps(
+                {
+                    "guess": 0.5,
+                    "challenge_token": "some-token",
+                    "client_uuid": "test-uuid-bounds-check",
+                }
+            ),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
@@ -161,7 +167,13 @@ class GameTestCase(unittest.TestCase):
 
         response = self.client.post(
             "/game/api/attempt",
-            data=json.dumps({"guess": 120.0, "challenge_token": "invalid-token-signature", "client_uuid": "test-uuid-invalid-token"}),
+            data=json.dumps(
+                {
+                    "guess": 120.0,
+                    "challenge_token": "invalid-token-signature",
+                    "client_uuid": "test-uuid-invalid-token",
+                }
+            ),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
@@ -184,7 +196,7 @@ class GameTestCase(unittest.TestCase):
             "guess": 120.5,
             "challenge_token": token,
             "clue_level": 4,
-            "client_uuid": "test-attempt-uuid-123"
+            "client_uuid": "test-attempt-uuid-123",
         }
 
         response = self.client.post(
@@ -208,7 +220,7 @@ class GameTestCase(unittest.TestCase):
         self.assertIsNotNone(attempt)
         self.assertEqual(attempt.user_id, user.id)
         self.assertEqual(attempt.crate_name, "House Crate")
-        self.assertIsNone(attempt.challenge_id) # Direct attempts have no challenge_id
+        self.assertIsNone(attempt.challenge_id)  # Direct attempts have no challenge_id
 
         # Submit the same uuid again -> should fail with 409 Conflict
         response_dup = self.client.post(
@@ -222,12 +234,12 @@ class GameTestCase(unittest.TestCase):
 
     def test_metrical_match_scoring_and_streak(self):
         """Test that half/double BPM guesses within 3% score 50, rating is 'Metrical Match', and streak is preserved."""
-        crate = Crate.query.filter_by(genre="house").first()
+        crate = Crate.query.filter_by(genre="dance-pop").first()
         challenge = Challenge(
             crate_id=crate.id,
             true_bpm=120.0,
-            genre="house",
-            beat_recipe_json=json.dumps({"genre": "house", "bpm": 120.0, "elements": ["kick"]}),
+            genre="dance-pop",
+            beat_recipe_json=json.dumps({"genre": "dance-pop", "bpm": 120.0, "elements": ["kick"]}),
         )
         db.session.add(challenge)
         db.session.commit()
@@ -254,7 +266,7 @@ class GameTestCase(unittest.TestCase):
         data_double = json.loads(response_double.data.decode("utf-8"))
         self.assertEqual(data_double["rating"], "Metrical Match")
         self.assertEqual(data_double["score"], 50)
-        self.assertEqual(data_double["streak"], 2) # Streak should continue!
+        self.assertEqual(data_double["streak"], 2)  # Streak should continue!
 
         # Check database records
         attempts = Attempt.query.order_by(Attempt.created_at.desc()).limit(2).all()
@@ -281,7 +293,7 @@ class GameTestCase(unittest.TestCase):
                     "rating": "Metrical Match",
                     "crate_name": "House Crate",
                     "metrical_multiplier": 0.5,
-                    "created_at": "2026-06-14T10:00:00Z"
+                    "created_at": "2026-06-14T10:00:00Z",
                 },
                 {
                     "client_uuid": "sync-metrical-2",
@@ -293,8 +305,8 @@ class GameTestCase(unittest.TestCase):
                     "rating": "Metrical Match",
                     "crate_name": "House Crate",
                     "metrical_multiplier": 2.0,
-                    "created_at": "2026-06-14T10:05:00Z"
-                }
+                    "created_at": "2026-06-14T10:05:00Z",
+                },
             ]
         }
 
@@ -306,7 +318,7 @@ class GameTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data.decode("utf-8"))
         self.assertEqual(data["synced_count"], 2)
-        self.assertEqual(data["current_streak"], 2) # Streak should be computed correctly
+        self.assertEqual(data["current_streak"], 2)  # Streak should be computed correctly
 
         # Check DB persistence
         a1 = Attempt.query.filter_by(client_uuid="sync-metrical-1").first()
@@ -325,6 +337,7 @@ class GameTestCase(unittest.TestCase):
             sess["user_id"] = user.id
 
         from portfolio.utils.security import generate_challenge_token
+
         token = generate_challenge_token(120.0, "House Crate")
 
         # 1. Reject NaN
@@ -333,32 +346,40 @@ class GameTestCase(unittest.TestCase):
             "challenge_token": token,
             "clue_level": 4,
             "client_uuid": "stability-test-nan",
-            "tap_stability": "NaN"
+            "tap_stability": "NaN",
         }
-        res_nan = self.client.post("/game/api/attempt", data=json.dumps(payload), content_type="application/json")
+        res_nan = self.client.post(
+            "/game/api/attempt", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res_nan.status_code, 400)
 
         # 2. Reject negative value
         payload["tap_stability"] = -15.5
         payload["client_uuid"] = "stability-test-neg"
-        res_neg = self.client.post("/game/api/attempt", data=json.dumps(payload), content_type="application/json")
+        res_neg = self.client.post(
+            "/game/api/attempt", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res_neg.status_code, 400)
 
         # 3. Reject too large value
         payload["tap_stability"] = 6000.0
         payload["client_uuid"] = "stability-test-large"
-        res_large = self.client.post("/game/api/attempt", data=json.dumps(payload), content_type="application/json")
+        res_large = self.client.post(
+            "/game/api/attempt", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res_large.status_code, 400)
 
         # 4. Accept valid value, verify rounding and database storage
         payload["tap_stability"] = 12.3456
         payload["client_uuid"] = "stability-test-valid"
-        res_valid = self.client.post("/game/api/attempt", data=json.dumps(payload), content_type="application/json")
+        res_valid = self.client.post(
+            "/game/api/attempt", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res_valid.status_code, 201)
 
         saved = Attempt.query.filter_by(client_uuid="stability-test-valid").first()
         self.assertIsNotNone(saved)
-        self.assertEqual(saved.tap_stability, 12.35) # Rounds to 2 decimal places
+        self.assertEqual(saved.tap_stability, 12.35)  # Rounds to 2 decimal places
 
     def test_sync_tap_stability_sanitization(self):
         """Test syncing local storage attempts with tap_stability, verifying sanitization."""
@@ -378,7 +399,7 @@ class GameTestCase(unittest.TestCase):
                     "rating": "Tempo Wizard",
                     "crate_name": "House Crate",
                     "tap_stability": 22.456,
-                    "created_at": "2026-06-14T10:00:00Z"
+                    "created_at": "2026-06-14T10:00:00Z",
                 },
                 {
                     "client_uuid": "sync-invalid-stability",
@@ -389,16 +410,18 @@ class GameTestCase(unittest.TestCase):
                     "score": 100,
                     "rating": "Tempo Wizard",
                     "crate_name": "House Crate",
-                    "tap_stability": "Infinity", # Should be rejected
-                    "created_at": "2026-06-14T10:05:00Z"
-                }
+                    "tap_stability": "Infinity",  # Should be rejected
+                    "created_at": "2026-06-14T10:05:00Z",
+                },
             ]
         }
 
-        res = self.client.post("/game/api/sync", data=json.dumps(payload), content_type="application/json")
+        res = self.client.post(
+            "/game/api/sync", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 200)
         data = json.loads(res.data.decode("utf-8"))
-        self.assertEqual(data["synced_count"], 1) # Only the valid one should sync
+        self.assertEqual(data["synced_count"], 1)  # Only the valid one should sync
 
         a_valid = Attempt.query.filter_by(client_uuid="sync-valid-stability").first()
         self.assertIsNotNone(a_valid)
@@ -411,25 +434,53 @@ class GameTestCase(unittest.TestCase):
         """Test stats calculation filters out None/null values and averages correctly without errors."""
         user = User.query.first()
         # Seed attempts
-        a1 = Attempt(user_id=user.id, guessed_bpm=120.0, true_bpm=120.0, bpm_error=0.0, percent_error=0.0, score=100, rating="Tempo Wizard", tap_stability=10.0)
-        a2 = Attempt(user_id=user.id, guessed_bpm=120.0, true_bpm=120.0, bpm_error=0.0, percent_error=0.0, score=100, rating="Tempo Wizard", tap_stability=20.0)
-        a3 = Attempt(user_id=user.id, guessed_bpm=120.0, true_bpm=120.0, bpm_error=0.0, percent_error=0.0, score=100, rating="Tempo Wizard", tap_stability=None) # keyboard attempt
+        a1 = Attempt(
+            user_id=user.id,
+            guessed_bpm=120.0,
+            true_bpm=120.0,
+            bpm_error=0.0,
+            percent_error=0.0,
+            score=100,
+            rating="Tempo Wizard",
+            tap_stability=10.0,
+        )
+        a2 = Attempt(
+            user_id=user.id,
+            guessed_bpm=120.0,
+            true_bpm=120.0,
+            bpm_error=0.0,
+            percent_error=0.0,
+            score=100,
+            rating="Tempo Wizard",
+            tap_stability=20.0,
+        )
+        a3 = Attempt(
+            user_id=user.id,
+            guessed_bpm=120.0,
+            true_bpm=120.0,
+            bpm_error=0.0,
+            percent_error=0.0,
+            score=100,
+            rating="Tempo Wizard",
+            tap_stability=None,
+        )  # keyboard attempt
         db.session.add_all([a1, a2, a3])
         db.session.commit()
 
         from portfolio.routes.game import calculate_user_stats
+
         attempts = Attempt.query.filter_by(user_id=user.id).all()
         stats = calculate_user_stats(user, attempts)
 
         self.assertEqual(stats["total_attempts"], 3)
-        self.assertEqual(stats["avg_stability"], 15.0) # Average of [10.0, 20.0]
+        self.assertEqual(stats["avg_stability"], 15.0)  # Average of [10.0, 20.0]
 
     def test_anchor_play_route_whitelist_validation(self):
         """Test that the anchor play route rejects non-whitelisted BPMs."""
         # Whitelisted: [95, 120, 128, 140]
         response = self.client.get("/game/play/anchor/100")
         self.assertEqual(response.status_code, 400)
-        
+
         response = self.client.get("/game/play/anchor/120")
         self.assertEqual(response.status_code, 200)
 
@@ -438,7 +489,7 @@ class GameTestCase(unittest.TestCase):
         response = self.client.get("/game/play/anchor/128?level=2")
         self.assertEqual(response.status_code, 200)
         html = response.data.decode("utf-8")
-        
+
         # Verify configurations are in HTML
         self.assertIn("isAnchor: true", html)
         self.assertIn("anchorBpm: 128", html)
@@ -451,23 +502,22 @@ class GameTestCase(unittest.TestCase):
             sess["user_id"] = user.id
 
         from portfolio.utils.security import generate_challenge_token
+
         # Create a signed anchor challenge token
         token = generate_challenge_token(
             true_bpm=128.5,
             crate_name="Anchor 128 BPM",
             is_anchor=True,
             anchor_bpm=128.0,
-            anchor_level=2
+            anchor_level=2,
         )
 
         response = self.client.post(
             "/game/api/attempt",
-            data=json.dumps({
-                "guess": 129.0,
-                "challenge_token": token,
-                "client_uuid": "test-anchor-direct-uuid"
-            }),
-            content_type="application/json"
+            data=json.dumps(
+                {"guess": 129.0, "challenge_token": token, "client_uuid": "test-anchor-direct-uuid"}
+            ),
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
 
@@ -485,9 +535,11 @@ class GameTestCase(unittest.TestCase):
             sess["user_id"] = user.id
 
         import time
+
         from itsdangerous import URLSafeTimedSerializer
+
         serializer = URLSafeTimedSerializer(self.app.config["SECRET_KEY"])
-        
+
         # Manually construct expired payload (timestamp is 150 seconds ago)
         expired_payload = {
             "true_bpm": 128.0,
@@ -495,18 +547,20 @@ class GameTestCase(unittest.TestCase):
             "timestamp": time.time() - 150,
             "is_anchor": True,
             "anchor_bpm": 128.0,
-            "anchor_level": 2
+            "anchor_level": 2,
         }
         token = serializer.dumps(expired_payload)
 
         response = self.client.post(
             "/game/api/attempt",
-            data=json.dumps({
-                "guess": 128.0,
-                "challenge_token": token,
-                "client_uuid": "test-expired-anchor-uuid"
-            }),
-            content_type="application/json"
+            data=json.dumps(
+                {
+                    "guess": 128.0,
+                    "challenge_token": token,
+                    "client_uuid": "test-expired-anchor-uuid",
+                }
+            ),
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data.decode("utf-8"))
@@ -528,21 +582,59 @@ class GameTestCase(unittest.TestCase):
                 is_anchor=True,
                 anchor_bpm=120.0,
                 anchor_level=1,
-                client_uuid=f"ari-attempt-{i}"
+                client_uuid=f"ari-attempt-{i}",
             )
             db.session.add(attempt)
         db.session.commit()
 
         from portfolio.routes.game import calculate_user_stats, get_unlocked_level
+
         attempts = Attempt.query.filter_by(user_id=user.id).all()
         stats = calculate_user_stats(user, attempts)
 
         # ARI = 100 - (1.5 * 10) = 85
         self.assertEqual(stats["anchor_stats"][120]["ari"], 85.0)
-        
+
         # Check that Level 4 is unlocked because ARI >= 85
         unlocked = get_unlocked_level(user.id, 120.0)
         self.assertEqual(unlocked, 4)
+
+    def test_reference_tracks_seeding(self):
+        """Test that the database seeds 4 crates and exactly 100 reference tracks (25 per crate)."""
+        crates = Crate.query.all()
+        self.assertEqual(len(crates), 4)
+
+        tracks_count = ReferenceTrack.query.count()
+        self.assertEqual(tracks_count, 100)
+
+        for crate in crates:
+            self.assertEqual(len(crate.reference_tracks), 25)
+
+    def test_play_route_reference_tracks_metadata(self):
+        """Test that the play route selects an active track and returns correct metadata/recipe variables."""
+        crate = Crate.query.filter_by(genre="pop-punk").first()
+        self.assertIsNotNone(crate)
+
+        # Trigger play route
+        response = self.client.get(f"/game/play/{crate.id}")
+        self.assertEqual(response.status_code, 200)
+
+        # Locate recipe metadata in HTML
+        html = response.data.decode("utf-8")
+        self.assertIn('id="recipe-meta"', html)
+        self.assertIn('class="active-track-hud"', html)
+        self.assertIn('id="toggle-drawer-btn"', html)
+
+        # Extract and verify JSON recipe
+        start_idx = html.find('data-recipe="') + len('data-recipe="')
+        end_idx = html.find('"', start_idx)
+        recipe_str = html[start_idx:end_idx].replace("&quot;", '"').replace("&#34;", '"')
+        recipe = json.loads(recipe_str)
+
+        self.assertEqual(recipe["genre"], "pop-punk")
+        self.assertIn("originalBpm", recipe)
+        crate_bpms = [t.bpm for t in crate.reference_tracks]
+        self.assertIn(recipe["originalBpm"], crate_bpms)
 
 
 if __name__ == "__main__":

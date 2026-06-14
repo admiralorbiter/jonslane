@@ -1,9 +1,12 @@
 import time
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+
 from flask import current_app
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 
-def generate_challenge_token(true_bpm, crate_name, is_anchor=False, anchor_bpm=None, anchor_level=None):
+def generate_challenge_token(
+    true_bpm, crate_name, is_anchor=False, anchor_bpm=None, anchor_level=None
+):
     """Generate a timed, cryptographically signed token containing true BPM, crate name, and anchor metadata."""
     serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     payload = {
@@ -26,4 +29,3 @@ def verify_challenge_token(token, max_age=600):
         return data
     except (SignatureExpired, BadSignature, TypeError, ValueError):
         return None
-
