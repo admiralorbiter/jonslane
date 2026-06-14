@@ -65,9 +65,29 @@
         </div>
 
         <!-- Practice Area Viewport -->
-        <div class="piano-card" id="practice-viewport" style="padding: 30px; min-height: 450px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="piano-card" id="practice-viewport" style="padding: 30px; min-height: 450px; display: flex; flex-direction: column;">
+            <!-- Global Count-In Indicator -->
+            <div id="count-in-container" style="display: none; text-align: center; margin-bottom: 20px;">
+                <div id="count-in-label" style="font-size: 0.95rem; text-transform: uppercase; color: #a48c82; letter-spacing: 1px; margin-bottom: 5px;">Get Ready</div>
+                <div id="count-in-number" style="font-size: 3.5rem; font-weight: 900; color: #d4af37; text-shadow: 0 0 15px rgba(212,175,55,0.6); line-height: 1;">4</div>
+            </div>
+
+            <!-- Global Progress Bar & Timer -->
+            <div id="drill-progress-container" style="display: none; margin-bottom: 25px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: #e6c594; margin-bottom: 8px; font-weight: 600;">
+                    <span id="drill-progress-bar-text">Bar 1 / 16</span>
+                    <span id="drill-progress-timer">0.0s</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="drill-progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- Persistent Real-Time Timing Feedback -->
+            <div id="realtime-timing-feedback" class="timing-feedback"></div>
+
             <!-- Content will be dynamically swapped here -->
-            <div id="drill-container"></div>
+            <div id="drill-container" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;"></div>
         </div>
     </div>
 </div>
@@ -188,6 +208,142 @@
                 key.classList.remove("active");
             }
         }
+    }
+
+    // Global active timeouts/intervals
+    let activeDrillTimeout = null;
+    let progressInterval = null;
+    let isCountingIn = false;
+
+    // 1. Audio/Visual Count-In Engine
+    async function runCountIn(bpm, onComplete) {
+        if (isCountingIn) return;
+        isCountingIn = true;
+
+        const countInContainer = document.getElementById("count-in-container");
+        const countInNumber = document.getElementById("count-in-number");
+
+        if (countInContainer && countInNumber) {
+            countInContainer.style.display = "block";
+            countInNumber.innerText = "4";
+        }
+
+        await ensureAudioStarted();
+
+        // Use absolute Transport seconds for glitch-free scheduling
+        const beatInterval = 60 / bpm;
+        const startTransportTime = Tone.Transport.seconds + 0.1;
+        
+        Tone.Transport.bpm.value = bpm;
+        Tone.Transport.start();
+
+        for (let i = 0; i < 4; i++) {
+            const clickTime = startTransportTime + i * beatInterval;
+            
+            // Schedule high metronome clicks
+            Tone.Transport.schedule(time => {
+                if (clickSynth) {
+                    clickSynth.triggerAttackRelease("C6", "16n", time);
+                }
+                Tone.Draw.schedule(() => {
+                    if (countInNumber) {
+                        countInNumber.innerText = 4 - i;
+                    }
+                }, time);
+            }, clickTime);
+        }
+
+        // Trigger completion callback exactly at beat 5 (start of bar 1)
+        const drillStartTime = startTransportTime + 4 * beatInterval;
+        Tone.Transport.schedule(time => {
+            Tone.Draw.schedule(() => {
+                isCountingIn = false;
+                if (countInContainer) {
+                    countInContainer.style.display = "none";
+                }
+                onComplete(time);
+            }, time);
+        }, drillStartTime);
+    }
+
+    // 2. Visual Progress Bar & Timer Updates
+    function startProgressTracker(totalDurationMs, totalBars, beatsPerBar, bpm) {
+        const progressContainer = document.getElementById("drill-progress-container");
+        const progressBarFill = document.getElementById("drill-progress-bar-fill");
+        const progressBarText = document.getElementById("drill-progress-bar-text");
+        const progressTimer = document.getElementById("drill-progress-timer");
+
+        if (!progressContainer || !progressBarFill || !progressBarText || !progressTimer) return;
+
+        progressContainer.style.display = "block";
+        progressBarFill.style.width = "0%";
+        progressBarText.innerText = `Bar 1 / ${totalBars}`;
+        progressTimer.innerText = "0.0s";
+
+        const startTime = performance.now();
+        const beatIntervalMs = (60 / bpm) * 1000;
+        const barIntervalMs = beatIntervalMs * beatsPerBar;
+
+        if (progressInterval) clearInterval(progressInterval);
+
+        progressInterval = setInterval(() => {
+            const elapsedMs = performance.now() - startTime;
+            const percent = Math.min(100, (elapsedMs / totalDurationMs) * 100);
+            progressBarFill.style.width = `${percent}%`;
+            progressTimer.innerText = `${(elapsedMs / 1000).toFixed(1)}s`;
+
+            const currentBar = Math.min(totalBars, Math.floor(elapsedMs / barIntervalMs) + 1);
+            progressBarText.innerText = `Bar ${currentBar} / ${totalBars}`;
+
+            if (elapsedMs >= totalDurationMs) {
+                clearInterval(progressInterval);
+            }
+        }, 50);
+    }
+
+    function stopProgressTracker() {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
+        const progressContainer = document.getElementById("drill-progress-container");
+        if (progressContainer) {
+            progressContainer.style.display = "none";
+        }
+    }
+
+    // 3. Real-Time Color-Coded Timing Feedback
+    function showTimingFeedback(offsetMs) {
+        const feedbackEl = document.getElementById("realtime-timing-feedback");
+        if (!feedbackEl) return;
+
+        feedbackEl.className = "timing-feedback active-feedback";
+
+        let text = "";
+        let timingClass = "";
+        const absOffset = Math.abs(offsetMs);
+
+        if (absOffset <= 25) {
+            text = "Perfect!";
+            timingClass = "perfect";
+        } else if (offsetMs < 0) {
+            text = `Early (${Math.round(offsetMs)}ms)`;
+            timingClass = "early";
+        } else {
+            text = `Late (+${Math.round(offsetMs)}ms)`;
+            timingClass = "late";
+        }
+
+        feedbackEl.innerText = text;
+        feedbackEl.classList.remove("perfect", "early", "late");
+        feedbackEl.classList.add(timingClass);
+
+        if (feedbackEl.fadeTimeout) {
+            clearTimeout(feedbackEl.fadeTimeout);
+        }
+        feedbackEl.fadeTimeout = setTimeout(() => {
+            feedbackEl.classList.remove("active-feedback");
+        }, 800);
     }
 
     // Precision Audio setup
@@ -384,13 +540,26 @@
     }
 
     function stopActiveDrills() {
+        if (activeDrillTimeout) {
+            clearTimeout(activeDrillTimeout);
+            activeDrillTimeout = null;
+        }
+        isCountingIn = false;
+        
+        const countInContainer = document.getElementById("count-in-container");
+        if (countInContainer) {
+            countInContainer.style.display = "none";
+        }
+        
+        stopProgressTracker();
+
         if (loopPart) {
             loopPart.stop();
             loopPart.dispose();
             loopPart = null;
         }
         Tone.Transport.stop();
-        Tone.Transport.cancel();
+        Tone.Transport.cancel(0);
         
         // Reset any MIDI callbacks
         if (midiManager) {
@@ -509,157 +678,183 @@
         document.getElementById("start-subdivision-btn").innerText = "Stop Trainer";
         document.getElementById("subdivision-results").style.display = "none";
 
-        // Setup subdivision playback
         const bpm = 100;
-        Tone.Transport.bpm.value = bpm;
-        const beatInterval = 60 / bpm; // 600ms
-        const quarterMs = beatInterval * 1000;
-        const eighthMs = quarterMs / 2;
-
-        const lhTargetIntervals = [];
-        const rhTargetIntervals = [];
-
-        // Precalculate target timestamps
-        const startTime = Tone.now() + 0.5;
-        const startPerfTime = (startTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
         
-        // Generate grid targets for 16 bars
-        // Quarters: 4 beats per bar * 16 = 64 beats
-        for (let beat = 0; beat < 64; beat++) {
-            lhTargetIntervals.push(startPerfTime + (beat * quarterMs));
-        }
-        // Eighths: 8 subdivisions per bar * 16 = 128 subdivs
-        for (let sub = 0; sub < 128; sub++) {
-            rhTargetIntervals.push(startPerfTime + (sub * eighthMs));
-        }
+        // Wrap execution in 1-bar Count-In
+        await runCountIn(bpm, (drillStartTime) => {
+            const beatInterval = 60 / bpm; // 600ms
+            const quarterMs = beatInterval * 1000;
+            const eighthMs = quarterMs / 2;
 
-        const lhUserTaps = [];
-        const rhUserTaps = [];
+            const lhTargetIntervals = [];
+            const rhTargetIntervals = [];
 
-        // Backing track components
-        const bassSynth = new Tone.MonoSynth({
-            oscillator: { type: "sine" },
-            envelope: { attack: 0.02, decay: 0.1, sustain: 0.4, release: 0.3 }
-        }).toDestination();
-        bassSynth.volume.value = -8;
-
-        const backingChords = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: "triangle" },
-            envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 }
-        }).toDestination();
-        backingChords.volume.value = -12;
-
-        let barCount = 0;
-        
-        // Loop structure
-        loopPart = new Tone.Loop(time => {
-            // Play quarters on LH
-            bassSynth.triggerAttackRelease("F2", "8n", time);
-            
-            // Visual pulse LH
-            Tone.Draw.schedule(() => {
-                const ind = document.getElementById("pulse-lh");
-                if (ind) {
-                    ind.classList.add("active-lh");
-                    setTimeout(() => { ind.classList.remove("active-lh"); }, 100);
-                }
-            }, time);
-
-            // Play eighth notes (offbeats) on RH
-            backingChords.triggerAttackRelease(["A3", "C4", "F4"], "16n", time + (eighthMs / 1000));
-            Tone.Draw.schedule(() => {
-                const ind = document.getElementById("pulse-rh");
-                if (ind) {
-                    ind.classList.add("active-rh");
-                    setTimeout(() => { ind.classList.remove("active-rh"); }, 80);
-                }
-            }, time + (eighthMs / 1000));
-
-            barCount++;
-            
-            // Fading backing track: drop volume after 4 bars (4 beats/bar = 16 beats)
-            if (barCount >= 16) {
-                bassSynth.volume.rampTo(-60, eighthMs / 1000);
-                backingChords.volume.rampTo(-60, eighthMs / 1000);
-            }
-        }, "4n");
-
-        loopPart.start(startTime);
-        Tone.Transport.start();
-
-        // Inputs handler
-        const handleSubdivisionTap = (domTimestamp, isLeft) => {
-            const compTimestamp = domTimestamp - latencyOffsetMs;
-            if (isLeft) {
-                lhUserTaps.push(compTimestamp);
+            // Core High-Precision Clock Pairing
+            const rawCtx = audioContext.rawContext || audioContext;
+            const timestamp = rawCtx.getOutputTimestamp ? rawCtx.getOutputTimestamp() : null;
+            let startPerfTime;
+            if (timestamp && timestamp.performanceTime !== null && timestamp.contextTime !== null) {
+                const clockOffset = timestamp.performanceTime - (timestamp.contextTime * 1000);
+                startPerfTime = (drillStartTime * 1000) + clockOffset;
             } else {
-                rhUserTaps.push(compTimestamp);
+                startPerfTime = (drillStartTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
             }
-        };
-
-        const keyboardListener = (e) => {
-            if (e.repeat) return;
-            let note = null;
-            let isLeft = false;
-            if (e.code === "KeyA" || e.code === "KeyS") {
-                isLeft = true;
-                note = 60;
-            } else if (e.code === "KeyK" || e.code === "KeyL") {
-                isLeft = false;
-                note = 72;
+            
+            // Generate grid targets for 16 bars
+            for (let beat = 0; beat < 64; beat++) {
+                lhTargetIntervals.push(startPerfTime + (beat * quarterMs));
+            }
+            for (let sub = 0; sub < 128; sub++) {
+                rhTargetIntervals.push(startPerfTime + (sub * eighthMs));
             }
 
-            if (note !== null) {
-                handleSubdivisionTap(e.timeStamp, isLeft);
-                if (polySynth) {
-                    const freq = Tone.Frequency(note, "midi").toFrequency();
-                    polySynth.triggerAttack(freq, Tone.now(), 0.8);
+            const lhUserTaps = [];
+            const rhUserTaps = [];
+
+            // Backing track components
+            const bassSynth = new Tone.MonoSynth({
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.02, decay: 0.1, sustain: 0.4, release: 0.3 }
+            }).toDestination();
+            bassSynth.volume.value = -8;
+
+            const backingChords = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 }
+            }).toDestination();
+            backingChords.volume.value = -12;
+
+            let barCount = 0;
+            
+            // Loop structure
+            loopPart = new Tone.Loop(time => {
+                // Play quarters on LH
+                bassSynth.triggerAttackRelease("F2", "8n", time);
+                
+                // Visual pulse LH
+                Tone.Draw.schedule(() => {
+                    const ind = document.getElementById("pulse-lh");
+                    if (ind) {
+                        ind.classList.add("active-lh");
+                        setTimeout(() => { ind.classList.remove("active-lh"); }, 100);
+                    }
+                }, time);
+
+                // Play eighth notes (offbeats) on RH
+                backingChords.triggerAttackRelease(["A3", "C4", "F4"], "16n", time + (eighthMs / 1000));
+                Tone.Draw.schedule(() => {
+                    const ind = document.getElementById("pulse-rh");
+                    if (ind) {
+                        ind.classList.add("active-rh");
+                        setTimeout(() => { ind.classList.remove("active-rh"); }, 80);
+                    }
+                }, time + (eighthMs / 1000));
+
+                barCount++;
+                
+                // Fading backing track: drop volume after 4 bars (4 beats/bar = 16 beats)
+                if (barCount >= 16) {
+                    bassSynth.volume.rampTo(-60, eighthMs / 1000);
+                    backingChords.volume.rampTo(-60, eighthMs / 1000);
                 }
-                highlightKey(note, true);
-            }
-        };
+            }, "4n");
 
-        const keyboardUpListener = (e) => {
-            let note = null;
-            if (e.code === "KeyA" || e.code === "KeyS") {
-                note = 60;
-            } else if (e.code === "KeyK" || e.code === "KeyL") {
-                note = 72;
-            }
-
-            if (note !== null) {
-                if (polySynth) {
-                    const freq = Tone.Frequency(note, "midi").toFrequency();
-                    polySynth.triggerRelease(freq);
+            // Inputs handler
+            const handleSubdivisionTap = (domTimestamp, isLeft) => {
+                if (isCountingIn) return; // Block scoring during count-in
+                
+                const compTimestamp = domTimestamp - latencyOffsetMs;
+                const grid = isLeft ? lhTargetIntervals : rhTargetIntervals;
+                
+                if (isLeft) {
+                    lhUserTaps.push(compTimestamp);
+                } else {
+                    rhUserTaps.push(compTimestamp);
                 }
-                highlightKey(note, false);
-            }
-        };
 
-        activeKeydownListener = keyboardListener;
-        activeKeyupListener = keyboardUpListener;
-        document.addEventListener("keydown", keyboardListener);
-        document.addEventListener("keyup", keyboardUpListener);
-
-        if (midiManager) {
-            midiManager.onStrokeCallback = (stroke) => {
-                // Determine LH/RH based on split setting
-                const splitKey = parseInt(document.getElementById("midi-split-key").value) || 60;
-                const isLeft = stroke.notes.some(n => n < splitKey);
-                handleSubdivisionTap(stroke.timestamp, isLeft);
+                // Compute real-time timing deviation
+                let minDiff = Infinity;
+                grid.forEach(gridTime => {
+                    const diff = compTimestamp - gridTime;
+                    if (Math.abs(diff) < Math.abs(minDiff)) {
+                        minDiff = diff;
+                    }
+                });
+                if (Math.abs(minDiff) < (isLeft ? 180 : 100)) {
+                    showTimingFeedback(minDiff);
+                }
             };
-        }
 
-        // Auto-end after 16 bars (64 seconds @ 100 BPM is about 38 seconds)
-        setTimeout(() => {
-            stopActiveDrills();
-            isSubdivisionPlaying = false;
+            const keyboardListener = (e) => {
+                if (e.repeat) return;
+                let note = null;
+                let isLeft = false;
+                if (e.code === "KeyA" || e.code === "KeyS") {
+                    isLeft = true;
+                    note = 60;
+                } else if (e.code === "KeyK" || e.code === "KeyL") {
+                    isLeft = false;
+                    note = 72;
+                }
+
+                if (note !== null) {
+                    handleSubdivisionTap(e.timeStamp, isLeft);
+                    if (polySynth) {
+                        const freq = Tone.Frequency(note, "midi").toFrequency();
+                        polySynth.triggerAttack(freq, Tone.now(), 0.8);
+                    }
+                    highlightKey(note, true);
+                }
+            };
+
+            const keyboardUpListener = (e) => {
+                let note = null;
+                if (e.code === "KeyA" || e.code === "KeyS") {
+                    note = 60;
+                } else if (e.code === "KeyK" || e.code === "KeyL") {
+                    note = 72;
+                }
+
+                if (note !== null) {
+                    if (polySynth) {
+                        const freq = Tone.Frequency(note, "midi").toFrequency();
+                        polySynth.triggerRelease(freq);
+                    }
+                    highlightKey(note, false);
+                }
+            };
+
+            activeKeydownListener = keyboardListener;
+            activeKeyupListener = keyboardUpListener;
+            document.addEventListener("keydown", keyboardListener);
+            document.addEventListener("keyup", keyboardUpListener);
+
+            if (midiManager) {
+                midiManager.onStrokeCallback = (stroke) => {
+                    // Determine LH/RH based on split setting
+                    const splitKey = parseInt(document.getElementById("midi-split-key").value) || 60;
+                    const isLeft = stroke.notes.some(n => n < splitKey);
+                    handleSubdivisionTap(stroke.timestamp, isLeft);
+                };
+            }
+
+            loopPart.start(drillStartTime);
             
-            const btn = document.getElementById("start-subdivision-btn");
-            if (btn) btn.innerText = "Start Trainer";
-            
-            evaluateSubdivision(lhUserTaps, lhTargetIntervals, rhUserTaps, rhTargetIntervals);
-        }, 16 * 4 * quarterMs + 1000);
+            // Start progress tracking
+            const totalDurationMs = 16 * 4 * quarterMs;
+            startProgressTracker(totalDurationMs, 16, 4, bpm);
+
+            // Auto-end after 16 bars (64 seconds @ 100 BPM is about 38 seconds)
+            activeDrillTimeout = setTimeout(() => {
+                stopActiveDrills();
+                isSubdivisionPlaying = false;
+                
+                const btn = document.getElementById("start-subdivision-btn");
+                if (btn) btn.innerText = "Start Trainer";
+                
+                evaluateSubdivision(lhUserTaps, lhTargetIntervals, rhUserTaps, rhTargetIntervals);
+            }, totalDurationMs + 1000);
+        });
     }
 
     function evaluateSubdivision(lhTaps, lhGrid, rhTaps, rhGrid) {
@@ -795,85 +990,113 @@
         document.getElementById("metro-results").style.display = "none";
 
         const bpm = 100;
-        const beatIntervalMs = (60 / bpm) * 1000;
+        
+        await runCountIn(bpm, (drillStartTime) => {
+            const beatIntervalMs = (60 / bpm) * 1000;
 
-        const startTime = Tone.now() + 0.5;
-        const startPerfTime = (startTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
-
-        const targetTimes = [];
-        // Beats 0-7: Audible clicks. Beats 8-15: Silent clicks
-        for (let beat = 0; beat < 16; beat++) {
-            targetTimes.push(startPerfTime + (beat * beatIntervalMs));
-        }
-
-        const userTaps = [];
-
-        // Play audible clicks for first 8 beats
-        for (let beat = 0; beat < 8; beat++) {
-            clickSynth.triggerAttackRelease("C5", "16n", startTime + (beat * beatIntervalMs / 1000));
-        }
-
-        // Tap tracking
-        const handleMetroTap = (domTimestamp) => {
-            const compTimestamp = domTimestamp - latencyOffsetMs;
-            userTaps.push(compTimestamp);
-        };
-
-        const keyboardListener = (e) => {
-            if (e.code === "Space") {
-                e.preventDefault();
-                if (e.repeat) return;
-                handleMetroTap(e.timeStamp);
-                if (polySynth) {
-                    polySynth.triggerAttack("C4", Tone.now(), 0.8);
-                }
-                highlightKey(60, true);
+            // Core High-Precision Clock Pairing
+            const rawCtx = audioContext.rawContext || audioContext;
+            const timestamp = rawCtx.getOutputTimestamp ? rawCtx.getOutputTimestamp() : null;
+            let startPerfTime;
+            if (timestamp && timestamp.performanceTime !== null && timestamp.contextTime !== null) {
+                const clockOffset = timestamp.performanceTime - (timestamp.contextTime * 1000);
+                startPerfTime = (drillStartTime * 1000) + clockOffset;
+            } else {
+                startPerfTime = (drillStartTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
             }
-        };
 
-        const keyboardUpListener = (e) => {
-            if (e.code === "Space") {
-                if (polySynth) {
-                    polySynth.triggerRelease("C4");
-                }
-                highlightKey(60, false);
+            const targetTimes = [];
+            // Beats 0-7: Audible clicks. Beats 8-15: Silent clicks
+            for (let beat = 0; beat < 16; beat++) {
+                targetTimes.push(startPerfTime + (beat * beatIntervalMs));
             }
-        };
 
-        activeKeydownListener = keyboardListener;
-        activeKeyupListener = keyboardUpListener;
-        document.addEventListener("keydown", keyboardListener);
-        document.addEventListener("keyup", keyboardUpListener);
+            const userTaps = [];
 
-        if (midiManager) {
-            midiManager.onStrokeCallback = (stroke) => {
-                handleMetroTap(stroke.timestamp);
+            // Play audible clicks for first 8 beats
+            for (let beat = 0; beat < 8; beat++) {
+                clickSynth.triggerAttackRelease("C5", "16n", drillStartTime + (beat * beatIntervalMs / 1000));
+            }
+
+            // Tap tracking
+            const handleMetroTap = (domTimestamp) => {
+                if (isCountingIn) return;
+                const compTimestamp = domTimestamp - latencyOffsetMs;
+                userTaps.push(compTimestamp);
+
+                // Compute real-time timing deviation
+                let minDiff = Infinity;
+                targetTimes.forEach(gridTime => {
+                    const diff = compTimestamp - gridTime;
+                    if (Math.abs(diff) < Math.abs(minDiff)) {
+                        minDiff = diff;
+                    }
+                });
+                if (Math.abs(minDiff) < 150) {
+                    showTimingFeedback(minDiff);
+                }
             };
-        }
 
-        // Run sweep animation
-        const sweep = document.getElementById("metro-sweep");
-        if (sweep) {
-            sweep.style.display = "block";
-            sweep.style.transition = "none";
-            sweep.style.left = "0%";
-            setTimeout(() => {
-                sweep.style.transition = "left 9.6s linear"; // 16 beats * 0.6s
-                sweep.style.left = "100%";
-            }, 100);
-        }
+            const keyboardListener = (e) => {
+                if (e.code === "Space") {
+                    e.preventDefault();
+                    if (e.repeat) return;
+                    handleMetroTap(e.timeStamp);
+                    if (polySynth) {
+                        polySynth.triggerAttack("C4", Tone.now(), 0.8);
+                    }
+                    highlightKey(60, true);
+                }
+            };
 
-        // Stop after 16 beats (9.6s)
-        setTimeout(() => {
-            stopActiveDrills();
-            isMetronomePlaying = false;
-            
-            const btn = document.getElementById("start-metro-btn");
-            if (btn) btn.innerText = "Start Metronome";
-            if (sweep) sweep.style.display = "none";
-            
-            evaluateInvisibleMetronome(userTaps, targetTimes);
-        }, 16 * beatIntervalMs + 500);
+            const keyboardUpListener = (e) => {
+                if (e.code === "Space") {
+                    if (polySynth) {
+                        polySynth.triggerRelease("C4");
+                    }
+                    highlightKey(60, false);
+                }
+            };
+
+            activeKeydownListener = keyboardListener;
+            activeKeyupListener = keyboardUpListener;
+            document.addEventListener("keydown", keyboardListener);
+            document.addEventListener("keyup", keyboardUpListener);
+
+            if (midiManager) {
+                midiManager.onStrokeCallback = (stroke) => {
+                    handleMetroTap(stroke.timestamp);
+                };
+            }
+
+            // Run sweep animation
+            const sweep = document.getElementById("metro-sweep");
+            if (sweep) {
+                sweep.style.display = "block";
+                sweep.style.transition = "none";
+                sweep.style.left = "0%";
+                setTimeout(() => {
+                    sweep.style.transition = "left 9.6s linear"; // 16 beats * 0.6s
+                    sweep.style.left = "100%";
+                }, 100);
+            }
+
+            // Start progress tracking
+            const totalDurationMs = 16 * beatIntervalMs;
+            startProgressTracker(totalDurationMs, 4, 4, bpm);
+
+            // Stop after 16 beats (9.6s)
+            activeDrillTimeout = setTimeout(() => {
+                stopActiveDrills();
+                isMetronomePlaying = false;
+                
+                const btn = document.getElementById("start-metro-btn");
+                if (btn) btn.innerText = "Start Metronome";
+                if (sweep) sweep.style.display = "none";
+                
+                evaluateInvisibleMetronome(userTaps, targetTimes);
+            }, totalDurationMs + 500);
+        });
     }
 
     function evaluateInvisibleMetronome(taps, targets) {
@@ -989,101 +1212,126 @@
         document.getElementById("phrase-results").style.display = "none";
 
         const bpm = 120;
-        Tone.Transport.bpm.value = bpm;
-        const barMs = (240 / bpm) * 1000; // 2 seconds
+        
+        await runCountIn(bpm, (drillStartTime) => {
+            const barMs = (240 / bpm) * 1000; // 2 seconds
 
-        const startTime = Tone.now() + 0.5;
-        const startPerfTime = (startTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
-
-        // Targets are beat 1 of bar 1 (0ms), bar 9 (8 bars = 16 seconds), bar 17 (32 seconds)
-        const phraseTargets = [
-            startPerfTime,
-            startPerfTime + (8 * barMs),
-            startPerfTime + (16 * barMs)
-        ];
-
-        const userTaps = [];
-
-        // Synthesizer loop chords: I-V-vi-IV loop where each chord is 2 bars
-        // Total = 8 bars. Same chords used repeating twice so there is no change in chord structure.
-        const backingChords = new Tone.PolySynth(Tone.Synth).toDestination();
-        backingChords.volume.value = -15;
-
-        const chordProgression = [
-            ["C4", "E4", "G4"], // I
-            ["G3", "B3", "D4"], // V
-            ["A3", "C4", "E4"], // vi
-            ["F3", "A3", "C4"]  // IV
-        ];
-
-        let barCount = 0;
-        loopPart = new Tone.Loop(time => {
-            // Play a chord every 2 bars
-            const chordIndex = Math.floor((barCount % 8) / 2);
-            backingChords.triggerAttackRelease(chordProgression[chordIndex], "1n", time);
-
-            Tone.Draw.schedule(() => {
-                const phraseNum = Math.floor(barCount / 8) + 1;
-                const barNum = (barCount % 8) + 1;
-                const display = document.getElementById("phrase-bar-counter");
-                if (display) {
-                    display.innerText = `Phrase ${phraseNum} | Bar ${barNum}`;
-                }
-            }, time);
-
-            barCount++;
-        }, "1m");
-
-        loopPart.start(startTime);
-        Tone.Transport.start();
-
-        const handlePhraseTap = (domTimestamp) => {
-            const compTimestamp = domTimestamp - latencyOffsetMs;
-            userTaps.push(compTimestamp);
-        };
-
-        const keyboardListener = (e) => {
-            if (e.code === "Space") {
-                e.preventDefault();
-                if (e.repeat) return;
-                handlePhraseTap(e.timeStamp);
-                if (polySynth) {
-                    polySynth.triggerAttack("C4", Tone.now(), 0.8);
-                }
-                highlightKey(60, true);
+            // Core High-Precision Clock Pairing
+            const rawCtx = audioContext.rawContext || audioContext;
+            const timestamp = rawCtx.getOutputTimestamp ? rawCtx.getOutputTimestamp() : null;
+            let startPerfTime;
+            if (timestamp && timestamp.performanceTime !== null && timestamp.contextTime !== null) {
+                const clockOffset = timestamp.performanceTime - (timestamp.contextTime * 1000);
+                startPerfTime = (drillStartTime * 1000) + clockOffset;
+            } else {
+                startPerfTime = (drillStartTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
             }
-        };
 
-        const keyboardUpListener = (e) => {
-            if (e.code === "Space") {
-                if (polySynth) {
-                    polySynth.triggerRelease("C4");
+            // Targets are beat 1 of bar 1 (0ms), bar 9 (8 bars = 16 seconds), bar 17 (32 seconds)
+            const phraseTargets = [
+                startPerfTime,
+                startPerfTime + (8 * barMs),
+                startPerfTime + (16 * barMs)
+            ];
+
+            const userTaps = [];
+
+            // Synthesizer loop chords: I-V-vi-IV loop where each chord is 2 bars
+            const backingChords = new Tone.PolySynth(Tone.Synth).toDestination();
+            backingChords.volume.value = -15;
+
+            const chordProgression = [
+                ["C4", "E4", "G4"], // I
+                ["G3", "B3", "D4"], // V
+                ["A3", "C4", "E4"], // vi
+                ["F3", "A3", "C4"]  // IV
+            ];
+
+            let barCount = 0;
+            loopPart = new Tone.Loop(time => {
+                // Play a chord every 2 bars
+                const chordIndex = Math.floor((barCount % 8) / 2);
+                backingChords.triggerAttackRelease(chordProgression[chordIndex], "1n", time);
+
+                Tone.Draw.schedule(() => {
+                    const phraseNum = Math.floor(barCount / 8) + 1;
+                    const barNum = (barCount % 8) + 1;
+                    const display = document.getElementById("phrase-bar-counter");
+                    if (display) {
+                        display.innerText = `Phrase ${phraseNum} | Bar ${barNum}`;
+                    }
+                }, time);
+
+                barCount++;
+            }, "1m");
+
+            const handlePhraseTap = (domTimestamp) => {
+                if (isCountingIn) return;
+                const compTimestamp = domTimestamp - latencyOffsetMs;
+                userTaps.push(compTimestamp);
+
+                // Compute real-time timing deviation
+                let minDiff = Infinity;
+                phraseTargets.forEach(targetTime => {
+                    const diff = compTimestamp - targetTime;
+                    if (Math.abs(diff) < Math.abs(minDiff)) {
+                        minDiff = diff;
+                    }
+                });
+                if (Math.abs(minDiff) < 800) {
+                    showTimingFeedback(minDiff);
                 }
-                highlightKey(60, false);
-            }
-        };
-
-        activeKeydownListener = keyboardListener;
-        activeKeyupListener = keyboardUpListener;
-        document.addEventListener("keydown", keyboardListener);
-        document.addEventListener("keyup", keyboardUpListener);
-
-        if (midiManager) {
-            midiManager.onStrokeCallback = (stroke) => {
-                handlePhraseTap(stroke.timestamp);
             };
-        }
 
-        // Run for 24 bars (48 seconds)
-        setTimeout(() => {
-            stopActiveDrills();
-            isPhrasePlaying = false;
+            const keyboardListener = (e) => {
+                if (e.code === "Space") {
+                    e.preventDefault();
+                    if (e.repeat) return;
+                    handlePhraseTap(e.timeStamp);
+                    if (polySynth) {
+                        polySynth.triggerAttack("C4", Tone.now(), 0.8);
+                    }
+                    highlightKey(60, true);
+                }
+            };
+
+            const keyboardUpListener = (e) => {
+                if (e.code === "Space") {
+                    if (polySynth) {
+                        polySynth.triggerRelease("C4");
+                    }
+                    highlightKey(60, false);
+                }
+            };
+
+            activeKeydownListener = keyboardListener;
+            activeKeyupListener = keyboardUpListener;
+            document.addEventListener("keydown", keyboardListener);
+            document.addEventListener("keyup", keyboardUpListener);
+
+            if (midiManager) {
+                midiManager.onStrokeCallback = (stroke) => {
+                    handlePhraseTap(stroke.timestamp);
+                };
+            }
+
+            loopPart.start(drillStartTime);
             
-            const btn = document.getElementById("start-phrase-btn");
-            if (btn) btn.innerText = "Start Drill";
-            
-            evaluatePhraseCounter(userTaps, phraseTargets);
-        }, 24 * barMs + 500);
+            // Start progress tracking
+            const totalDurationMs = 24 * barMs;
+            startProgressTracker(totalDurationMs, 24, 4, bpm);
+
+            // Run for 24 bars (48 seconds)
+            activeDrillTimeout = setTimeout(() => {
+                stopActiveDrills();
+                isPhrasePlaying = false;
+                
+                const btn = document.getElementById("start-phrase-btn");
+                if (btn) btn.innerText = "Start Drill";
+                
+                evaluatePhraseCounter(userTaps, phraseTargets);
+            }, totalDurationMs + 500);
+        });
     }
 
     function evaluatePhraseCounter(taps, targets) {
@@ -1201,127 +1449,154 @@
         document.getElementById("limb-results").style.display = "none";
 
         const bpm = 100;
-        Tone.Transport.bpm.value = bpm;
-        const beatMs = (60 / bpm) * 1000;
+        
+        await runCountIn(bpm, (drillStartTime) => {
+            const beatMs = (60 / bpm) * 1000;
 
-        const startTime = Tone.now() + 0.5;
-        const startPerfTime = (startTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
-
-        const footTargets = [];
-        const handTargets = [];
-
-        // Generate target grid for 8 bars (32 beats)
-        for (let beat = 0; beat < 32; beat++) {
-            const beatTime = startPerfTime + (beat * beatMs);
-            if (beat % 4 === 0 || beat % 4 === 2) {
-                footTargets.push(beatTime);
+            // Core High-Precision Clock Pairing
+            const rawCtx = audioContext.rawContext || audioContext;
+            const timestamp = rawCtx.getOutputTimestamp ? rawCtx.getOutputTimestamp() : null;
+            let startPerfTime;
+            if (timestamp && timestamp.performanceTime !== null && timestamp.contextTime !== null) {
+                const clockOffset = timestamp.performanceTime - (timestamp.contextTime * 1000);
+                startPerfTime = (drillStartTime * 1000) + clockOffset;
             } else {
-                handTargets.push(beatTime);
+                startPerfTime = (drillStartTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
             }
-        }
 
-        const footTaps = [];
-        const handTaps = [];
+            const footTargets = [];
+            const handTargets = [];
 
-        // Loop play metronome click
-        let count = 0;
-        loopPart = new Tone.Loop(time => {
-            clickSynth.triggerAttackRelease(count % 4 === 0 ? "C5" : "C4", "16n", time);
-
-            Tone.Draw.schedule(() => {
-                const footInd = document.getElementById("limb-foot");
-                const handInd = document.getElementById("limb-hand");
-                
-                if (count % 4 === 0 || count % 4 === 2) {
-                    if (footInd) {
-                        footInd.classList.add("active-lh");
-                        setTimeout(() => { footInd.classList.remove("active-lh"); }, 100);
-                    }
+            // Generate target grid for 8 bars (32 beats)
+            for (let beat = 0; beat < 32; beat++) {
+                const beatTime = startPerfTime + (beat * beatMs);
+                if (beat % 4 === 0 || beat % 4 === 2) {
+                    footTargets.push(beatTime);
                 } else {
-                    if (handInd) {
-                        handInd.classList.add("active-rh");
-                        setTimeout(() => { handInd.classList.remove("active-rh"); }, 100);
+                    handTargets.push(beatTime);
+                }
+            }
+
+            const footTaps = [];
+            const handTaps = [];
+
+            // Loop play metronome click
+            let count = 0;
+            loopPart = new Tone.Loop(time => {
+                clickSynth.triggerAttackRelease(count % 4 === 0 ? "C5" : "C4", "16n", time);
+
+                Tone.Draw.schedule(() => {
+                    const footInd = document.getElementById("limb-foot");
+                    const handInd = document.getElementById("limb-hand");
+                    
+                    if (count % 4 === 0 || count % 4 === 2) {
+                        if (footInd) {
+                            footInd.classList.add("active-lh");
+                            setTimeout(() => { footInd.classList.remove("active-lh"); }, 100);
+                        }
+                    } else {
+                        if (handInd) {
+                            handInd.classList.add("active-rh");
+                            setTimeout(() => { handInd.classList.remove("active-rh"); }, 100);
+                        }
                     }
+                }, time);
+
+                count++;
+            }, "4n");
+
+            const handleLimbTap = (domTimestamp, isFoot) => {
+                if (isCountingIn) return;
+                const compTimestamp = domTimestamp - latencyOffsetMs;
+                const grid = isFoot ? footTargets : handTargets;
+                if (isFoot) {
+                    footTaps.push(compTimestamp);
+                } else {
+                    handTaps.push(compTimestamp);
                 }
-            }, time);
 
-            count++;
-        }, "4n");
-
-        loopPart.start(startTime);
-        Tone.Transport.start();
-
-        const handleLimbTap = (domTimestamp, isFoot) => {
-            const compTimestamp = domTimestamp - latencyOffsetMs;
-            if (isFoot) {
-                footTaps.push(compTimestamp);
-            } else {
-                handTaps.push(compTimestamp);
-            }
-        };
-
-        const keyboardListener = (e) => {
-            if (e.repeat) return;
-            let note = null;
-            let isFoot = false;
-            if (e.code === "KeyA" || e.code === "KeyS") {
-                isFoot = true;
-                note = 60;
-            } else if (e.code === "KeyK" || e.code === "KeyL") {
-                isFoot = false;
-                note = 72;
-            }
-
-            if (note !== null) {
-                handleLimbTap(e.timeStamp, isFoot);
-                if (polySynth) {
-                    const freq = Tone.Frequency(note, "midi").toFrequency();
-                    polySynth.triggerAttack(freq, Tone.now(), 0.8);
+                // Compute real-time timing deviation
+                let minDiff = Infinity;
+                grid.forEach(gridTime => {
+                    const diff = compTimestamp - gridTime;
+                    if (Math.abs(diff) < Math.abs(minDiff)) {
+                        minDiff = diff;
+                    }
+                });
+                if (Math.abs(minDiff) < 180) {
+                    showTimingFeedback(minDiff);
                 }
-                highlightKey(note, true);
-            }
-        };
-
-        const keyboardUpListener = (e) => {
-            let note = null;
-            if (e.code === "KeyA" || e.code === "KeyS") {
-                note = 60;
-            } else if (e.code === "KeyK" || e.code === "KeyL") {
-                note = 72;
-            }
-
-            if (note !== null) {
-                if (polySynth) {
-                    const freq = Tone.Frequency(note, "midi").toFrequency();
-                    polySynth.triggerRelease(freq);
-                }
-                highlightKey(note, false);
-            }
-        };
-
-        activeKeydownListener = keyboardListener;
-        activeKeyupListener = keyboardUpListener;
-        document.addEventListener("keydown", keyboardListener);
-        document.addEventListener("keyup", keyboardUpListener);
-
-        if (midiManager) {
-            midiManager.onStrokeCallback = (stroke) => {
-                const splitKey = parseInt(document.getElementById("midi-split-key").value) || 60;
-                const isFoot = stroke.notes.some(n => n < splitKey);
-                handleLimbTap(stroke.timestamp, isFoot);
             };
-        }
 
-        // Run for 8 bars (19.2 seconds)
-        setTimeout(() => {
-            stopActiveDrills();
-            isLimbPlaying = false;
+            const keyboardListener = (e) => {
+                if (e.repeat) return;
+                let note = null;
+                let isFoot = false;
+                if (e.code === "KeyA" || e.code === "KeyS") {
+                    isFoot = true;
+                    note = 60;
+                } else if (e.code === "KeyK" || e.code === "KeyL") {
+                    isFoot = false;
+                    note = 72;
+                }
+
+                if (note !== null) {
+                    handleLimbTap(e.timeStamp, isFoot);
+                    if (polySynth) {
+                        const freq = Tone.Frequency(note, "midi").toFrequency();
+                        polySynth.triggerAttack(freq, Tone.now(), 0.8);
+                    }
+                    highlightKey(note, true);
+                }
+            };
+
+            const keyboardUpListener = (e) => {
+                let note = null;
+                if (e.code === "KeyA" || e.code === "KeyS") {
+                    note = 60;
+                } else if (e.code === "KeyK" || e.code === "KeyL") {
+                    note = 72;
+                }
+
+                if (note !== null) {
+                    if (polySynth) {
+                        const freq = Tone.Frequency(note, "midi").toFrequency();
+                        polySynth.triggerRelease(freq);
+                    }
+                    highlightKey(note, false);
+                }
+            };
+
+            activeKeydownListener = keyboardListener;
+            activeKeyupListener = keyboardUpListener;
+            document.addEventListener("keydown", keyboardListener);
+            document.addEventListener("keyup", keyboardUpListener);
+
+            if (midiManager) {
+                midiManager.onStrokeCallback = (stroke) => {
+                    const splitKey = parseInt(document.getElementById("midi-split-key").value) || 60;
+                    const isFoot = stroke.notes.some(n => n < splitKey);
+                    handleLimbTap(stroke.timestamp, isFoot);
+                };
+            }
+
+            loopPart.start(drillStartTime);
             
-            const btn = document.getElementById("start-limb-btn");
-            if (btn) btn.innerText = "Start Drill";
-            
-            evaluateLimbIndependence(footTaps, footTargets, handTaps, handTargets);
-        }, 32 * beatMs + 500);
+            // Start progress tracking
+            const totalDurationMs = 32 * beatMs;
+            startProgressTracker(totalDurationMs, 8, 4, bpm);
+
+            // Run for 8 bars (19.2 seconds)
+            activeDrillTimeout = setTimeout(() => {
+                stopActiveDrills();
+                isLimbPlaying = false;
+                
+                const btn = document.getElementById("start-limb-btn");
+                if (btn) btn.innerText = "Start Drill";
+                
+                evaluateLimbIndependence(footTaps, footTargets, handTaps, handTargets);
+            }, totalDurationMs + 500);
+        });
     }
 
     function evaluateLimbIndependence(footTaps, footGrid, handTaps, handGrid) {
