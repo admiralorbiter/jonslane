@@ -92,24 +92,24 @@ For interactive, zero-latency applications like the BPM ear trainer, we employ a
 
 ---
 
-## 🎹 Planned: Rhythm Intelligence Platform & Academy
+## 🎹 Rhythm Intelligence Platform & Academy
 
-The architecture is designed to grow into a **three-layer platform** where public tools, a shared technical core, and a private Academy co-exist cleanly. See `docs/count_me_in/roadmap.md` for the full feature roadmap.
+The architecture is built as a **three-layer platform** where public tools, a shared technical core, and a private Academy co-exist cleanly. See `docs/count_me_in/roadmap.md` for the full feature roadmap.
 
 ### Platform Layers
 
 ```
 Layer 1: Public Surfaces (no login required)
 ├── Count Me In (/game)   — DJ BPM ear training
-├── Piano Lab   (/piano)  — Instrument rhythm practice [planned]
+├── Piano Lab   (/piano)  — Instrument rhythm practice
 └── Any future public tools
 
 Layer 2: Shared Technical Core (invisible to users)
 ├── BpmAudioEngine (Tone.js)   — shared audio engine
-├── MidiDeviceManager           — shared MIDI input [planned]
+├── MidiDeviceManager           — shared MIDI input
 ├── Attempt model               — shared attempt logging
 ├── User model + auth           — shared identity
-└── utils/srs.py, diagnostics  — shared algorithms [planned]
+└── utils/srs.py, diagnostics  — shared algorithms (SRS implemented, diagnostics planned)
 
 Layer 3: Academy (/academy)     — AUTH-GATED: logged-in users only
 ├── Curriculum map + skill graph

@@ -164,7 +164,7 @@ The diagnostic string is added to the existing `/game/api/attempt` JSON response
 
 ---
 
-## 7. Planned: Spaced Repetition System (`utils/srs.py` + `AnchorSchedule` model)
+## 7. Spaced Repetition System (`utils/srs.py` + `AnchorSchedule` model)
 
 To be added in V4 (Academy), the SRS system schedules anchor tempo reviews at expanding intervals.
 
@@ -229,7 +229,7 @@ A "Metrical Match" (octave error like hearing 70 BPM for a 140 BPM loop) is rate
 
 ---
 
-## 8. Planned: MIDI Device Manager (`midi_manager.js`)
+## 8. MIDI Device Manager (`midi_manager.js`)
 
 To be added in V5 (Piano Lab), the MIDI Device Manager wraps the Web MIDI API and provides a unified event source for any lab that currently uses keyboard input.
 
@@ -278,7 +278,7 @@ The `MIDIAccess.onstatechange` handler property must be explicitly set to `null`
 
 ---
 
-## 9. Planned: Attempt Model Extension
+## 9. Attempt Model Extension
 
 To support multiple modules (Count Me In, Piano Lab) and new lab types, the `Attempt` table will be extended with additive columns via Alembic migration:
 
@@ -307,7 +307,7 @@ Existing analytics queries remain unaffected because they filter on `is_anchor =
 
 ---
 
-## 10. Planned: Blueprint Authentication Gating Pattern
+## 10. Blueprint Authentication Gating Pattern
 
 To protect the future Academy blueprint routes globally and avoid manual checks in every route, a `before_request` hook will be registered on the blueprint using the session-based authentication check:
 
@@ -325,7 +325,7 @@ This guarantees that all routes registered under `/academy` are automatically ga
 
 ---
 
-## 11. Planned: Academy Discovery & Post-Login Transition
+## 11. Academy Discovery & Post-Login Transition
 
 To preserve guest UX while ensuring immediate onboarding value for registered users:
 *   **Nav Injection:** The Academy entry point is completely hidden from guests (no grayed out link). `base.html` conditionally registers the `/academy` link based on user auth status.
@@ -334,7 +334,7 @@ To preserve guest UX while ensuring immediate onboarding value for registered us
 
 ---
 
-## 12. Planned: On-Demand Skill Profile Calculation (No Denormalization)
+## 12. On-Demand Skill Profile Calculation (No Denormalization)
 
 To support multiple domains (music, piano, future topics) without constant database migrations, the user skill profile (`UserSkillProfile`) is computed entirely **on-demand** from the `Attempt` table:
 *   **Aggregation Query:** Group attempts by `module` and `skill_tag` to aggregate stats:

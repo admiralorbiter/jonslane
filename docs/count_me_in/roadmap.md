@@ -64,7 +64,7 @@ Version 3.0 shifts Count Me In from a "Tempo Trainer" to a complete **DJ Rhythm,
 
 ---
 
-### Version 4.0: Count Me In Academy [Designed — Planned for Phased Build]
+### Version 4.0: Count Me In Academy [Completed]
 
 Version 4.0 restructures Count Me In into a **year-long, research-grounded rhythm intelligence curriculum** with 8 progressive levels. The pedagogy loop is:
 
@@ -122,7 +122,7 @@ The curriculum is structured into progressive levels. Levels 2 and 3 run as para
 
 ---
 
-### Version 5.0: Piano Lab & MIDI Integration [Designed — Future]
+### Version 5.0: Piano Lab & MIDI Integration [Completed]
 
 Version 5.0 introduces a dedicated **Piano Lab** module (`/piano`) and full **MIDI controller support**, extending the rhythm intelligence platform beyond DJ ear-training to instrument practice.
 
@@ -139,23 +139,29 @@ Version 5.0 introduces a dedicated **Piano Lab** module (`/piano`) and full **MI
 *   Implemented as a dedicated `piano.css` stylesheet injected via the `{% block extra_css %}` mechanism (same pattern as `game.css`).
 *   The contrast between the two tools is intentional: they serve different practice contexts and should *feel* different.
 
-#### 5.2 Piano Lab Blueprint (`/piano`)
+#### 5.3 Piano Lab Blueprint (`/piano`)
 *   **Rhythm Drills:** Metronome-based pulse exercises, body-first before notation.
 *   **Subdivision Trainer:** LH quarters, RH eighths, scored separately per hand.
 *   **Chord-Loop Phrase Counter:** Play a 4-chord loop, count 8 bars to a phrase boundary.
 *   **Invisible Metronome:** Piano equivalent — play 8 bars with click, 2 bars without, resync.
 *   **MIDI Groove Matching:** App plays a reference groove; user matches it on MIDI keys in real time; drift scored.
 
-#### 5.3 Piano + DJ Bridge Labs
+#### 5.4 Piano + DJ Bridge Labs
 *   **Left Hand Pulse:** CMI tap-tempo stability meets LH quarter-note accompaniment.
 *   **Right Hand Eighths:** Subdivision recognition meets RH eighth-note patterns.
 *   **Drop Prediction Piano:** Identify where the bridge/chorus starts; play a piano stab on beat 1 of the new section.
 *   **Chord Change Timing:** App shows chord chart; user hits root note on each change; timing vs. phrase grid scored.
 
-#### 5.4 Body Before Brain Mode
+#### 5.5 Body Before Brain Mode
 *   Dalcroze/eurhythmics-inspired physical exercises before any notation.
 *   Labs: Walk at BPM (self-report), Clap on 2 and 4, Foot quarters + hand eighths (two-key or two-MIDI).
 *   Lowest barrier entry for complete beginners.
+
+#### 5.6 Version 5.2: Precision UI & Entrainment [Completed]
+*   **1-Bar Count-In Sequence:** Sounding high-pitched metronome clicks (`C6` click synth) while displaying visual countdown digits (4, 3, 2, 1) to block inputs during warmup and prevent starting delay.
+*   **Visual Progress Bar & Elapsed Timer:** Mahogany-brass style filling bar with a real-time running clock (e.g. "Bar 5 / 16", "12.4s").
+*   **Real-time Timing Feedback:** Flashing and fading color-coded performance text directly above the keyboard visualizer (e.g. "Perfect!" for $\pm25\text{ms}$, "Early" for $<0\text{ms}$, "Late" for $>0\text{ms}$).
+*   **Active Cleanup Lifecycle:** Refactored teardown pipeline inside `stopActiveDrills()` to cancel Tone.Transport schedulers, clear timeouts, reset state indicators, and halt sound generators instantaneously.
 
 ---
 
@@ -166,11 +172,11 @@ The full platform follows a three-layer model:
 ```
 djon Music Hub (music.html)
 ├── Count Me In  (/game)   — DJ Ear Training       [public, Layer 1]
-├── Piano Lab    (/piano)  — Instrument Practice   [public, Layer 1, planned]
-├── Academy Hub  (/academy)— Curriculum & Progress [auth-gated, Layer 3, planned]
+├── Piano Lab    (/piano)  — Instrument Practice   [public, Layer 1]
+├── Academy Hub  (/academy)— Curriculum & Progress [auth-gated, Layer 3]
 └── Shared Core            — Audio, MIDI, DB, Auth [Layer 2]
     ├── BpmAudioEngine (Tone.js)
-    ├── MidiDeviceManager [planned]
+    ├── MidiDeviceManager
     ├── Attempt model (+ module/skill_tag columns)
     ├── AnchorSchedule model (SRS) [auth-gated]
     └── UserSkillProfile (computed on-demand) [auth-gated]
