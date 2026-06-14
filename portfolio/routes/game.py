@@ -2,7 +2,7 @@ import json
 import random
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, render_template, request, redirect, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 
 from portfolio import db
 from portfolio.models import Attempt, Challenge, Crate, ReferenceTrack, User
@@ -17,6 +17,7 @@ VALID_ANCHOR_BPMS = [95, 120, 128, 140]
 
 class DummyCrate:
     """Dummy Crate class to mimic Crate model properties in templates."""
+
     def __init__(self, c_id, name, desc, diff, min_b, max_b, gen, ref_tracks):
         self.id = c_id
         self.name = name
@@ -186,10 +187,7 @@ def calculate_user_stats(user, attempts):
         stats["best_range"] = best_name
 
     # Compute anchor stats dynamically in memory to prevent N+4 query storm
-    anchor_attempts = [
-        a for a in attempts
-        if getattr(a, "is_anchor", False)
-    ]
+    anchor_attempts = [a for a in attempts if getattr(a, "is_anchor", False)]
     anchor_attempts_desc = sorted(anchor_attempts, key=lambda x: x.created_at, reverse=True)
 
     for bpm in VALID_ANCHOR_BPMS:
@@ -367,18 +365,18 @@ def validate_and_parse_attempt_data(att_data):
     input_method = att_data.get("input_method")
     if input_method:
         input_method = str(input_method)
-        
+
     phase_error_ms = None
     if att_data.get("phase_error_ms") is not None:
         try:
             phase_error_ms = float(att_data["phase_error_ms"])
         except (ValueError, TypeError):
             pass
-            
+
     hand = att_data.get("hand")
     if hand:
         hand = str(hand)
-        
+
     phrase_length = None
     if att_data.get("phrase_length") is not None:
         try:
@@ -409,10 +407,12 @@ def validate_and_parse_attempt_data(att_data):
 def recalculate_user_streaks(user):
     """Recalculate and persist chronological streaks for a user. Callers must commit transaction."""
     # Bounded query to avoid full-table scan on huge histories.
-    recent_attempts = Attempt.query.filter_by(user_id=user.id, module="count_me_in")\
-        .order_by(Attempt.created_at.desc())\
-        .limit(500)\
+    recent_attempts = (
+        Attempt.query.filter_by(user_id=user.id, module="count_me_in")
+        .order_by(Attempt.created_at.desc())
+        .limit(500)
         .all()
+    )
 
     current_streak = 0
     for a in recent_attempts:
@@ -612,7 +612,8 @@ def play(crate_id):
 @game_bp.route("/submit", methods=["POST"])
 def submit():
     """Legacy submission route used by automated test suites."""
-    from flask import current_app, abort
+    from flask import abort, current_app
+
     if not current_app.config.get("TESTING"):
         abort(404)
 
@@ -710,14 +711,14 @@ def submit_attempt():
     module = data.get("module", "count_me_in")
     skill_tag = data.get("skill_tag")
     input_method = data.get("input_method")
-    
+
     phase_error_ms = None
     if data.get("phase_error_ms") is not None:
         try:
             phase_error_ms = float(data["phase_error_ms"])
         except (ValueError, TypeError):
             pass
-            
+
     hand = data.get("hand")
     phrase_length = None
     if data.get("phrase_length") is not None:
@@ -819,10 +820,11 @@ def submit_attempt():
         )
         db.session.add(attempt)
         db.session.commit()
-        
+
         # If it's an anchor challenge, trigger SRS schedule update
         if is_anchor and anchor_bpm:
             from portfolio.utils.srs import update_schedule_after_attempt
+
             update_schedule_after_attempt(user.id, anchor_bpm, rating, attempt.created_at)
     except Exception:
         db.session.rollback()
@@ -862,15 +864,21 @@ def sync():
 
     synced_count = 0
     new_attempts = []
-    anchor_attempts_map = {} # anchor_bpm -> list of percent_errors
-    
+    anchor_attempts_map = {}  # anchor_bpm -> list of percent_errors
+
     # 1. Bulk pre-query UUIDs to prevent N SELECT queries
-    uuids = [att.get("client_uuid") for att in attempts_data if isinstance(att, dict) and att.get("client_uuid")]
+    uuids = [
+        att.get("client_uuid")
+        for att in attempts_data
+        if isinstance(att, dict) and att.get("client_uuid")
+    ]
     existing_uuids = set()
     if uuids:
-        existing = db.session.query(Attempt.client_uuid).filter(Attempt.client_uuid.in_(uuids)).all()
+        existing = (
+            db.session.query(Attempt.client_uuid).filter(Attempt.client_uuid.in_(uuids)).all()
+        )
         existing_uuids = {r[0] for r in existing}
-        
+
     for att_data in attempts_data:
         if not isinstance(att_data, dict):
             continue
@@ -889,12 +897,14 @@ def sync():
                 calculate_piano_score_and_rating(
                     parsed.get("skill_tag"),
                     tap_stability=parsed.get("tap_stability"),
-                    phase_error_ms=parsed.get("phase_error_ms")
+                    phase_error_ms=parsed.get("phase_error_ms"),
                 )
             )
         else:
             score, rating, is_success, percent_error, bpm_error, metrical_multiplier = (
-                calculate_score_and_rating(parsed["guessed_bpm"], parsed["true_bpm"], parsed.get("clue_level", 4))
+                calculate_score_and_rating(
+                    parsed["guessed_bpm"], parsed["true_bpm"], parsed.get("clue_level", 4)
+                )
             )
 
         try:
@@ -925,14 +935,14 @@ def sync():
                 )
                 db.session.add(attempt)
                 new_attempts.append(attempt)
-                
+
                 # Track anchor info for seeding
                 if parsed["is_anchor"] and parsed["anchor_bpm"]:
                     bpm = parsed["anchor_bpm"]
                     if bpm not in anchor_attempts_map:
                         anchor_attempts_map[bpm] = []
                     anchor_attempts_map[bpm].append(percent_error)
-            
+
             synced_count += 1
         except Exception:
             continue
@@ -942,12 +952,13 @@ def sync():
         # Seeding AnchorSchedule dynamically using the parsed statistics
         try:
             from portfolio.utils.srs import seed_schedule_from_history
+
             for bpm, errs in anchor_attempts_map.items():
                 avg_err = sum(errs) / len(errs)
                 seed_schedule_from_history(user.id, bpm, avg_err)
         except Exception:
             pass
-            
+
         recalculate_user_streaks(user)
         db.session.commit()
 

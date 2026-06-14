@@ -1,7 +1,8 @@
 import unittest
 from datetime import datetime, timedelta, timezone
+
 from portfolio import create_app, db
-from portfolio.models import User, Attempt, AnchorSchedule, seed_database
+from portfolio.models import AnchorSchedule, Attempt, User, seed_database
 from portfolio.utils.srs import update_schedule_after_attempt
 
 
@@ -31,7 +32,7 @@ class PianoTestCase(unittest.TestCase):
         payload = {
             "client_uuid": "piano_uuid_anon",
             "skill_tag": "subdivision",
-            "tap_stability": 30.0
+            "tap_stability": 30.0,
         }
         response = self.client.post("/piano/api/attempts", json=payload)
         self.assertEqual(response.status_code, 401)
@@ -44,10 +45,7 @@ class PianoTestCase(unittest.TestCase):
         db.session.commit()
 
         # Connect session
-        self.client.post("/auth/login", data={
-            "email": "student@piano.com",
-            "password": "piano123"
-        })
+        self.client.post("/auth/login", data={"email": "student@piano.com", "password": "piano123"})
 
         # Submit attempt
         payload = {
@@ -55,7 +53,7 @@ class PianoTestCase(unittest.TestCase):
             "skill_tag": "subdivision",
             "tap_stability": 30.0,
             "input_method": "midi",
-            "hand": "both"
+            "hand": "both",
         }
         response = self.client.post("/piano/api/attempts", json=payload)
         self.assertEqual(response.status_code, 201)
@@ -82,10 +80,7 @@ class PianoTestCase(unittest.TestCase):
         db.session.commit()
 
         # Connect session
-        self.client.post("/auth/login", data={
-            "email": "sync@piano.com",
-            "password": "sync123"
-        })
+        self.client.post("/auth/login", data={"email": "sync@piano.com", "password": "sync123"})
 
         # Payload includes both CMI and Piano attempts
         payload = {
@@ -95,7 +90,7 @@ class PianoTestCase(unittest.TestCase):
                     "guessed_bpm": 120.0,
                     "true_bpm": 120.0,
                     "module": "count_me_in",
-                    "created_at": "2026-06-14T12:00:00Z"
+                    "created_at": "2026-06-14T12:00:00Z",
                 },
                 {
                     "client_uuid": "uuid_piano_1",
@@ -104,8 +99,8 @@ class PianoTestCase(unittest.TestCase):
                     "module": "piano_lab",
                     "skill_tag": "phase_alignment",
                     "phase_error_ms": 15.0,
-                    "created_at": "2026-06-14T12:01:00Z"
-                }
+                    "created_at": "2026-06-14T12:01:00Z",
+                },
             ]
         }
         response = self.client.post("/game/api/sync", json=payload)
@@ -124,6 +119,7 @@ class PianoTestCase(unittest.TestCase):
 
         # Check stats pollution (Piano attempts should not pollute DJ dashboard stats)
         from portfolio.routes.game import calculate_user_stats
+
         all_attempts = Attempt.query.filter_by(user_id=user.id).all()
         stats = calculate_user_stats(user, all_attempts)
         # Total attempts for CMI should only be 1
@@ -137,7 +133,7 @@ class PianoTestCase(unittest.TestCase):
         # Update schedule with Metrical Match rating
         # Metrical Match should map to Quality 3 (which allows repetitions and interval growth)
         update_schedule_after_attempt(user.id, 120, "Metrical Match")
-        
+
         # Verify schedule exists
         schedule = AnchorSchedule.query.filter_by(user_id=user.id, anchor_bpm=120).first()
         self.assertIsNotNone(schedule)

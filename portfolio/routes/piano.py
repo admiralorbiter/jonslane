@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
-from flask import Blueprint, render_template, request, jsonify, session
+
+from flask import Blueprint, jsonify, render_template, request, session
+
 from portfolio import db
 from portfolio.models import Attempt, User
 from portfolio.routes.game import calculate_piano_score_and_rating
@@ -38,7 +40,7 @@ def submit_attempt():
     skill_tag = data.get("skill_tag")
     input_method = data.get("input_method", "tap")
     hand = data.get("hand")
-    
+
     # Parse numeric timing fields
     try:
         guessed_bpm = float(data.get("guessed_bpm", 120.0))
@@ -70,9 +72,7 @@ def submit_attempt():
     # Calculate metrics
     score, rating, is_success, percent_error, bpm_error, metrical_multiplier = (
         calculate_piano_score_and_rating(
-            skill_tag,
-            tap_stability=tap_stability,
-            phase_error_ms=phase_error_ms
+            skill_tag, tap_stability=tap_stability, phase_error_ms=phase_error_ms
         )
     )
 
@@ -103,10 +103,12 @@ def submit_attempt():
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": f"Failed to save attempt: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to save attempt: {e!s}"}), 500
 
-    return jsonify({
-        "success": True,
-        "score": score,
-        "rating": rating,
-    }), 201
+    return jsonify(
+        {
+            "success": True,
+            "score": score,
+            "rating": rating,
+        }
+    ), 201

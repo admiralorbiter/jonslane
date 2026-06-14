@@ -1,5 +1,7 @@
 import pytest
+
 from portfolio import create_app, db
+
 
 @pytest.fixture
 def client():
@@ -11,12 +13,14 @@ def client():
             yield client
             db.drop_all()
 
+
 def test_home_page(client):
     """Verify that the home page renders successfully."""
     response = client.get("/")
     assert response.status_code == 200
     assert b"Jon's Lane" in response.data
     assert b"music / djon" in response.data
+
 
 def test_music_page(client):
     """Verify that the music page renders successfully."""

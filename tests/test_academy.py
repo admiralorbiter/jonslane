@@ -1,8 +1,9 @@
 import unittest
 from datetime import datetime, timedelta, timezone
+
 from portfolio import create_app, db
-from portfolio.models import User, Attempt, seed_database
-from portfolio.utils.academy_stats import get_user_academy_stats, calculate_skills_mastery
+from portfolio.models import Attempt, User, seed_database
+from portfolio.utils.academy_stats import calculate_skills_mastery, get_user_academy_stats
 
 
 class AcademyTestCase(unittest.TestCase):
@@ -39,21 +40,23 @@ class AcademyTestCase(unittest.TestCase):
         db.session.commit()
 
         # Connect session (POST request with next parameter)
-        response = self.client.post("/auth/login", data={
-            "email": "test@example.com",
-            "password": "password123",
-            "next": "/academy/"
-        })
+        response = self.client.post(
+            "/auth/login",
+            data={"email": "test@example.com", "password": "password123", "next": "/academy/"},
+        )
         self.assertEqual(response.status_code, 302)
         # Should redirect to next path (/academy/)
         self.assertEqual(response.headers.get("Location"), "/academy/")
 
         # Test malicious open redirects
-        response2 = self.client.post("/auth/login", data={
-            "email": "test@example.com",
-            "password": "password123",
-            "next": "http://evil-attacker.com"
-        })
+        response2 = self.client.post(
+            "/auth/login",
+            data={
+                "email": "test@example.com",
+                "password": "password123",
+                "next": "http://evil-attacker.com",
+            },
+        )
         # Should fallback to default dashboard redirect
         self.assertEqual(response2.status_code, 302)
         self.assertEqual(response2.headers.get("Location"), "/game/dashboard")
@@ -87,9 +90,9 @@ class AcademyTestCase(unittest.TestCase):
                 score=100,
                 rating="Tempo Wizard",
                 client_uuid=f"uuid-find-pulse-{i}",
-                tap_stability=28.0, # <= 30.0 -> score = 100
+                tap_stability=28.0,  # <= 30.0 -> score = 100
                 skill_tag="find_pulse",
-                created_at=day1
+                created_at=day1,
             )
             db.session.add(att)
 
@@ -103,9 +106,9 @@ class AcademyTestCase(unittest.TestCase):
                 score=100,
                 rating="Tempo Wizard",
                 client_uuid=f"uuid-find-pulse-{i}",
-                tap_stability=35.0, # 35 <= 50 -> score = 100 - (35-30) = 95
+                tap_stability=35.0,  # 35 <= 50 -> score = 100 - (35-30) = 95
                 skill_tag="find_pulse",
-                created_at=day2
+                created_at=day2,
             )
             db.session.add(att)
 

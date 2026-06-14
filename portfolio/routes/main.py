@@ -13,4 +13,3 @@ def index():
 def music():
     """Render the djon music section page."""
     return render_template("main/music.html")
-

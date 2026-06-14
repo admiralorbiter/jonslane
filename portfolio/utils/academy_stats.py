@@ -1,7 +1,6 @@
 import math
-from datetime import datetime, timezone
-from sqlalchemy import func
-from portfolio.models import db, Attempt, AnchorSchedule
+
+from portfolio.models import Attempt, db
 
 VALID_ANCHOR_BPMS = [95, 120, 128, 140]
 
@@ -30,7 +29,7 @@ def get_skill_stats(user_id, skill_tag):
             "avg_stability": None,
             "sd_stability": None,
             "avg_phase_error": None,
-            "count": 0
+            "count": 0,
         }
 
     sum_pct = 0.0
@@ -67,7 +66,7 @@ def get_skill_stats(user_id, skill_tag):
         "avg_stability": avg_stability,
         "sd_stability": sd_stability,
         "avg_phase_error": avg_phase,
-        "count": count
+        "count": count,
     }
 
 
@@ -77,7 +76,7 @@ def calculate_skills_mastery(user_id):
     """
     # 1. Pulse Entrainment (skill_tag = 'find_pulse')
     pulse = get_skill_stats(user_id, "find_pulse")
-    pulse_sd = pulse["sd_stability"] or pulse["avg_stability"] # fallback if only 1 attempt
+    pulse_sd = pulse["sd_stability"] or pulse["avg_stability"]  # fallback if only 1 attempt
     if pulse_sd is None:
         pulse_score = 0.0
     else:
@@ -152,11 +151,13 @@ def calculate_skills_mastery(user_id):
         "downbeat_alignment": round(downbeat_score, 1),
         "subdivision_stability": round(subdiv_score, 1),
         "metrical_ambiguity": round(metrical_score, 1),
-        "absolute_tempo_memory": round(tempo_score, 1)
+        "absolute_tempo_memory": round(tempo_score, 1),
     }
 
 
-def check_level_mastery(user_id, skill_tag, threshold, metric_name, min_attempts=5, percent_required=0.8):
+def check_level_mastery(
+    user_id, skill_tag, threshold, metric_name, min_attempts=5, percent_required=0.8
+):
     """
     Check if the user has mastered a specific level by evaluating a rolling window.
     Requires that at least percent_required (e.g. 80%) of the last min_attempts
@@ -181,7 +182,7 @@ def check_level_mastery(user_id, skill_tag, threshold, metric_name, min_attempts
             # For phase_error, check absolute error
             if metric_name == "phase_error_ms":
                 val = abs(val)
-                
+
             if val <= threshold:
                 qualifying_count += 1
                 if a.created_at:
@@ -206,7 +207,7 @@ def get_user_level_progression(user_id):
         4: "locked",
         5: "locked",
         6: "locked",
-        7: "locked"
+        7: "locked",
     }
 
     # Evaluate mastery for Level 0
@@ -215,7 +216,7 @@ def get_user_level_progression(user_id):
         skill_tag="find_pulse",
         threshold=50.0,
         metric_name="tap_stability",
-        min_attempts=5
+        min_attempts=5,
     )
     if l0_mastered:
         progression[0] = "mastered"
@@ -227,7 +228,7 @@ def get_user_level_progression(user_id):
         skill_tag="meter_downbeat",
         threshold=60.0,
         metric_name="phase_error_ms",
-        min_attempts=5
+        min_attempts=5,
     )
     if l0_mastered and l1_mastered:
         progression[1] = "mastered"
@@ -240,14 +241,14 @@ def get_user_level_progression(user_id):
         skill_tag="subdivision",
         threshold=45.0,
         metric_name="tap_stability",
-        min_attempts=5
+        min_attempts=5,
     )
     l3_mastered = check_level_mastery(
         user_id=user_id,
         skill_tag="metrical_ambiguity",
         threshold=3.0,
         metric_name="percent_error",
-        min_attempts=5
+        min_attempts=5,
     )
 
     if l2_mastered:
@@ -274,7 +275,7 @@ def get_user_level_progression(user_id):
         skill_tag="groove",
         threshold=40.0,
         metric_name="tap_stability",
-        min_attempts=5
+        min_attempts=5,
     )
     if progression[5] == "unlocked" and l5_mastered:
         progression[5] = "mastered"
@@ -286,7 +287,7 @@ def get_user_level_progression(user_id):
         skill_tag="phrasing",
         threshold=75.0,
         metric_name="phase_error_ms",
-        min_attempts=5
+        min_attempts=5,
     )
     if progression[6] == "unlocked" and l6_mastered:
         progression[6] = "mastered"
@@ -298,7 +299,7 @@ def get_user_level_progression(user_id):
         skill_tag="beatmatch",
         threshold=40.0,
         metric_name="phase_error_ms",
-        min_attempts=5
+        min_attempts=5,
     )
     if progression[7] == "unlocked" and l7_mastered:
         progression[7] = "mastered"
@@ -314,7 +315,4 @@ def get_user_academy_stats(user_id):
     skills = calculate_skills_mastery(user_id)
     progression = get_user_level_progression(user_id)
 
-    return {
-        "skills": skills,
-        "progression": progression
-    }
+    return {"skills": skills, "progression": progression}

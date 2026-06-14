@@ -124,7 +124,9 @@ class Attempt(db.Model):
     __tablename__ = "attempts"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     challenge_id = db.Column(
         db.Integer, db.ForeignKey("challenges.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -208,7 +210,9 @@ class AnchorSchedule(db.Model):
     __tablename__ = "anchor_schedules"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     anchor_bpm = db.Column(db.Integer, nullable=False)
     ease_factor = db.Column(db.Float, nullable=False, default=2.5)
     interval_days = db.Column(db.Integer, nullable=False, default=1)

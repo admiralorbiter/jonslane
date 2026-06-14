@@ -17,9 +17,13 @@ def register():
 def login():
     """Log in an existing user."""
     next_page = request.args.get("next") or request.form.get("next") or ""
-    
+
     # Secure validation of next redirect target to prevent Open Redirects
-    is_safe = next_page.startswith("/") and not next_page.startswith("//") and not next_page.startswith("\\")
+    is_safe = (
+        next_page.startswith("/")
+        and not next_page.startswith("//")
+        and not next_page.startswith("\\")
+    )
     redirect_target = next_page if is_safe else url_for("game.dashboard")
 
     if session.get("user_id"):

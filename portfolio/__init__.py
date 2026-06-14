@@ -53,10 +53,10 @@ def create_app(config_name="development"):
     migrate.init_app(app, db, render_as_batch=True)
 
     # Register blueprints
+    from portfolio.routes.academy import academy_bp
     from portfolio.routes.auth import auth_bp
     from portfolio.routes.game import game_bp
     from portfolio.routes.main import main_bp
-    from portfolio.routes.academy import academy_bp
     from portfolio.routes.piano import piano_bp
 
     app.register_blueprint(main_bp)

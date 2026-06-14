@@ -1,4 +1,5 @@
 import os
+from typing import ClassVar
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -15,7 +16,7 @@ class Config:
         or f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'portfolio.db')}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"timeout": 15}}
+    SQLALCHEMY_ENGINE_OPTIONS: ClassVar[dict] = {"connect_args": {"timeout": 15}}
 
     # Cookie security headers
     SESSION_COOKIE_HTTPONLY = True
