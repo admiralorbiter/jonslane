@@ -148,7 +148,7 @@ class GameTestCase(unittest.TestCase):
         # Guess out of bounds (< 1.0)
         response = self.client.post(
             "/game/api/attempt",
-            data=json.dumps({"guess": 0.5, "challenge_token": "some-token"}),
+            data=json.dumps({"guess": 0.5, "challenge_token": "some-token", "client_uuid": "test-uuid-bounds-check"}),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
@@ -161,7 +161,7 @@ class GameTestCase(unittest.TestCase):
 
         response = self.client.post(
             "/game/api/attempt",
-            data=json.dumps({"guess": 120.0, "challenge_token": "invalid-token-signature"}),
+            data=json.dumps({"guess": 120.0, "challenge_token": "invalid-token-signature", "client_uuid": "test-uuid-invalid-token"}),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
@@ -423,6 +423,126 @@ class GameTestCase(unittest.TestCase):
 
         self.assertEqual(stats["total_attempts"], 3)
         self.assertEqual(stats["avg_stability"], 15.0) # Average of [10.0, 20.0]
+
+    def test_anchor_play_route_whitelist_validation(self):
+        """Test that the anchor play route rejects non-whitelisted BPMs."""
+        # Whitelisted: [95, 120, 128, 140]
+        response = self.client.get("/game/play/anchor/100")
+        self.assertEqual(response.status_code, 400)
+        
+        response = self.client.get("/game/play/anchor/120")
+        self.assertEqual(response.status_code, 200)
+
+    def test_anchor_play_route_metadata(self):
+        """Test that anchor play route signs a token with correct metadata."""
+        response = self.client.get("/game/play/anchor/128?level=2")
+        self.assertEqual(response.status_code, 200)
+        html = response.data.decode("utf-8")
+        
+        # Verify configurations are in HTML
+        self.assertIn("isAnchor: true", html)
+        self.assertIn("anchorBpm: 128", html)
+        self.assertIn("anchorLevel: 2", html)
+
+    def test_anchor_api_attempt_persistence(self):
+        """Test direct submit handles anchor metadata correctly from verified token."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        from portfolio.utils.security import generate_challenge_token
+        # Create a signed anchor challenge token
+        token = generate_challenge_token(
+            true_bpm=128.5,
+            crate_name="Anchor 128 BPM",
+            is_anchor=True,
+            anchor_bpm=128.0,
+            anchor_level=2
+        )
+
+        response = self.client.post(
+            "/game/api/attempt",
+            data=json.dumps({
+                "guess": 129.0,
+                "challenge_token": token,
+                "client_uuid": "test-anchor-direct-uuid"
+            }),
+            content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 201)
+
+        # Query database to check if fields persisted
+        attempt = Attempt.query.filter_by(client_uuid="test-anchor-direct-uuid").first()
+        self.assertIsNotNone(attempt)
+        self.assertTrue(attempt.is_anchor)
+        self.assertEqual(attempt.anchor_bpm, 128.0)
+        self.assertEqual(attempt.anchor_level, 2)
+
+    def test_anchor_token_expiration_120s(self):
+        """Test that anchor challenge token rejects submissions after 120 seconds."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        import time
+        from itsdangerous import URLSafeTimedSerializer
+        serializer = URLSafeTimedSerializer(self.app.config["SECRET_KEY"])
+        
+        # Manually construct expired payload (timestamp is 150 seconds ago)
+        expired_payload = {
+            "true_bpm": 128.0,
+            "crate_name": "Anchor 128 BPM",
+            "timestamp": time.time() - 150,
+            "is_anchor": True,
+            "anchor_bpm": 128.0,
+            "anchor_level": 2
+        }
+        token = serializer.dumps(expired_payload)
+
+        response = self.client.post(
+            "/game/api/attempt",
+            data=json.dumps({
+                "guess": 128.0,
+                "challenge_token": token,
+                "client_uuid": "test-expired-anchor-uuid"
+            }),
+            content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data.decode("utf-8"))
+        self.assertIn("expired", data["error"])
+
+    def test_calculate_user_stats_ari_and_progression(self):
+        """Test calculation of Absolute Recall Index (ARI) and level progression logic."""
+        user = User.query.first()
+        # Seed 10 attempts for anchor 120 BPM with 1.5% percent error
+        for i in range(10):
+            attempt = Attempt(
+                user_id=user.id,
+                guessed_bpm=121.8,
+                true_bpm=120.0,
+                bpm_error=1.8,
+                percent_error=1.5,
+                score=75,
+                rating="DJ-Ready",
+                is_anchor=True,
+                anchor_bpm=120.0,
+                anchor_level=1,
+                client_uuid=f"ari-attempt-{i}"
+            )
+            db.session.add(attempt)
+        db.session.commit()
+
+        from portfolio.routes.game import calculate_user_stats, get_unlocked_level
+        attempts = Attempt.query.filter_by(user_id=user.id).all()
+        stats = calculate_user_stats(user, attempts)
+
+        # ARI = 100 - (1.5 * 10) = 85
+        self.assertEqual(stats["anchor_stats"][120]["ari"], 85.0)
+        
+        # Check that Level 4 is unlocked because ARI >= 85
+        unlocked = get_unlocked_level(user.id, 120.0)
+        self.assertEqual(unlocked, 4)
 
 
 if __name__ == "__main__":

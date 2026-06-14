@@ -60,6 +60,47 @@
                 </div>
                 {% endfor %}
             </div>
+
+            <!-- Anchor Tempo Training Section -->
+            <h2 class="crates-title" style="margin-top: 40px;">Anchor Tempo Training Center</h2>
+            <div class="crates-grid" id="anchors-grid">
+                {% set anchor_metadata = [
+                    {"bpm": 95, "name": "95 BPM Anchor", "desc": "Lock in 95 BPM - the iconic swing of Boom-Bap Hip Hop.", "difficulty": "Easy", "genre": "beginner"},
+                    {"bpm": 120, "name": "120 BPM Anchor", "desc": "Internalize 120 BPM - the deep groove of classic Deep House.", "difficulty": "Medium", "genre": "house"},
+                    {"bpm": 128, "name": "128 BPM Anchor", "desc": "Lock in 128 BPM - the driving energy of mainstream Dance music.", "difficulty": "Medium", "genre": "house"},
+                    {"bpm": 140, "name": "140 BPM Anchor", "desc": "Conquer 140 BPM - the half-time sway of Dubstep and Trap.", "difficulty": "Hard", "genre": "trap"}
+                ] %}
+                {% for meta in anchor_metadata %}
+                <div class="glass-card crate-card anchor-card" data-bpm="{{ meta.bpm }}">
+                    <div>
+                        <div class="crate-header">
+                            <span class="crate-name">{{ meta.name }}</span>
+                            <span class="difficulty-badge {{ meta.difficulty.lower() }}">{{ meta.difficulty }}</span>
+                        </div>
+                        <p class="crate-desc">{{ meta.desc }}</p>
+                        <div class="crate-meta">
+                            ARI: <span class="ari-val">{% if stats and stats.anchor_stats %}{{ stats.anchor_stats[meta.bpm].ari }}{% else %}N/A{% endif %}</span> | 
+                            High Streak: <span class="streak-val">{% if stats and stats.anchor_stats %}{{ stats.anchor_stats[meta.bpm].high_streak }}{% else %}0{% endif %}</span>
+                        </div>
+                        <div class="level-selector-row" style="margin: 15px 0; display: flex; flex-direction: column; gap: 5px;">
+                            <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Select Level:</span>
+                            <div class="level-btn-group" style="display: flex; gap: 6px;">
+                                {% set unlocked = stats.anchor_stats[meta.bpm].unlocked_level if (stats and stats.anchor_stats) else 1 %}
+                                {% for lvl in [1, 2, 3, 4] %}
+                                    <button type="button" class="btn-level {% if lvl == 1 %}active{% endif %} {% if lvl > unlocked %}locked{% endif %}" 
+                                            data-level="{{ lvl }}" 
+                                            style="flex: 1; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.2s;"
+                                            {% if lvl > unlocked %}disabled title="Locked. Complete previous level to unlock."{% endif %}>
+                                        Lvl {{ lvl }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('game.play_anchor', anchor_bpm=meta.bpm) }}?level=1" class="btn-game btn-play-anchor" style="text-align: center; width: 100%;">Start Calibration</a>
+                </div>
+                {% endfor %}
+            </div>
         </div>
 
         <!-- Rating Performance Breakdown -->
@@ -341,7 +382,129 @@ document.addEventListener("DOMContentLoaded", () => {
         if (cntElem) cntElem.textContent = `${count} (${pct}%)`;
         if (barElem) barElem.style.width = `${pct}%`;
     }
+
+    // Anchor metadata config for guest hydration
+    const anchorBpms = [95, 120, 128, 140];
+    
+    anchorBpms.forEach(bpm => {
+        const anchorAttempts = attempts.filter(a => a.is_anchor && parseFloat(a.anchor_bpm) === bpm);
+        
+        const last10 = anchorAttempts.slice(-10);
+        let ari = "N/A";
+        if (last10.length > 0) {
+            const sumPctErr = last10.reduce((sum, a) => sum + a.percent_error, 0);
+            const avgPctErr = sumPctErr / last10.length;
+            ari = Math.max(0, 100 - (avgPctErr * 10)).toFixed(1);
+        }
+        
+        let highStreak = 0;
+        let currentStreak = 0;
+        anchorAttempts.forEach(a => {
+            if (a.percent_error <= 5.0 || a.rating === "Metrical Match") {
+                currentStreak++;
+                if (currentStreak > highStreak) highStreak = currentStreak;
+            } else {
+                currentStreak = 0;
+            }
+        });
+        
+        let unlockedLevel = 1;
+        let l1Streak = 0;
+        let l2Streak = 0;
+        let l3Streak = 0;
+        
+        let hasUnlockedL2 = false;
+        let hasUnlockedL3 = false;
+        let hasUnlockedL4 = false;
+        
+        anchorAttempts.forEach(a => {
+            if (parseInt(a.anchor_level) === 1) {
+                if (a.percent_error <= 3.0) {
+                    l1Streak++;
+                    if (l1Streak >= 3) hasUnlockedL2 = true;
+                } else {
+                    l1Streak = 0;
+                }
+            } else if (parseInt(a.anchor_level) === 2) {
+                if (a.percent_error <= 3.0) {
+                    l2Streak++;
+                    if (l2Streak >= 3) hasUnlockedL3 = true;
+                } else {
+                    l2Streak = 0;
+                }
+            } else if (parseInt(a.anchor_level) === 3) {
+                if (a.percent_error <= 3.0) {
+                    l3Streak++;
+                    if (l3Streak >= 5) hasUnlockedL4 = true;
+                } else {
+                    l3Streak = 0;
+                }
+            }
+        });
+        
+        if (ari !== "N/A" && parseFloat(ari) >= 85.0) {
+            hasUnlockedL3 = true;
+            hasUnlockedL4 = true;
+        }
+        
+        if (hasUnlockedL4) unlockedLevel = 4;
+        else if (hasUnlockedL3) unlockedLevel = 3;
+        else if (hasUnlockedL2) unlockedLevel = 2;
+        
+        if (unlockedLevel > 2) unlockedLevel = 2; // Guest lock
+        
+        const card = document.querySelector(`.anchor-card[data-bpm="${bpm}"]`);
+        if (card) {
+            const ariValSpan = card.querySelector(".ari-val");
+            const streakValSpan = card.querySelector(".streak-val");
+            if (ariValSpan) ariValSpan.textContent = ari;
+            if (streakValSpan) streakValSpan.textContent = highStreak;
+            
+            const levelBtns = card.querySelectorAll(".btn-level");
+            levelBtns.forEach(btn => {
+                const lvl = parseInt(btn.getAttribute("data-level"));
+                btn.classList.remove("active");
+                if (lvl === 1) btn.classList.add("active");
+                
+                btn.classList.remove("locked");
+                btn.disabled = false;
+                btn.removeAttribute("title");
+                
+                if (lvl > unlockedLevel) {
+                    btn.classList.add("locked");
+                    btn.disabled = true;
+                    if (lvl > 2) {
+                        btn.setAttribute("title", "Sign in to unlock Level 3 and 4.");
+                    } else {
+                        btn.setAttribute("title", "Locked. Complete previous level to unlock.");
+                    }
+                }
+            });
+        }
+    });
 });
 </script>
 {% endif %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Setup interactive level selection for all anchor cards
+    document.querySelectorAll(".anchor-card").forEach(card => {
+        const levelBtns = card.querySelectorAll(".btn-level");
+        const playBtn = card.querySelector(".btn-play-anchor");
+        const bpm = card.getAttribute("data-bpm");
+        
+        levelBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                if (btn.classList.contains("locked") || btn.disabled) return;
+                
+                levelBtns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                
+                const level = btn.getAttribute("data-level");
+                playBtn.setAttribute("href", `/game/play/anchor/${bpm}?level=${level}`);
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -38,6 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentClueLevel = 4; // Default to full beat
     let isBraking = false;
     let isSubmitting = false;
+    let isVisualizerActive = false;
+    let anchorState = "idle"; // idle, calibrating, transitioning, testing
 
     // Tap Tempo state
     let tapTimes = [];
@@ -216,6 +218,36 @@ document.addEventListener("DOMContentLoaded", () => {
         // Skip hotkeys if user is currently typing in the guess input field or submitting
         if (document.activeElement === guessInput || isSubmitting) return;
 
+        if (anchorState === "calibrating") {
+            if (e.code === "Space" || e.key === "Enter") {
+                e.preventDefault();
+                endCalibration(true);
+                return;
+            }
+        }
+
+        if (e.key === "Escape") {
+            e.preventDefault();
+            stopPlayback(false);
+            return;
+        }
+
+        if (e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            if (tabKeyboard && !tabKeyboard.classList.contains("disabled")) tabKeyboard.click();
+            return;
+        }
+        if (e.key.toLowerCase() === "m") {
+            e.preventDefault();
+            if (tabTap && !tabTap.classList.contains("disabled")) tabTap.click();
+            return;
+        }
+        if (e.key.toLowerCase() === "r") {
+            e.preventDefault();
+            resetTaps();
+            return;
+        }
+
         const isTapActive = tabTap && tabTap.classList.contains("active");
 
         if (isTapActive) {
@@ -226,13 +258,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
                 handleTapRegistration();
-                return;
-            }
-            if (e.key === "Escape") {
-                e.preventDefault();
-                if (window.audioEngine.playing) {
-                    stopPlayback(false);
-                }
                 return;
             }
         } else {
@@ -247,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        if (e.key >= "1" && e.key <= "4") {
+        if (e.key >= "1" && e.key <= "4" && anchorState !== "calibrating") {
             const level = parseInt(e.key);
             setClueLevel(level);
         }
@@ -270,6 +295,133 @@ document.addEventListener("DOMContentLoaded", () => {
         window.audioEngine.dispose();
     });
 
+    function announceStatus(text) {
+        const announcer = document.getElementById("game-status-announcer");
+        if (announcer) {
+            announcer.textContent = text;
+        }
+    }
+
+    let calibrationInterval = null;
+
+    function startCalibration() {
+        anchorState = "calibrating";
+        announceStatus(`Calibration phase active. Reference BPM is ${window.CMI_CONFIG.anchorBpm}. Timer counting down.`);
+
+        const glassMask = document.getElementById("glass-mask");
+        if (glassMask) {
+            glassMask.classList.remove("hidden-state");
+        }
+
+        // Setup visual aids for level
+        if (window.CMI_CONFIG.anchorLevel === 2) {
+            if (canvas) canvas.style.filter = "blur(10px)";
+        } else {
+            if (canvas) canvas.style.filter = "none";
+        }
+
+        // Start audio engine locked to anchor BPM
+        const calibrationRecipe = {
+            ...recipe,
+            bpm: window.CMI_CONFIG.anchorBpm,
+            clueLevel: 4
+        };
+        window.audioEngine.start(calibrationRecipe);
+
+        // Start spinning vinyl record
+        vinylRecord.classList.add("spinning");
+        vinylRecord.classList.remove("braking", "transition-backspin", "transition-spinup");
+        const rotationTime = 60 / window.CMI_CONFIG.anchorBpm;
+        vinylRecord.style.animationDuration = `${rotationTime}s`;
+
+        startVisualizer();
+
+        let timeLeft = window.CMI_CONFIG.anchorLevel === 1 ? 15 : 5;
+        const timerDisplay = document.getElementById("calibration-timer-display");
+        if (timerDisplay) {
+            timerDisplay.textContent = `${timeLeft}s`;
+        }
+
+        if (calibrationInterval) clearInterval(calibrationInterval);
+        calibrationInterval = setInterval(() => {
+            timeLeft--;
+            if (timerDisplay) {
+                timerDisplay.textContent = `${timeLeft}s`;
+            }
+            if (timeLeft <= 0) {
+                clearInterval(calibrationInterval);
+                endCalibration(false);
+            }
+        }, 1000);
+
+        if (playBtn) playBtn.style.display = "none";
+        if (stopBtn) stopBtn.style.display = "flex";
+    }
+
+    function endCalibration(skipped = false) {
+        if (calibrationInterval) {
+            clearInterval(calibrationInterval);
+            calibrationInterval = null;
+        }
+
+        anchorState = "transitioning";
+        announceStatus("Calibration complete. Cleansing memory.");
+
+        // CSS Backspin
+        vinylRecord.classList.remove("spinning");
+        vinylRecord.classList.add("transition-backspin");
+
+        // CSS Flash
+        document.body.classList.add("flash-effect");
+        setTimeout(() => {
+            document.body.classList.remove("flash-effect");
+        }, 300);
+
+        // Web Audio palate cleanser & transition
+        window.audioEngine.transitionToTest(recipe.bpm, () => {
+            anchorState = "testing";
+            announceStatus("Entering test phase. Input your estimate relative to the anchor.");
+
+            document.body.classList.add("anchor-test-phase");
+
+            const glassMask = document.getElementById("glass-mask");
+            if (glassMask) {
+                glassMask.classList.add("hidden-state");
+            }
+
+            // Reset inputs
+            if (guessInput) {
+                guessInput.disabled = false;
+                if (tabKeyboard && tabKeyboard.classList.contains("active")) {
+                    guessInput.focus();
+                }
+            }
+            clueBadges.forEach(btn => btn.disabled = false);
+            if (tabKeyboard) tabKeyboard.classList.remove("disabled");
+            if (tabTap) tabTap.classList.remove("disabled");
+
+            vinylRecord.classList.remove("transition-backspin");
+            vinylRecord.classList.add("spinning");
+            const rotationTime = 60 / recipe.bpm;
+            vinylRecord.style.animationDuration = `${rotationTime}s`;
+        });
+    }
+
+    function startStandardPlayback() {
+        recipe.clueLevel = currentClueLevel;
+        window.audioEngine.start(recipe);
+
+        vinylRecord.classList.add("spinning");
+        vinylRecord.classList.remove("braking", "transition-backspin", "transition-spinup");
+        const rotationTime = 60 / recipe.bpm;
+        vinylRecord.style.animationDuration = `${rotationTime}s`;
+
+        startVisualizer();
+
+        if (playBtn) playBtn.style.display = "none";
+        if (stopBtn) stopBtn.style.display = "flex";
+    }
+
     async function startPlayback() {
         if (!recipe || isBraking || isSubmitting) return;
 
@@ -279,27 +431,34 @@ document.addEventListener("DOMContentLoaded", () => {
             await Tone.context.resume();
         }
 
-        // Set current clue level on engine
-        recipe.clueLevel = currentClueLevel;
-
-        // Start audio engine
-        window.audioEngine.start(recipe);
-
-        // Start spinning vinyl record
-        vinylRecord.classList.add("spinning");
-        vinylRecord.classList.remove("braking");
-        const rotationTime = 60 / recipe.bpm;
-        vinylRecord.style.animationDuration = `${rotationTime}s`;
-
-        // Start visualizer loop
-        startVisualizer();
-
-        // Toggle active button states
-        if (playBtn) playBtn.style.display = "none";
-        if (stopBtn) stopBtn.style.display = "flex";
+        if (window.CMI_CONFIG.isAnchor && (window.CMI_CONFIG.anchorLevel === 1 || window.CMI_CONFIG.anchorLevel === 2)) {
+            startCalibration();
+        } else {
+            startStandardPlayback();
+        }
     }
 
     function stopPlayback(withBrake = false) {
+        if (calibrationInterval) {
+            clearInterval(calibrationInterval);
+            calibrationInterval = null;
+        }
+        anchorState = "idle";
+        document.body.classList.remove("anchor-test-phase");
+
+        const glassMask = document.getElementById("glass-mask");
+        if (glassMask && window.CMI_CONFIG.isAnchor && (window.CMI_CONFIG.anchorLevel === 1 || window.CMI_CONFIG.anchorLevel === 2)) {
+            glassMask.classList.add("hidden-state");
+            const timerDisplay = document.getElementById("calibration-timer-display");
+            if (timerDisplay) {
+                timerDisplay.textContent = window.CMI_CONFIG.anchorLevel === 1 ? "15s" : "5s";
+            }
+            if (guessInput) guessInput.disabled = true;
+            clueBadges.forEach(btn => btn.disabled = true);
+            if (tabKeyboard) tabKeyboard.classList.add("disabled");
+            if (tabTap) tabTap.classList.add("disabled");
+        }
+
         if (withBrake) {
             isBraking = true;
             window.audioEngine.stop(true); // Ramp BPM down
@@ -309,15 +468,13 @@ document.addEventListener("DOMContentLoaded", () => {
             vinylRecord.style.animationDuration = "0.5s";
 
             setTimeout(() => {
-                vinylRecord.classList.remove("spinning");
-                vinylRecord.classList.remove("braking");
+                vinylRecord.classList.remove("spinning", "braking", "transition-backspin", "transition-spinup");
                 cancelVisualizer();
                 isBraking = false;
             }, 450);
         } else {
             window.audioEngine.stop(false);
-            vinylRecord.classList.remove("spinning");
-            vinylRecord.classList.remove("braking");
+            vinylRecord.classList.remove("spinning", "braking", "transition-backspin", "transition-spinup");
             cancelVisualizer();
         }
 
@@ -326,6 +483,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function cancelVisualizer() {
+        isVisualizerActive = false;
         if (visualizerFrameId) {
             cancelAnimationFrame(visualizerFrameId);
             visualizerFrameId = null;
@@ -526,6 +684,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 crate_name: crateName,
                 metrical_multiplier: metricalMultiplier,
                 tap_stability: currentTapStability,
+                is_anchor: window.CMI_CONFIG.isAnchor,
+                anchor_bpm: window.CMI_CONFIG.anchorBpm,
+                anchor_level: window.CMI_CONFIG.anchorLevel,
                 created_at: new Date().toISOString()
             };
 
@@ -664,11 +825,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const analyser = window.audioEngine.analyser;
         if (!analyser) return;
 
+        isVisualizerActive = true;
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
         const draw = () => {
-            if (!visualizerFrameId && visualizerFrameId !== 0) return;
+            if (!isVisualizerActive) return;
             visualizerFrameId = requestAnimationFrame(draw);
 
             analyser.getByteFrequencyData(dataArray);
@@ -749,6 +911,28 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             console.error("Network error during sync:", error);
         }
+    }
+
+    // Skip calibration button click listener
+    const skipCalibrationBtn = document.getElementById("skip-calibration-btn");
+    if (skipCalibrationBtn) {
+        skipCalibrationBtn.addEventListener("click", () => {
+            if (anchorState === "calibrating") {
+                endCalibration(true);
+            }
+        });
+    }
+
+    // Initialize page state for Anchor challenge calibration
+    if (window.CMI_CONFIG.isAnchor && (window.CMI_CONFIG.anchorLevel === 1 || window.CMI_CONFIG.anchorLevel === 2)) {
+        const glassMask = document.getElementById("glass-mask");
+        if (glassMask) {
+            glassMask.classList.add("hidden-state");
+        }
+        if (guessInput) guessInput.disabled = true;
+        clueBadges.forEach(btn => btn.disabled = true);
+        if (tabKeyboard) tabKeyboard.classList.add("disabled");
+        if (tabTap) tabTap.classList.add("disabled");
     }
 
     // Trigger sync on page load if authenticated

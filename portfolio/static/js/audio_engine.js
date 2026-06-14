@@ -14,6 +14,8 @@ class BpmAudioEngine {
         this.hat = null;
         this.bass = null;
         this.chimeSynth = null;
+        this.noiseGenerator = null;
+        this.transitionFilter = null;
 
         // Loop IDs for scheduling
         this.loopIds = [];
@@ -25,6 +27,18 @@ class BpmAudioEngine {
 
         // Start the Tone audio context if suspended
         await Tone.start();
+
+        // Set up transition sweep generator
+        this.transitionFilter = new Tone.Filter({
+            type: "highpass",
+            frequency: 100,
+            Q: 1.5
+        }).toDestination();
+
+        this.noiseGenerator = new Tone.Noise({
+            type: "white",
+            volume: -Infinity
+        }).connect(this.transitionFilter);
 
         // 1. Kick: Membrane Synth for deep punchy sub-heavy kick
         this.kick = new Tone.MembraneSynth({
@@ -50,18 +64,16 @@ class BpmAudioEngine {
                 type: "pink"
             },
             envelope: {
-                attack: 0.001,
-                decay: 0.15,
-                sustain: 0,
-                release: 0.1
+                attack: 0.005,
+                decay: 0.1,
+                sustain: 0
             }
         }).connect(snareFilter);
 
-        // 3. Hi-hat: High frequency metal/noise synth for closed/open hats
+        // 3. Closed Hi-hat: Very short metallic-like noise peak
         const hatFilter = new Tone.Filter({
             type: "highpass",
-            frequency: 7000,
-            Q: 1
+            frequency: 7000
         }).toDestination();
 
         this.hat = new Tone.NoiseSynth({
@@ -70,59 +82,51 @@ class BpmAudioEngine {
             },
             envelope: {
                 attack: 0.001,
-                decay: 0.05,
-                sustain: 0,
-                release: 0.05
+                decay: 0.03,
+                sustain: 0
             }
         }).connect(hatFilter);
 
-        // 4. Bass: Monophonic synth with lowpass filter for deep sub bassline
-        const bassFilter = new Tone.Filter({
-            type: "lowpass",
-            frequency: 300,
-            Q: 1
-        }).toDestination();
-
+        // 4. Bassline: Monophonic FM Synth for deep round bass tones
         this.bass = new Tone.MonoSynth({
             oscillator: {
                 type: "triangle"
             },
+            filter: {
+                Q: 1,
+                type: "lowpass",
+                frequency: 200
+            },
             envelope: {
-                attack: 0.05,
+                attack: 0.02,
                 decay: 0.2,
-                sustain: 0.4,
-                release: 0.2
+                sustain: 0.8,
+                release: 0.3
             },
             filterEnvelope: {
                 attack: 0.01,
                 decay: 0.1,
                 sustain: 0.5,
-                release: 0.2,
-                baseFrequency: 200,
-                octaves: 2
+                baseFrequency: 100,
+                octaves: 1.2
             }
-        }).connect(bassFilter);
+        }).toDestination();
 
-        // 5. Chime: PolySynth for feedback chord sweeps
+        // 5. Chime/SFX: Polyphonic synth for success/failure feedback
         this.chimeSynth = new Tone.PolySynth(Tone.Synth, {
             oscillator: {
-                type: "triangle"
+                type: "sine"
             },
             envelope: {
                 attack: 0.01,
-                decay: 0.6,
-                sustain: 0.1,
-                release: 0.6
+                decay: 0.2,
+                sustain: 0.3,
+                release: 0.8
             }
         }).toDestination();
-        this.chimeSynth.volume.value = -8; // Keep feedback chimes comfortable
 
-        // Limit maximum volume to prevent ear blowout
-        Tone.Destination.volume.value = -6; // -6dB standard volume limit
-
-        // Create Web Audio Analyser node for the live visualization
-        this.analyser = Tone.context.createAnalyser();
-        this.analyser.fftSize = 128;
+        // Set up analyzer for audio visualization
+        this.analyser = new Tone.Analyser("fft", 256);
         Tone.Destination.connect(this.analyser);
 
         this.initialized = true;
@@ -134,7 +138,7 @@ class BpmAudioEngine {
             return;
         }
 
-        this.stop(false); // Clean any active schedules immediately without braking
+        this.stop(false, true); // Clean any active schedules immediately and synchronously
 
         this.bpm = recipe.bpm || 120;
         this.genre = recipe.genre || "beginner";
@@ -152,19 +156,28 @@ class BpmAudioEngine {
             this.scheduleBeginner();
         }
 
+        // Fade in master volume to prevent clicks
+        const now = Tone.now();
+        Tone.Destination.volume.setValueAtTime(-40, now);
+        Tone.Destination.volume.linearRampToValueAtTime(0, now + 0.05);
+
         // Start the Transport timeline loop
         Tone.Transport.start();
         this.playing = true;
     }
 
-    stop(withBrake = false) {
+    stop(withBrake = false, forceSync = false) {
+        const now = Tone.now();
         if (withBrake && this.playing) {
             const originalBpm = this.bpm;
 
-            // Decelerate turntable to 20 BPM over 0.5 seconds
+            // Decelerate turntable to 20 BPM over 0.45 seconds
             Tone.Transport.bpm.rampTo(20, 0.45);
+            // Fade out master volume
+            Tone.Destination.volume.setValueAtTime(Tone.Destination.volume.value, now);
+            Tone.Destination.volume.linearRampToValueAtTime(-40, now + 0.45);
 
-            setTimeout(() => {
+            const stopAction = () => {
                 Tone.Transport.stop();
                 Tone.Transport.cancel();
 
@@ -172,21 +185,102 @@ class BpmAudioEngine {
                 this.loopIds.forEach(id => Tone.Transport.clear(id));
                 this.loopIds = [];
 
-                // Reset BPM to original for next session
+                // Reset volume and BPM for next session
+                Tone.Destination.volume.value = 0;
                 Tone.Transport.bpm.value = originalBpm;
                 this.playing = false;
-            }, 450);
+            };
+
+            if (forceSync) {
+                stopAction();
+            } else {
+                setTimeout(stopAction, 450);
+            }
         } else {
-            // Instant stop
+            const stopAction = () => {
+                Tone.Transport.stop();
+                Tone.Transport.cancel();
+
+                // Clear all loops
+                this.loopIds.forEach(id => Tone.Transport.clear(id));
+                this.loopIds = [];
+
+                Tone.Destination.volume.value = 0;
+                this.playing = false;
+            };
+
+            if (forceSync) {
+                stopAction();
+            } else {
+                // Instant stop - fade out over 50ms first to prevent click
+                Tone.Destination.volume.setValueAtTime(Tone.Destination.volume.value, now);
+                Tone.Destination.volume.linearRampToValueAtTime(-40, now + 0.05);
+
+                setTimeout(stopAction, 50);
+            }
+        }
+    }
+
+    playTransitionSFX(callback) {
+        const now = Tone.now();
+        
+        // Start white noise generator
+        this.noiseGenerator.start(now);
+        this.noiseGenerator.volume.setValueAtTime(-60, now);
+        this.noiseGenerator.volume.exponentialRampToValueAtTime(-15, now + 0.15);
+        this.transitionFilter.frequency.setValueAtTime(100, now);
+        this.transitionFilter.frequency.exponentialRampToValueAtTime(8000, now + 0.3);
+        
+        // Decay noise to absolute silence
+        this.noiseGenerator.volume.exponentialRampToValueAtTime(-Infinity, now + 0.4);
+        
+        setTimeout(() => {
+            this.noiseGenerator.stop();
+            // Trigger callback after 400ms of absolute silence (acoustic palate cleanser)
+            if (callback) callback();
+        }, 800);
+    }
+
+    transitionToTest(targetBpm, callback) {
+        if (!this.playing) return;
+
+        // Turntable deceleration brake ramp
+        Tone.Transport.bpm.rampTo(20, 0.3);
+
+        // Fade out master volume
+        const now = Tone.now();
+        Tone.Destination.volume.setValueAtTime(Tone.Destination.volume.value, now);
+        Tone.Destination.volume.linearRampToValueAtTime(-40, now + 0.3);
+
+        setTimeout(() => {
             Tone.Transport.stop();
             Tone.Transport.cancel();
-
-            // Clear all loops
             this.loopIds.forEach(id => Tone.Transport.clear(id));
             this.loopIds = [];
 
-            this.playing = false;
-        }
+            // Reset master volume for transition SFX
+            Tone.Destination.volume.value = 0;
+
+            // Play the acoustic cleanser sweep
+            this.playTransitionSFX(() => {
+                this.bpm = targetBpm;
+                Tone.Transport.bpm.value = 40; // start low
+                
+                if (this.genre === "house") this.scheduleHouse();
+                else if (this.genre === "trap") this.scheduleTrap();
+                else this.scheduleBeginner();
+
+                // Fade in master volume during spin up
+                const nowSpin = Tone.now();
+                Tone.Destination.volume.setValueAtTime(-40, nowSpin);
+                Tone.Destination.volume.linearRampToValueAtTime(0, nowSpin + 0.45);
+
+                Tone.Transport.start();
+                Tone.Transport.bpm.rampTo(targetBpm, 0.45);
+                
+                if (callback) callback();
+            });
+        }, 300);
     }
 
     playChime(isSuccess) {
@@ -208,7 +302,7 @@ class BpmAudioEngine {
     }
 
     dispose() {
-        this.stop(false);
+        this.stop(false, true);
         if (this.analyser) {
             try {
                 Tone.Destination.disconnect(this.analyser);
@@ -222,6 +316,8 @@ class BpmAudioEngine {
         if (this.hat) this.hat.dispose();
         if (this.bass) this.bass.dispose();
         if (this.chimeSynth) this.chimeSynth.dispose();
+        if (this.noiseGenerator) this.noiseGenerator.dispose();
+        if (this.transitionFilter) this.transitionFilter.dispose();
         this.initialized = false;
     }
 

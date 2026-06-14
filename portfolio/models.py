@@ -56,8 +56,6 @@ class User(db.Model):
     max_streak = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
-    attempts = db.relationship("Attempt", backref="user", lazy=True, cascade="all, delete-orphan", passive_deletes=True)
-
     def set_password(self, password):
         """Hash and set the user's password."""
         from werkzeug.security import generate_password_hash
@@ -79,6 +77,7 @@ class User(db.Model):
 class Crate(db.Model):
     """Database model for gameplay Crates."""
 
+    __bind_key__ = "count_me_in"
     __tablename__ = "crates"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -98,6 +97,7 @@ class Crate(db.Model):
 class Challenge(db.Model):
     """Database model for generated game challenges."""
 
+    __bind_key__ = "count_me_in"
     __tablename__ = "challenges"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -116,10 +116,11 @@ class Challenge(db.Model):
 class Attempt(db.Model):
     """Database model for user challenge attempts."""
 
+    __bind_key__ = "count_me_in"
     __tablename__ = "attempts"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False, index=True)
     challenge_id = db.Column(db.Integer, db.ForeignKey("challenges.id", ondelete="SET NULL"), nullable=True, index=True)
     guessed_bpm = db.Column(db.Float, nullable=False)
     true_bpm = db.Column(db.Float, nullable=False)
@@ -132,6 +133,9 @@ class Attempt(db.Model):
     crate_name = db.Column(db.String(100), nullable=True)
     metrical_multiplier = db.Column(db.Float, nullable=False, default=1.0)
     tap_stability = db.Column(db.Float, nullable=True)
+    is_anchor = db.Column(db.Boolean, nullable=False, default=False)
+    anchor_bpm = db.Column(db.Float, nullable=True)
+    anchor_level = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     @validates("tap_stability")
@@ -155,6 +159,7 @@ class Attempt(db.Model):
 
     __table_args__ = (
         db.Index("idx_attempts_user_created", "user_id", "created_at"),
+        db.Index("idx_attempts_ari", "user_id", "is_anchor", "anchor_bpm", "created_at"),
     )
 
     def __repr__(self):

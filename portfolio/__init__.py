@@ -43,6 +43,11 @@ def create_app(config_name="development"):
 
     app.config.from_object(config_by_name[config_name])
 
+    # Configure database binds for project decoupling (Count Me In game database)
+    app.config["SQLALCHEMY_BINDS"] = {
+        "count_me_in": f"sqlite:///{os.path.join(app.instance_path, 'count_me_in.db')}"
+    }
+
     # Ensure the instance folder exists for SQLite db storage
     try:
         os.makedirs(app.instance_path)

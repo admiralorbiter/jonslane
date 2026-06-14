@@ -31,9 +31,80 @@ def get_range_key(bpm):
     return "Fast (140+ BPM)"
 
 
+def get_unlocked_level(user_id, anchor_bpm):
+    """Determine the highest unlocked progression level (1-4) for a given user and anchor tempo."""
+    attempts = (
+        Attempt.query
+        .filter_by(user_id=user_id, is_anchor=True, anchor_bpm=anchor_bpm)
+        .order_by(Attempt.created_at.desc())
+        .all()
+    )
+
+    # Calculate ARI over the last 10 attempts
+    last_10 = attempts[:10]
+    ari = None
+    if last_10:
+        avg_pct_err = sum(a.percent_error for a in last_10) / len(last_10)
+        ari = max(0.0, 100.0 - (avg_pct_err * 10.0))
+
+    # To find streak achievements, scan chronologically (oldest to newest)
+    attempts_chrono = list(reversed(attempts))
+
+    l1_streak = 0
+    l2_streak = 0
+    l3_streak = 0
+
+    has_unlocked_l2 = False
+    has_unlocked_l3 = False
+    has_unlocked_l4 = False
+
+    for a in attempts_chrono:
+        if a.anchor_level == 1:
+            if a.percent_error <= 3.0:
+                l1_streak += 1
+                if l1_streak >= 3:
+                    has_unlocked_l2 = True
+            else:
+                l1_streak = 0
+        elif a.anchor_level == 2:
+            if a.percent_error <= 3.0:
+                l2_streak += 1
+                if l2_streak >= 3:
+                    has_unlocked_l3 = True
+            else:
+                l2_streak = 0
+        elif a.anchor_level == 3:
+            if a.percent_error <= 3.0:
+                l3_streak += 1
+                if l3_streak >= 5:
+                    has_unlocked_l4 = True
+            else:
+                l3_streak = 0
+
+    # Apply ARI fallback
+    if ari is not None and ari >= 85.0:
+        has_unlocked_l3 = True
+        has_unlocked_l4 = True
+
+    if has_unlocked_l4:
+        return 4
+    if has_unlocked_l3:
+        return 3
+    if has_unlocked_l2:
+        return 2
+    return 1
+
+
 def calculate_user_stats(user, attempts):
     """Calculate and format statistical performance for a user's attempts."""
-    total_attempts = len(attempts)
+    # Filter out None values and anchor attempts for general stats
+    non_anchor_attempts = [
+        a for a in attempts 
+        if not getattr(a, "is_anchor", False) 
+        and a.bpm_error is not None 
+        and a.percent_error is not None
+    ]
+    total_attempts = len(non_anchor_attempts)
     stats = {
         "total_attempts": total_attempts,
         "avg_error": 0.0,
@@ -50,20 +121,24 @@ def calculate_user_stats(user, attempts):
             "Needs Practice": 0,
         },
         "avg_stability": None,
+        "anchor_stats": {}
     }
 
     if total_attempts > 0:
-        total_error = sum(abs(a.bpm_error) for a in attempts)
-        total_pct_error = sum(a.percent_error for a in attempts)
+        total_error = sum(abs(a.bpm_error) for a in non_anchor_attempts)
+        total_pct_error = sum(a.percent_error for a in non_anchor_attempts)
         stats["avg_error"] = round(total_error / total_attempts, 2)
         stats["avg_percent_error"] = round(total_pct_error / total_attempts, 2)
 
-        tapped_stabilities = [a.tap_stability for a in attempts if getattr(a, "tap_stability", None) is not None]
+        tapped_stabilities = [
+            a.tap_stability for a in non_anchor_attempts 
+            if getattr(a, "tap_stability", None) is not None
+        ]
         if tapped_stabilities:
             stats["avg_stability"] = round(sum(tapped_stabilities) / len(tapped_stabilities), 2)
 
         # Count ratings
-        for a in attempts:
+        for a in non_anchor_attempts:
             if a.rating in stats["rating_breakdown"]:
                 stats["rating_breakdown"][a.rating] += 1
 
@@ -74,7 +149,7 @@ def calculate_user_stats(user, attempts):
             "Dance (120-140 BPM)": [],
             "Fast (140+ BPM)": [],
         }
-        for a in attempts:
+        for a in non_anchor_attempts:
             r_key = get_range_key(a.true_bpm)
             ranges[r_key].append(a.percent_error)
 
@@ -88,7 +163,42 @@ def calculate_user_stats(user, attempts):
                     best_name = f"{range_name} (avg error {round(avg, 1)}%)"
         stats["best_range"] = best_name
 
+    # Compute anchor stats dynamically
+    for bpm in [95, 120, 128, 140]:
+        last_10 = (
+            Attempt.query
+            .filter_by(user_id=user.id, is_anchor=True, anchor_bpm=bpm)
+            .order_by(Attempt.created_at.desc())
+            .limit(10)
+            .all()
+        )
+        ari = None
+        if last_10:
+            avg_pct_err = sum(a.percent_error for a in last_10) / len(last_10)
+            ari = round(max(0.0, 100.0 - (avg_pct_err * 10.0)), 1)
+            
+        unlocked_level = get_unlocked_level(user.id, bpm)
+        
+        # High streak for this anchor
+        attempts_anchor = Attempt.query.filter_by(user_id=user.id, is_anchor=True, anchor_bpm=bpm).all()
+        high_streak = 0
+        current_streak = 0
+        for a in sorted(attempts_anchor, key=lambda x: x.created_at):
+            if a.percent_error <= 5.0 or a.rating == "Metrical Match":
+                current_streak += 1
+                if current_streak > high_streak:
+                    high_streak = current_streak
+            else:
+                current_streak = 0
+                
+        stats["anchor_stats"][bpm] = {
+            "ari": ari if ari is not None else "N/A",
+            "unlocked_level": unlocked_level,
+            "high_streak": high_streak
+        }
+
     return stats
+
 
 
 def calculate_score_and_rating(guess, true_bpm, clue_level=4):
@@ -145,6 +255,19 @@ def validate_and_parse_attempt_data(att_data):
         crate_name = str(att_data.get("crate_name", "Unknown Crate"))
         metrical_multiplier = float(att_data.get("metrical_multiplier", 1.0))
 
+        # Parse anchor fields
+        is_anchor = bool(att_data.get("is_anchor", False))
+        anchor_bpm = att_data.get("anchor_bpm")
+        if anchor_bpm is not None:
+            anchor_bpm = float(anchor_bpm)
+            if anchor_bpm not in [95.0, 120.0, 128.0, 140.0]:
+                return None
+        anchor_level = att_data.get("anchor_level")
+        if anchor_level is not None:
+            anchor_level = int(anchor_level)
+            if anchor_level not in [1, 2, 3, 4]:
+                return None
+
         # Support upper bound up to 400.0 BPM (e.g. Drum & Bass double-tempo)
         if not (1.0 <= guessed <= 400.0) or not (1.0 <= true_bpm <= 400.0):
             return None
@@ -180,8 +303,12 @@ def validate_and_parse_attempt_data(att_data):
         "crate_name": crate_name,
         "metrical_multiplier": metrical_multiplier,
         "tap_stability": tap_stability,
+        "is_anchor": is_anchor,
+        "anchor_bpm": anchor_bpm,
+        "anchor_level": anchor_level,
         "created_at": created_at_dt,
     }
+
 
 
 def recalculate_user_streaks(user):
@@ -201,6 +328,106 @@ def recalculate_user_streaks(user):
 
     user.current_streak = current_streak
     user.max_streak = max_streak
+
+
+@game_bp.route("/play/anchor/<int:anchor_bpm>")
+def play_anchor(anchor_bpm):
+    if anchor_bpm not in [95, 120, 128, 140]:
+        from flask import abort
+        abort(400, "Unsupported anchor tempo.")
+
+    level_val = request.args.get("level", 1)
+    try:
+        level = int(level_val)
+        if level not in [1, 2, 3, 4]:
+            level = 1
+    except ValueError:
+        level = 1
+
+    from flask import session
+    user_id = session.get("user_id")
+    user = db.session.get(User, user_id) if user_id else None
+
+    # Check unlocked level
+    if user:
+        unlocked = get_unlocked_level(user.id, anchor_bpm)
+        if level > unlocked:
+            level = unlocked
+    else:
+        # Guests can access up to level 2
+        if level > 2:
+            level = 2
+
+    percent_limits = {1: 5.0, 2: 10.0, 3: 15.0, 4: 15.0}
+    limit = percent_limits.get(level, 5.0)
+
+    if level == 4:
+        base_target = round(random.uniform(anchor_bpm * 0.85, anchor_bpm * 1.15), 1)
+        r = random.random()
+        if r < 0.25:
+            true_bpm = round(base_target / 2.0, 1)
+        elif r < 0.50:
+            true_bpm = round(base_target * 2.0, 1)
+        else:
+            true_bpm = base_target
+    else:
+        delta = anchor_bpm * (limit / 100.0)
+        true_bpm = round(random.uniform(anchor_bpm - delta, anchor_bpm + delta), 1)
+
+    genre_map = {95: "beginner", 120: "house", 128: "house", 140: "trap"}
+    genre = genre_map.get(anchor_bpm, "beginner")
+
+    crate_name = f"Anchor {anchor_bpm} BPM"
+    challenge_token = generate_challenge_token(
+        true_bpm=true_bpm,
+        crate_name=crate_name,
+        is_anchor=True,
+        anchor_bpm=anchor_bpm,
+        anchor_level=level
+    )
+
+    recipe = {
+        "genre": genre,
+        "bpm": true_bpm,
+        "elements": ["kick", "snare", "hihat"],
+    }
+    if genre == "house":
+        recipe["elements"] = ["kick", "snare", "hihat", "bass"]
+    elif genre == "trap":
+        recipe["elements"] = ["kick", "snare", "hihat_roll", "clap"]
+        recipe["half_time"] = True
+
+    # Dummy class to mimic Crate properties
+    class DummyCrate:
+        def __init__(self, c_id, name, desc, diff, min_b, max_b, gen):
+            self.id = c_id
+            self.name = name
+            self.description = desc
+            self.difficulty = diff
+            self.min_bpm = min_b
+            self.max_bpm = max_b
+            self.genre = gen
+
+    crate_obj = DummyCrate(
+        0,
+        crate_name,
+        f"Anchor Tempo Training for {anchor_bpm} BPM. Level {level}.",
+        "Easy" if level == 1 else ("Medium" if level == 2 else "Hard"),
+        int(anchor_bpm * (1.0 - limit / 100.0)),
+        int(anchor_bpm * (1.0 + limit / 100.0)),
+        genre
+    )
+
+    return render_template(
+        "game/play.html",
+        recipe_json=json.dumps(recipe),
+        crate=crate_obj,
+        challenge_token=challenge_token,
+        is_anchor=True,
+        anchor_bpm=anchor_bpm,
+        anchor_level=level
+    )
+
 
 
 @game_bp.route("/dashboard")
@@ -345,6 +572,9 @@ def submit_attempt():
     clue_level_val = data.get("clue_level", 4)
     client_uuid = data.get("client_uuid")
 
+    if not client_uuid:
+        return jsonify({"error": "Missing client UUID."}), 400
+
     if guess_val is None or not challenge_token:
         return jsonify({"error": "Missing guess or challenge token."}), 400
 
@@ -375,14 +605,23 @@ def submit_attempt():
     if not challenge_data:
         return jsonify({"error": "Invalid or expired challenge token."}), 400
 
+    is_anchor = challenge_data.get("is_anchor", False)
+    anchor_bpm = challenge_data.get("anchor_bpm")
+    anchor_level = challenge_data.get("anchor_level")
+    timestamp = challenge_data.get("timestamp")
+
+    if is_anchor:
+        import time
+        if timestamp and (time.time() - timestamp > 120.0):
+            return jsonify({"error": "Anchor challenge token expired."}), 400
+
     true_bpm = challenge_data["true_bpm"]
     crate_name = challenge_data["crate_name"]
 
     # Check for duplicate client UUID to prevent double submissions
-    if client_uuid:
-        existing = Attempt.query.filter_by(client_uuid=client_uuid).first()
-        if existing:
-            return jsonify({"error": "Attempt already recorded."}), 409
+    existing = Attempt.query.filter_by(client_uuid=client_uuid).first()
+    if existing:
+        return jsonify({"error": "Attempt already recorded."}), 409
 
     # Calculate metrics (API path)
     score, rating, is_success, percent_error, bpm_error, metrical_multiplier = calculate_score_and_rating(guess, true_bpm, clue_level)
@@ -409,6 +648,9 @@ def submit_attempt():
             client_uuid=client_uuid,
             metrical_multiplier=metrical_multiplier,
             tap_stability=tap_stability,
+            is_anchor=is_anchor,
+            anchor_bpm=anchor_bpm,
+            anchor_level=anchor_level,
             created_at=datetime.now(timezone.utc)
         )
         db.session.add(attempt)
@@ -477,6 +719,9 @@ def sync():
                     client_uuid=parsed["client_uuid"],
                     metrical_multiplier=parsed["metrical_multiplier"],
                     tap_stability=parsed["tap_stability"],
+                    is_anchor=parsed["is_anchor"],
+                    anchor_bpm=parsed["anchor_bpm"],
+                    anchor_level=parsed["anchor_level"],
                     created_at=parsed["created_at"],
                 )
                 db.session.add(attempt)
@@ -497,5 +742,6 @@ def sync():
             "max_streak": user.max_streak,
         }
     )
+
 
 
