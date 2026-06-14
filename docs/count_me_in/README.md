@@ -58,17 +58,12 @@ For the full list of references, see the [Research Bibliography](file:///c:/User
 
 ---
 
-## 🎓 Future Direction: Count Me In Academy
+## 🎓 Related Modules
 
-Count Me In is designed to grow into a **year-long Rhythm Intelligence Academy** — a structured, research-grounded learning path that teaches four interconnected skills together:
+Count Me In is integrated alongside other modules and a shared **Academy**:
 
-1. **Perception** — Hear pulse, tempo, meter, and downbeat
-2. **Motor control** — Tap, clap, count, and play in time
-3. **Music theory** — Understand beat, subdivision, meter, bar, phrase, syncopation
-4. **DJ/piano application** — Beatmatch, count phrases, practice with and without a metronome
+1. **Count Me In (/game):** The core BPM ear-training sandbox game.
+2. **Academy (/academy):** A structured, research-grounded curriculum timeline (Levels 0–7) with spaced retrieval and progress tracking. See the [Academy Docs](file:///c:/Users/admir/Github/jonslane/docs/academy/README.md).
+3. **Piano Lab (/piano):** Instrument rhythm drills with MIDI controller support. See the [Piano Lab Docs](file:///c:/Users/admir/Github/jonslane/docs/piano_lab/README.md).
 
-The planned curriculum has 8 progressive levels (Level 0: Find the Pulse → Level 7: Beatmatch & Drift) and incorporates three learning science principles: **spaced retrieval** (Carpenter et al., 2012), **interleaved practice** (Kornell & Bjork, 2008), and **metacognitive reflection** (Hallam, 2001).
-
-A companion **Piano Lab** module and **MIDI controller integration** are also designed, sharing the same user profile, audio engine, and scoring pipeline.
-
-For the full roadmap see [roadmap.md](file:///c:/Users/admir/Github/jonslane/docs/count_me_in/roadmap.md). For technical system designs see [technical_spec.md](file:///c:/Users/admir/Github/jonslane/docs/count_me_in/technical_spec.md).
+For the long-term project roadmap, see the [roadmap.md](file:///c:/Users/admir/Github/jonslane/docs/count_me_in/roadmap.md). For the database and audio architecture design, see the [technical_spec.md](file:///c:/Users/admir/Github/jonslane/docs/count_me_in/technical_spec.md).

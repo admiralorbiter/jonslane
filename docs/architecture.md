@@ -92,11 +92,11 @@ For interactive, zero-latency applications like the BPM ear trainer, we employ a
 
 ---
 
-## 🎹 Rhythm Intelligence Platform & Academy
+## 🎹 Multi-Module System & Academy
 
-The architecture is built as a **three-layer platform** where public tools, a shared technical core, and a private Academy co-exist cleanly. See `docs/count_me_in/roadmap.md` for the full feature roadmap.
+The architecture is built as a **three-layer system** where public tools, a shared technical core, and a private Academy co-exist cleanly. See `docs/count_me_in/roadmap.md` for the full feature roadmap.
 
-### Platform Layers
+### System Layers
 
 ```
 Layer 1: Public Surfaces (no login required)
@@ -184,4 +184,3 @@ class MidiDeviceManager {
 | `UserSkillProfile` (Computed) | Calculated on-demand by aggregating `Attempt` rows (no dedicated DB table) | Academy-only (auth-gated) |
 
 Both follow the same ORM conventions as existing models. All existing queries are unaffected.
-

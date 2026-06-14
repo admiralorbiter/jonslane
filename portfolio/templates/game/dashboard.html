@@ -79,7 +79,7 @@
                         </div>
                         <p class="crate-desc">{{ meta.desc }}</p>
                         <div class="crate-meta">
-                            ARI: <span class="ari-val">{% if stats and stats.anchor_stats %}{{ stats.anchor_stats[meta.bpm].ari }}{% else %}N/A{% endif %}</span> | 
+                            ARI: <span class="ari-val">{% if stats and stats.anchor_stats %}{{ stats.anchor_stats[meta.bpm].ari }}{% else %}N/A{% endif %}</span> |
                             High Streak: <span class="streak-val">{% if stats and stats.anchor_stats %}{{ stats.anchor_stats[meta.bpm].high_streak }}{% else %}0{% endif %}</span>
                         </div>
                         <div class="level-selector-row" style="margin: 15px 0; display: flex; flex-direction: column; gap: 5px;">
@@ -87,8 +87,8 @@
                             <div class="level-btn-group" style="display: flex; gap: 6px;">
                                 {% set unlocked = stats.anchor_stats[meta.bpm].unlocked_level if (stats and stats.anchor_stats) else 1 %}
                                 {% for lvl in [1, 2, 3, 4] %}
-                                    <button type="button" class="btn-level {% if lvl == 1 %}active{% endif %} {% if lvl > unlocked %}locked{% endif %}" 
-                                            data-level="{{ lvl }}" 
+                                    <button type="button" class="btn-level {% if lvl == 1 %}active{% endif %} {% if lvl > unlocked %}locked{% endif %}"
+                                            data-level="{{ lvl }}"
                                             style="flex: 1; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.2s;"
                                             {% if lvl > unlocked %}data-locked="true" title="Locked. Complete previous level to unlock."{% endif %}>
                                         Lvl {{ lvl }}
@@ -216,22 +216,22 @@
                 </div>
             </div>
         </div>
-        
+
         {% if not stats %}
         <!-- Guest Academy Teaser Card -->
         <div class="glass-card" style="margin-top: 30px; position: relative; overflow: hidden; padding: 25px; border: 1px solid rgba(0, 240, 255, 0.2); box-shadow: 0 0 20px rgba(0, 240, 255, 0.05);">
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 14, 20, 0.65); backdrop-filter: blur(5px); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
                 <div style="font-size: 2rem; margin-bottom: 10px;">🔒</div>
-                <h4 style="color: var(--neon-cyan); font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0;">Unlock Rhythm Academy</h4>
+                <h4 style="color: var(--neon-cyan); font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0;">Unlock Academy</h4>
                 <p style="color: var(--text-primary); font-size: 0.85rem; line-height: 1.5; margin: 0 0 20px 0; max-width: 280px;">
                     Connect a free account to track your Spaced Repetition (SRS) schedule, access 8 professional levels, and unlock your dynamic Skill Radar.
                 </p>
                 <a href="{{ url_for('auth.login', next='/academy') }}" class="btn-game" style="text-decoration: none; padding: 8px 18px; font-size: 0.85rem; font-weight: 700; display: inline-block;">Connect Account</a>
             </div>
-            
+
             <!-- Mock Radar and Roadmap Visuals under the blur -->
             <h3 style="font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; opacity: 0.3;">
-                Rhythm Intelligence
+                Your Progress
             </h3>
             <div style="display: flex; justify-content: center; margin-bottom: 20px; opacity: 0.2;">
                 <!-- Static Mock SVG Radar -->
@@ -276,13 +276,13 @@
             <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
             <h3 id="auth-modal-title" style="color: var(--neon-cyan); font-size: 1.3rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Access Locked Level</h3>
             <p id="auth-modal-msg" style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.6; margin: 0;"></p>
-            
+
             <!-- Action Row for Guests (Auth gate) -->
             <div id="auth-modal-actions" style="display: none; gap: 15px; margin-top: 10px;">
                 <a href="/register?next=/game/dashboard" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; background: var(--neon-pink); color: #000; font-weight: 700; border-radius: 6px; font-size: 0.9rem;">Register</a>
                 <a href="/login?next=/game/dashboard" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; background: transparent; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); font-weight: 700; border-radius: 6px; font-size: 0.9rem;">Sign In</a>
             </div>
-            
+
             <!-- OK Button for progression locks -->
             <button id="auth-modal-ok" style="display: none; width: 100%; padding: 10px; background: var(--neon-cyan); color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Got it!</button>
         </div>
@@ -449,10 +449,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Anchor metadata config for guest hydration
     const anchorBpms = [95, 120, 128, 140];
-    
+
     anchorBpms.forEach(bpm => {
         const anchorAttempts = attempts.filter(a => a.is_anchor && parseFloat(a.anchor_bpm) === bpm);
-        
+
         const last10 = anchorAttempts.slice(-10);
         let ari = "N/A";
         if (last10.length > 0) {
@@ -460,7 +460,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const avgPctErr = sumPctErr / last10.length;
             ari = Math.max(0, 100 - (avgPctErr * 10)).toFixed(1);
         }
-        
+
         let highStreak = 0;
         let currentStreak = 0;
         anchorAttempts.forEach(a => {
@@ -471,16 +471,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 currentStreak = 0;
             }
         });
-        
+
         let unlockedLevel = 1;
         let l1Streak = 0;
         let l2Streak = 0;
         let l3Streak = 0;
-        
+
         let hasUnlockedL2 = false;
         let hasUnlockedL3 = false;
         let hasUnlockedL4 = false;
-        
+
         anchorAttempts.forEach(a => {
             if (parseInt(a.anchor_level) === 1) {
                 if (a.percent_error <= 3.0) {
@@ -505,35 +505,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
-        
+
         if (ari !== "N/A" && parseFloat(ari) >= 85.0) {
             hasUnlockedL3 = true;
             hasUnlockedL4 = true;
         }
-        
+
         if (hasUnlockedL4) unlockedLevel = 4;
         else if (hasUnlockedL3) unlockedLevel = 3;
         else if (hasUnlockedL2) unlockedLevel = 2;
-        
+
         if (unlockedLevel > 2) unlockedLevel = 2; // Guest lock
-        
+
         const card = document.querySelector(`.anchor-card[data-bpm="${bpm}"]`);
         if (card) {
             const ariValSpan = card.querySelector(".ari-val");
             const streakValSpan = card.querySelector(".streak-val");
             if (ariValSpan) ariValSpan.textContent = ari;
             if (streakValSpan) streakValSpan.textContent = highStreak;
-            
+
             const levelBtns = card.querySelectorAll(".btn-level");
             levelBtns.forEach(btn => {
                 const lvl = parseInt(btn.getAttribute("data-level"));
                 btn.classList.remove("active");
                 if (lvl === 1) btn.classList.add("active");
-                
+
                 btn.classList.remove("locked");
                 btn.disabled = false;
                 btn.removeAttribute("title");
-                
+
                 if (lvl > unlockedLevel) {
                     btn.classList.add("locked");
                     btn.setAttribute("data-locked", "true");
@@ -556,7 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const actionRow = document.getElementById("auth-modal-actions");
     const okBtn = document.getElementById("auth-modal-ok");
     const closeBtn = document.getElementById("close-auth-modal");
-    
+
     function showAuthGateModal(message, isAuthGate = true) {
         msgEl.textContent = message;
         if (isAuthGate) {
@@ -568,14 +568,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         modal.style.display = "flex";
     }
-    
+
     function hideModal() {
         modal.style.display = "none";
     }
-    
+
     if (closeBtn) closeBtn.addEventListener("click", hideModal);
     if (okBtn) okBtn.addEventListener("click", hideModal);
-    
+
     // Close modal on click outside
     modal.addEventListener("click", (e) => {
         if (e.target === modal) hideModal();
@@ -586,12 +586,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const levelBtns = card.querySelectorAll(".btn-level");
         const playBtn = card.querySelector(".btn-play-anchor");
         const bpm = card.getAttribute("data-bpm");
-        
+
         levelBtns.forEach(btn => {
             btn.addEventListener("click", () => {
                 const level = btn.getAttribute("data-level");
                 const isLocked = btn.getAttribute("data-locked") === "true" || btn.classList.contains("locked");
-                
+
                 if (isLocked) {
                     const isGuest = document.body.getAttribute("data-authenticated") !== "true";
                     if (isGuest && parseInt(level) > 2) {
@@ -601,10 +601,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     return;
                 }
-                
+
                 levelBtns.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
-                
+
                 playBtn.setAttribute("href", `/game/play/anchor/${bpm}?level=${level}`);
             });
         });
