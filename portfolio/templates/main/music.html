@@ -229,13 +229,13 @@
                                 <p style="font-size: 9px; margin-top: 2px;">95 BPM | djon Mashup</p>
                             </div>
                             
-                            <!-- Crate 2: Pop Rap -->
+                            <!-- Crate 2: Trap / Club - Throw It Up -->
                             <div class="crate-vinyl-card" data-genre="poprap">
-                                <div class="crate-vinyl-sleeve" style="background: linear-gradient(135deg, #d2d2ff, #a4a4ff);">
-                                    <div class="crate-vinyl-genre" style="color:#fff;">Millennial Pop</div>
+                                <div class="crate-vinyl-sleeve" style="background: linear-gradient(135deg, #1a0a2e, #4a0e6b, #8b1a8b); border: 2px solid #c039ff; box-shadow: 0 0 10px #c039ff55;">
+                                    <div class="crate-vinyl-genre" style="color:#c039ff; text-shadow: 0 0 8px #c039ff; font-weight: 900; letter-spacing: 0.5px;">Trap / Club</div>
                                 </div>
-                                <strong style="font-size: 11px;">Yeah!</strong>
-                                <p style="font-size: 9px; margin-top: 2px;">105 BPM | Synth Melodies</p>
+                                <strong style="font-size: 11px;">Throw It Up</strong>
+                                <p style="font-size: 9px; margin-top: 2px;">146 BPM | Lux Aeterna</p>
                             </div>
                             
                             <!-- Crate 3: Pop Rock / Dance -->
@@ -458,37 +458,63 @@ const genresData = {
         ]
     },
     poprap: {
-        title: "Genre: Millennial Pop Rap",
-        description: "The early 2000s club anthems. Energetic synth lines, infectious hook singing, and beats that defined middle school dances and late-night car rides.",
-        trackTitle: "Usher ft. Lil Jon - Yeah!",
-        bpm: 105,
+        title: "Genre: Trap / Club Bangers",
+        description: "Lil Jon & The East Side Boyz's 'Throw It Up' feat. Pastor Troy samples the iconic 'Lux Aeterna' by Clint Mansell — the dramatic orchestral theme from Requiem for a Dream (2000), performed by the Kronos Quartet. This is djon's personal favorite: where cinematic orchestral strings collide with crunk trap energy.",
+        trackTitle: "Lil Jon & ESB ft. Pastor Troy — Throw It Up (Lux Aeterna)",
+        bpm: 146,
+        waveform: "sawtooth",
         melody: [
-            // Usher's Yeah! Synth line: G#5, G#5, A#5, C#6, A#5, C#6, A#5, G#5
-            { note: "G#5", time: 0.0, dur: 0.15 },
-            { note: "G#5", time: 0.25, dur: 0.15 },
-            { note: "A#5", time: 0.5, dur: 0.15 },
-            { note: "C#6", time: 0.75, dur: 0.15 },
-            { note: "A#5", time: 1.0, dur: 0.15 },
-            { note: "C#6", time: 1.25, dur: 0.15 },
-            { note: "A#5", time: 1.5, dur: 0.15 },
-            { note: "G#5", time: 1.75, dur: 0.25 },
-            
-            { note: "G#5", time: 2.2, dur: 0.15 },
-            { note: "G#5", time: 2.45, dur: 0.15 },
-            { note: "A#5", time: 2.7, dur: 0.15 },
-            { note: "C#6", time: 2.95, dur: 0.15 },
-            { note: "A#5", time: 3.2, dur: 0.15 },
-            { note: "C#6", time: 3.45, dur: 0.15 },
-            { note: "A#5", time: 3.7, dur: 0.15 },
-            { note: "G#5", time: 3.95, dur: 0.25 }
+            // ================================================
+            // LUX AETERNA — Clint Mansell (G minor, 146 BPM)
+            // As sampled in "Throw It Up" by Lil Jon & The East Side Boyz
+            // ================================================
+            // Measure 1 (Gm -> Eb tension)
+            { note: "G4",  time: 0.00, dur: 0.16 },
+            { note: "D5",  time: 0.205, dur: 0.16 },
+            { note: "G5",  time: 0.41, dur: 0.16 },
+            { note: "D5",  time: 0.615, dur: 0.16 },
+            { note: "D#5", time: 0.82, dur: 0.16 },
+            { note: "D5",  time: 1.025, dur: 0.16 },
+            { note: "D#5", time: 1.23, dur: 0.16 },
+            { note: "D5",  time: 1.435, dur: 0.16 },
+
+            // Measure 2 (Gm -> F -> Dm resolution)
+            { note: "G4",  time: 1.64, dur: 0.16 },
+            { note: "D5",  time: 1.845, dur: 0.16 },
+            { note: "G5",  time: 2.05, dur: 0.16 },
+            { note: "D5",  time: 2.255, dur: 0.16 },
+            { note: "F5",  time: 2.46, dur: 0.16 },
+            { note: "D5",  time: 2.665, dur: 0.16 },
+            { note: "C5",  time: 2.87, dur: 0.16 },
+            { note: "A#4", time: 3.075, dur: 0.16 },
+
+            // Measure 3 (Gm -> Eb tension buildup)
+            { note: "G4",  time: 3.28, dur: 0.16 },
+            { note: "D5",  time: 3.485, dur: 0.16 },
+            { note: "G5",  time: 3.69, dur: 0.16 },
+            { note: "D5",  time: 3.895, dur: 0.16 },
+            { note: "D#5", time: 4.10, dur: 0.16 },
+            { note: "D5",  time: 4.305, dur: 0.16 },
+            { note: "D#5", time: 4.51, dur: 0.16 },
+            { note: "F5",  time: 4.715, dur: 0.16 },
+
+            // Measure 4 (Rising climax -> Gm resolve)
+            { note: "G5",  time: 4.92, dur: 0.16 },
+            { note: "A#5", time: 5.125, dur: 0.16 },
+            { note: "D6",  time: 5.33, dur: 0.16 },
+            { note: "A#5", time: 5.535, dur: 0.16 },
+            { note: "G5",  time: 5.74, dur: 0.16 },
+            { note: "F5",  time: 5.945, dur: 0.16 },
+            { note: "D5",  time: 6.15, dur: 0.16 },
+            { note: "G4",  time: 6.355, dur: 0.18 }
         ],
-        loopLength: 4.4,
+        loopLength: 6.56,
         playlist: [
-            { title: "Yeah!", artist: "Usher ft. Lil Jon & Ludacris" },
-            { title: "In Da Club", artist: "50 Cent" },
-            { title: "Toxic", artist: "Britney Spears" },
-            { title: "Get Busy", artist: "Sean Paul" },
-            { title: "Lose Control", artist: "Missy Elliott" }
+            { title: "Throw It Up (feat. Pastor Troy)", artist: "Lil Jon & The East Side Boyz" },
+            { title: "Lux Aeterna (Requiem for a Dream OST)", artist: "Clint Mansell & Kronos Quartet" },
+            { title: "Get Low", artist: "Lil Jon & The East Side Boyz ft. Ying Yang Twins" },
+            { title: "Kings of Crunk", artist: "Lil Jon & The East Side Boyz" },
+            { title: "Act a Fool", artist: "Lil Jon ft. Pastor Troy" }
         ]
     },
     dance: {
@@ -528,7 +554,7 @@ const genresData = {
 
 const noteFreqs = {
     "G4": 392.00, "G#4": 415.30, "A4": 440.00, "A#4": 466.16, "B4": 493.88,
-    "C5": 523.25, "C#5": 554.37, "D5": 587.33, "D#5": 622.25, "E5": 659.25, "F#5": 739.99,
+    "C5": 523.25, "C#5": 554.37, "D5": 587.33, "D#5": 622.25, "E5": 659.25, "F5": 698.46, "F#5": 739.99,
     "G5": 783.99, "G#5": 830.61, "A5": 880.00, "A#5": 932.33, "B5": 987.77,
     "C6": 1046.50, "C#6": 1109.73, "D6": 1174.66, "D#6": 1244.51, "E6": 1318.51,
     "F6": 1396.91, "F#6": 1479.98, "G6": 1567.98, "G#6": 1661.22
@@ -581,39 +607,65 @@ function initAudio() {
 }
 
 // Play note via Web Audio
-function playSynthNote(frequency, startTime, duration) {
+// waveform: 'triangle' (default chiptune), 'sawtooth' (dramatic Lux Aeterna punch)
+function playSynthNote(frequency, startTime, duration, waveform) {
     if (!audioCtx) return;
+    waveform = waveform || "triangle";
     
-    // Create oscillator (chiptune triangle wave)
+    const isDramatic = (waveform === "sawtooth");
+    
+    // ── Primary Oscillator ──────────────────────────────────────
     const osc = audioCtx.createOscillator();
-    osc.type = "triangle";
+    osc.type = waveform;
     osc.frequency.setValueAtTime(frequency, startTime);
     
-    // Create gain node for envelope
     const gain = audioCtx.createGain();
+    const peakGain = isDramatic ? 0.20 : 0.12;
+    const sustainGain = isDramatic ? 0.14 : 0.08;
     gain.gain.setValueAtTime(0.001, startTime);
-    // Attack
-    gain.gain.linearRampToValueAtTime(0.12, startTime + 0.03);
-    // Decay/Sustain
-    gain.gain.exponentialRampToValueAtTime(0.08, startTime + duration - 0.05);
-    // Release
+    gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.02);    // snappy attack
+    gain.gain.exponentialRampToValueAtTime(sustainGain, startTime + duration - 0.04);
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     
-    // Connect to analyser
     osc.connect(gain);
     gain.connect(analyserNode);
-    
-    // Track scheduled oscillator
     activeOscillators.push(osc);
     osc.onended = () => {
         const idx = activeOscillators.indexOf(osc);
-        if (idx > -1) {
-            activeOscillators.splice(idx, 1);
-        }
+        if (idx > -1) activeOscillators.splice(idx, 1);
     };
-    
     osc.start(startTime);
     osc.stop(startTime + duration);
+    
+    // ── Sub Oscillator (Lux Aeterna "orchestral" layer) ─────────
+    // Adds a square-wave one octave below for cinematic body
+    if (isDramatic) {
+        const sub = audioCtx.createOscillator();
+        sub.type = "square";
+        sub.frequency.setValueAtTime(frequency / 2, startTime);
+        
+        const subGain = audioCtx.createGain();
+        subGain.gain.setValueAtTime(0.001, startTime);
+        subGain.gain.linearRampToValueAtTime(0.07, startTime + 0.03);
+        subGain.gain.exponentialRampToValueAtTime(0.04, startTime + duration - 0.04);
+        subGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        
+        // Subtle high-pass filter to keep sub from muddying
+        const hpf = audioCtx.createBiquadFilter();
+        hpf.type = "highpass";
+        hpf.frequency.value = 80;
+        
+        sub.connect(hpf);
+        hpf.connect(subGain);
+        subGain.connect(analyserNode);
+        activeOscillators.push(sub);
+        sub.onended = () => {
+            const idx = activeOscillators.indexOf(sub);
+            if (idx > -1) activeOscillators.splice(idx, 1);
+        };
+        sub.start(startTime);
+        sub.stop(startTime + duration);
+    }
 }
 
 // Synth engine scheduler loop
@@ -631,10 +683,11 @@ function startSequencer() {
     
     // Function to schedule a single loop segment
     function scheduleLoopSegment(time) {
+        const waveform = currentTrackData.waveform || "triangle";
         currentTrackData.melody.forEach(noteEvent => {
             const freq = noteFreqs[noteEvent.note];
             if (freq) {
-                playSynthNote(freq, time + noteEvent.time, noteEvent.dur);
+                playSynthNote(freq, time + noteEvent.time, noteEvent.dur, waveform);
             }
         });
     }
