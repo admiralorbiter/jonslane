@@ -1,0 +1,861 @@
+{% extends "base.html" %}
+
+{% block title %}djon | Music Hub{% endblock %}
+{% block meta_description %}The music profile of djon. Spinning hip hop, pop, and emo/pop punk throwbacks. Book djon for events.{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Page-specific inline overrides or extensions */
+.navbar {
+    background: rgba(14, 16, 23, 0.9) !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="myspace-theme-container">
+    <div class="myspace-container">
+        
+        <!-- Retro navigation button -->
+        <a href="/" class="btn-back-home">&larr; Back to Home</a>
+        
+        <!-- Header Banner -->
+        <div class="myspace-header-banner">
+            <h1>djon's Space</h1>
+            <p>Pardon me, do you have any djon?</p>
+        </div>
+        
+        <!-- Columns Grid -->
+        <div class="myspace-grid">
+            
+            <!-- LEFT COLUMN -->
+            <div class="myspace-col-left">
+                
+                <!-- Profile Pic Panel -->
+                <div class="myspace-panel">
+                    <div class="myspace-panel-header">djon</div>
+                    <div class="myspace-panel-body">
+                        <div class="myspace-profile-info">
+                            <div class="myspace-pic-box">
+                                <div class="myspace-pic">
+                                    <!-- Stylized SVG waveform/vinyl placeholder for future photo -->
+                                    <div class="myspace-pic-placeholder">
+                                        <span style="font-size: 32px; display: block; margin-bottom: 8px;">🎧</span>
+                                        <strong>djon</strong>
+                                        <p style="margin-top: 10px; font-size: 9px; line-height: 1.2; color: #777;">Photo container.<br>Ready for event shots.</p>
+                                    </div>
+                                </div>
+                                <div class="myspace-status-text">"currently digging for hot tracks..."</div>
+                            </div>
+                            <div class="myspace-details-box">
+                                <div class="myspace-details-row"><span class="myspace-details-label">DJ Name:</span> djon</div>
+                                <div class="myspace-details-row"><span class="myspace-details-label">Vibe:</span> Hip Hop / Pop / Emo / Pop-Punk</div>
+                                <div class="myspace-details-row"><span class="myspace-details-label">Location:</span> Kansas City</div>
+                                <div class="myspace-details-row"><span class="myspace-details-label">Sound:</span> Millennial</div>
+                                <div class="myspace-details-row"><span class="myspace-details-label">BPM Range:</span> 70 - 130 BPM</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Box Panel -->
+                <div class="myspace-panel">
+                    <div class="myspace-panel-header">Contacting djon</div>
+                    <div class="myspace-panel-body">
+                        <div class="myspace-contact-grid">
+                            <a href="mailto:placeholder@jonslane.com?subject=DJ Booking Inquiry for djon" class="myspace-contact-btn">✉ Send Message</a>
+                            <a href="mailto:placeholder@jonslane.com?subject=DJ Booking Inquiry for djon" class="myspace-contact-btn">➕ Add to Friends</a>
+                            <a href="mailto:placeholder@jonslane.com?subject=DJ Booking Inquiry for djon" class="myspace-contact-btn">⭐ Add to Favorites</a>
+                            <a href="mailto:placeholder@jonslane.com?subject=DJ Booking Inquiry for djon" class="myspace-contact-btn">📥 Instant Mix</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Interests Panel -->
+                <div class="myspace-panel">
+                    <div class="myspace-panel-header">djon's Interests</div>
+                    <div class="myspace-panel-body">
+                        <div class="myspace-details-row">
+                            <span class="myspace-details-label">Music Styles:</span> 90s/00s/10s Hip Hop, Bubblegum Pop, Pop-Punk Anthems, Emo.
+                        </div>
+                        <div class="myspace-details-row">
+                            <span class="myspace-details-label">Favorite DJ Gear:</span> FLX-4, Serato
+                        </div>
+                        <div class="myspace-details-row">
+                            <span class="myspace-details-label">Mixing Philosophy:</span> Keep the energy high, match the BPMs seamlessly, and drop throwbacks that make people scream-sing.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Friends Panel -->
+                <div class="myspace-panel">
+                    <div class="myspace-panel-header">djon's Space Friends (Top 8)</div>
+                    <div class="myspace-panel-body">
+                        <p style="margin-bottom: 12px; font-weight: bold;">djon has <span style="color:#ff6600;">8</span> friends.</p>
+                        <div class="top-friends-grid">
+                            <!-- Friend 1: Tom (Classic MySpace Tom) -->
+                            <a href="#" class="friend-cell" onclick="return false;">
+                                <div class="friend-pic" style="background-color: #dfdfdf; font-size: 16px;">👨‍💻</div>
+                                <span class="friend-name">Tom</span>
+                            </a>
+                            <!-- Friend 2: Hip Hop -->
+                            <a href="#" class="friend-cell" onclick="return false;">
+                                <div class="friend-pic" style="background-color: #ffd2d2; font-size: 16px;">🎤</div>
+                                <span class="friend-name">Hip Hop</span>
+                            </a>
+                            <!-- Friend 3: Pop -->
+                            <a href="#" class="friend-cell" onclick="return false;">
+                                <div class="friend-pic" style="background-color: #d2ffd2; font-size: 16px;">🍿</div>
+                                <span class="friend-name">Pop</span>
+                            </a>
+                            <!-- Friend 4: Millennial -->
+                            <a href="#" class="friend-cell" onclick="return false;">
+                                <div class="friend-pic" style="background-color: #d2d2ff; font-size: 16px;">📟</div>
+                                <span class="friend-name">Millennials</span>
+                            </a>
+                            <!-- Friend 5: Technics -->
+                            <a href="#" class="friend-cell" onclick="return false;">
+                                <div class="friend-pic" style="background-color: #ffd2ff; font-size: 16px;">🎛️</div>
+                                <span class="friend-name">Technics</span>
+                            </a>
+                            <!-- Friend 6: Vinyl -->
+                            <a href="#" class="friend-cell" onclick="return false;">
+                                <div class="friend-pic" style="background-color: #ffffd2; font-size: 16px;">💿</div>
+                                <span class="friend-name">Vinyl</span>
+                            </a>
+                            <!-- Friend 7: BPM -->
+                            <a href="#" class="friend-cell" onclick="return false;">
+                                <div class="friend-pic" style="background-color: #d2ffff; font-size: 16px;">⏱️</div>
+                                <span class="friend-name">BPM</span>
+                            </a>
+                            <!-- Friend 8: Count Me In -->
+                            <a href="{{ url_for('game.dashboard') }}" class="friend-cell">
+                                <div class="friend-pic" style="background-color: #ffe0cc; font-size: 16px; border: 1px solid #ff6600;">🔢</div>
+                                <span class="friend-name" style="color: #ff6600;">Count Me In</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="myspace-col-right">
+                
+                <!-- MySpace Music Player Widget -->
+                <div class="myspace-player-widget" id="myspace-player">
+                    <div class="player-brand">
+                        <div class="player-brand-logo">
+                            <span>🔊</span> djon's retro audio deck
+                        </div>
+                        <div style="font-size: 9px; opacity: 0.8; font-family: monospace;">chiptune synth v1.2</div>
+                    </div>
+                    
+                    <div class="player-main-grid">
+                        <div class="player-vinyl-area" id="vinyl-turntable">
+                            <div class="player-vinyl">
+                                <div class="player-vinyl-label">
+                                    <div class="player-vinyl-hole"></div>
+                                </div>
+                            </div>
+                            <!-- Simple stylized tonearm SVG -->
+                            <svg class="player-tonearm" viewBox="0 0 30 40" fill="none">
+                                <path d="M28 2 L15 15 L17 28 L15 32" stroke="#bbb" stroke-width="2" stroke-linecap="round"/>
+                                <rect x="12" y="30" width="6" height="8" rx="1" fill="#ff6600"/>
+                                <circle cx="28" cy="2" r="2" fill="#888"/>
+                            </svg>
+                        </div>
+                        
+                        <div class="player-screen">
+                            <div class="player-ticker-container">
+                                <div class="player-ticker" id="player-song-title">Select a track from the crates below...</div>
+                            </div>
+                            <div class="player-stats">
+                                <span>BPM: <strong id="player-bpm">--</strong></span>
+                                <span>Status: <strong id="player-status">STOPPED</strong></span>
+                            </div>
+                            
+                            <!-- Controls and Progress -->
+                            <div class="player-controls">
+                                <button class="player-btn" id="btn-play-pause" disabled>PLAY</button>
+                                <div class="player-progress-bar" id="progress-bar">
+                                    <div class="player-progress-fill" id="progress-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Waveform Visualizer -->
+                    <div class="player-visualizer-box">
+                        <canvas class="player-visualizer-canvas" id="visualizer-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Blurbs Panel -->
+                <div class="myspace-panel">
+                    <div class="myspace-panel-header-orange">djon's Blurbs</div>
+                    <div class="myspace-panel-body">
+                        <h3 style="color:#ff6600; font-size: 13px; font-weight: bold; margin-bottom: 6px;">About me:</h3>
+                        <p>
+                            Hey! I'm <strong>djon</strong> (pronounced like Dijon, or DJ-on, or just Jon with a silent D). I'm a bedroom mixer turned event DJ who is absolutely obsessed with the music that shaped our generation. I specialize in curated mixes that feature <strong>hip hop</strong>, <strong>pop</strong>, and <strong>millennial throwbacks</strong>.
+                        </p>
+                        <p>
+                            For me, DJing isn't just about playing hit songs. It's about triggering memories—mixing that one tracks from your middle school dance with a classic hip hop bassline from MTV. 
+                        </p>
+
+                        <h3 style="color:#ff6600; font-size: 13px; font-weight: bold; margin-top: 14px; margin-bottom: 6px;">Event Booking & DJ Services:</h3>
+                        <p>
+                            I love spinning for private events, house parties, club nights, and corporate gatherings. If you need a DJ who knows how to mix, who will actually read a room, and keep people dancing instead, let's talk!
+                        </p>
+                        <p>
+                            👉 <strong>Email me at:</strong> <a href="mailto:booking@jonslane.com?subject=djon Booking Inquiry" style="color: #618cc5; font-weight: bold; text-decoration: underline;">placeholder@jonslane.com</a> to inquire about dates, pricing, and sound systems.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- djon's Crates Panel -->
+                <div class="myspace-panel">
+                    <div class="myspace-panel-header">djon's Crates (Select a Genre)</div>
+                    <div class="myspace-panel-body">
+                        <p style="margin-bottom: 10px;">Dig through my record bins! Click on a genre crate to view my select tracks and load their signature melody snippet into the MySpace player.</p>
+                        
+                        <div class="crate-slider">
+                            <!-- Crate 1: Hip Hop -->
+                            <div class="crate-vinyl-card active" data-genre="hiphop">
+                                <div class="crate-vinyl-sleeve">
+                                    <div class="crate-vinyl-genre">Hip Hop</div>
+                                </div>
+                                <strong style="font-size: 11px;">Still D.R.E. x Moonlight</strong>
+                                <p style="font-size: 9px; margin-top: 2px;">95 BPM | djon Mashup</p>
+                            </div>
+                            
+                            <!-- Crate 2: Pop Rap -->
+                            <div class="crate-vinyl-card" data-genre="poprap">
+                                <div class="crate-vinyl-sleeve" style="background: linear-gradient(135deg, #d2d2ff, #a4a4ff);">
+                                    <div class="crate-vinyl-genre" style="color:#fff;">Millennial Pop</div>
+                                </div>
+                                <strong style="font-size: 11px;">Yeah!</strong>
+                                <p style="font-size: 9px; margin-top: 2px;">105 BPM | Synth Melodies</p>
+                            </div>
+                            
+                            <!-- Crate 3: Pop Rock / Dance -->
+                            <div class="crate-vinyl-card" data-genre="dance">
+                                <div class="crate-vinyl-sleeve" style="background: linear-gradient(135deg, #ffd2d2, #ffa4a4);">
+                                    <div class="crate-vinyl-genre" style="color:#fff;">Pop / Funk</div>
+                                </div>
+                                <strong style="font-size: 11px;">Hey Ya!</strong>
+                                <p style="font-size: 9px; margin-top: 2px;">120 BPM | High Energy Chords</p>
+                            </div>
+                        </div>
+
+                        <!-- Crate Details Box -->
+                        <div class="crate-details-panel">
+                            <h3 id="crate-title" style="color: #618cc5; font-size: 13px; font-weight: bold; margin-bottom: 6px;">Genre: Golden Era Hip Hop</h3>
+                            <p id="crate-description" style="font-style: italic;">"Nothing beats the head-nod factor of late 90s and early 2000s hip hop. Deep basslines, sharp drums, and iconic instrumental hooks that grab attention immediately."</p>
+                            
+                            <button class="player-btn" id="btn-load-vinyl" style="margin: 5px 0 15px; background-color: #ff6600; color:#fff; padding: 6px 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer;">💿 Load Crate Track onto Turntable</button>
+                            
+                            <strong style="display:block; margin-bottom: 5px;">djon's Sample Crate Tracks:</strong>
+                            <ul class="crate-playlist" id="crate-playlist-items">
+                                <!-- Loaded dynamically -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Polaroid Showcase -->
+                <div class="myspace-panel">
+                    <div class="myspace-panel-header">Photo Stream</div>
+                    <div class="myspace-panel-body" style="background-color: #fafafa; display: flex; justify-content: center; padding: 20px;">
+                        <div class="retro-polaroid">
+                            <div class="retro-polaroid-photo">
+                                <span style="font-size: 3rem;">🎛️🎧🕺</span>
+                                <p style="margin-top: 10px; font-size: 10px; padding: 0 10px; text-align: center; color: #666;">Live photos of the dancefloor coming soon!</p>
+                            </div>
+                            <div class="retro-polaroid-caption">djon @ the mixer, 2026</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guestbook / Comments Panel -->
+                <div class="myspace-panel">
+                    <div class="myspace-panel-header-orange">djon's Friends Comments</div>
+                    <div class="myspace-panel-body">
+                        <table class="myspace-comments-table">
+                            <tr class="myspace-comment-row">
+                                <td class="myspace-comment-author">
+                                    <div class="friend-pic" style="margin: 0 auto; width: 50px; height: 50px; font-size: 14px;">👨‍💻</div>
+                                    Tom
+                                </td>
+                                <td class="myspace-comment-body">
+                                    Yo djon! Thanks for adding me. Your mixes are fire. Can't wait to see you DJ live! Keep spinning those throwbacks.
+                                    <div class="myspace-comment-date">Posted 06/14/2026 10:15 AM</div>
+                                </td>
+                            </tr>
+                            <tr class="myspace-comment-row">
+                                <td class="myspace-comment-author">
+                                    <div class="friend-pic" style="margin: 0 auto; width: 50px; height: 50px; font-size: 14px;">🎤</div>
+                                    Hip Hop
+                                </td>
+                                <td class="myspace-comment-body">
+                                    That chiptune "Still D.R.E. x Moonlight Sonata" mashup on your player is dope! It sounds exactly like a retro Gameboy game. You gotta drop the full mix sometime!
+                                    <div class="myspace-comment-date">Posted 06/14/2026 11:22 AM</div>
+                                </td>
+                            </tr>
+                            <tr class="myspace-comment-row">
+                                <td class="myspace-comment-author">
+                                    <div class="friend-pic" style="margin: 0 auto; width: 50px; height: 50px; font-size: 14px;">🔢</div>
+                                    Count Me In
+                                </td>
+                                <td class="myspace-comment-body">
+                                    Hey djon, we should practice some BPM drills today. Let's head over to the training dashboard!
+                                    <div class="myspace-comment-date">Posted 06/14/2026 12:05 PM</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Music Data structure
+const genresData = {
+    hiphop: {
+        title: "Genre: Classical Hip Hop Mashup",
+        description: "A customized chiptune mashup crafted by djon. Combining the moving minor triplets of Beethoven's 'Moonlight Sonata' (Adagio) with the staccato chords of Dr. Dre's 'Still D.R.E.'.",
+        trackTitle: "djon - Still D.R.E. x Moonlight Sonata",
+        bpm: 95,
+        melody: [
+            // ==========================================
+            // PART 1: Moonlight Sonata Background Triplets (Octave 4/5)
+            // ==========================================
+            // Beat 1: G#4 - C#5 - E5
+            { note: "G#4", time: 0.0, dur: 0.15 },
+            { note: "C#5", time: 0.2, dur: 0.15 },
+            { note: "E5", time: 0.4, dur: 0.15 },
+            
+            // Beat 2: G#4 - C#5 - E5
+            { note: "G#4", time: 0.6, dur: 0.15 },
+            { note: "C#5", time: 0.8, dur: 0.15 },
+            { note: "E5", time: 1.0, dur: 0.15 },
+            
+            // Beat 3: G#4 - C#5 - E5
+            { note: "G#4", time: 1.2, dur: 0.15 },
+            { note: "C#5", time: 1.4, dur: 0.15 },
+            { note: "E5", time: 1.6, dur: 0.15 },
+            
+            // Beat 4: G#4 - C#5 - E5
+            { note: "G#4", time: 1.8, dur: 0.15 },
+            { note: "C#5", time: 2.0, dur: 0.15 },
+            { note: "E5", time: 2.2, dur: 0.15 },
+            
+            // Beat 5: A4 - C#5 - E5
+            { note: "A4", time: 2.4, dur: 0.15 },
+            { note: "C#5", time: 2.6, dur: 0.15 },
+            { note: "E5", time: 2.8, dur: 0.15 },
+            
+            // Beat 6: A4 - D5 - F#5
+            { note: "A4", time: 3.0, dur: 0.15 },
+            { note: "D5", time: 3.2, dur: 0.15 },
+            { note: "F#5", time: 3.4, dur: 0.15 },
+            
+            // Beat 7: G#4 - B4 - D#5
+            { note: "G#4", time: 3.6, dur: 0.15 },
+            { note: "B4", time: 3.8, dur: 0.15 },
+            { note: "D#5", time: 4.0, dur: 0.15 },
+            
+            // Beat 8: G#4 - C#5 - E5
+            { note: "G#4", time: 4.2, dur: 0.15 },
+            { note: "C#5", time: 4.4, dur: 0.15 },
+            { note: "E5", time: 4.6, dur: 0.15 },
+
+            // ==========================================
+            // PART 2: Still D.R.E. Foreground Chords (Octave 5/6)
+            // ==========================================
+            // Chord 1: Am (A5 + C6 + E6)
+            { note: "E6", time: 0.0, dur: 0.12 },
+            { note: "C6", time: 0.0, dur: 0.12 },
+            { note: "A5", time: 0.0, dur: 0.12 },
+
+            { note: "E6", time: 0.3, dur: 0.12 },
+            { note: "C6", time: 0.3, dur: 0.12 },
+            { note: "A5", time: 0.3, dur: 0.12 },
+
+            { note: "E6", time: 0.6, dur: 0.12 },
+            { note: "C6", time: 0.6, dur: 0.12 },
+            { note: "A5", time: 0.6, dur: 0.12 },
+
+            { note: "E6", time: 0.9, dur: 0.12 },
+            { note: "C6", time: 0.9, dur: 0.12 },
+            { note: "A5", time: 0.9, dur: 0.12 },
+
+            { note: "E6", time: 1.2, dur: 0.12 },
+            { note: "C6", time: 1.2, dur: 0.12 },
+            { note: "A5", time: 1.2, dur: 0.12 },
+
+            { note: "E6", time: 1.5, dur: 0.12 },
+            { note: "C6", time: 1.5, dur: 0.12 },
+            { note: "A5", time: 1.5, dur: 0.12 },
+
+            { note: "E6", time: 1.8, dur: 0.12 },
+            { note: "C6", time: 1.8, dur: 0.12 },
+            { note: "A5", time: 1.8, dur: 0.12 },
+
+            { note: "E6", time: 2.1, dur: 0.12 },
+            { note: "C6", time: 2.1, dur: 0.12 },
+            { note: "A5", time: 2.1, dur: 0.12 },
+
+            // Chord 2: G/Am variant (G5 + C6 + E6)
+            { note: "E6", time: 2.4, dur: 0.12 },
+            { note: "C6", time: 2.4, dur: 0.12 },
+            { note: "G5", time: 2.4, dur: 0.12 },
+
+            { note: "E6", time: 2.7, dur: 0.12 },
+            { note: "C6", time: 2.7, dur: 0.12 },
+            { note: "G5", time: 2.7, dur: 0.12 },
+
+            // Chord 3: G/B (G5 + B5 + D6)
+            { note: "D6", time: 3.0, dur: 0.12 },
+            { note: "B5", time: 3.0, dur: 0.12 },
+            { note: "G5", time: 3.0, dur: 0.12 },
+
+            { note: "D6", time: 3.3, dur: 0.12 },
+            { note: "B5", time: 3.3, dur: 0.12 },
+            { note: "G5", time: 3.3, dur: 0.12 },
+
+            { note: "D6", time: 3.6, dur: 0.12 },
+            { note: "B5", time: 3.6, dur: 0.12 },
+            { note: "G5", time: 3.6, dur: 0.12 },
+
+            { note: "D6", time: 3.9, dur: 0.12 },
+            { note: "B5", time: 3.9, dur: 0.12 },
+            { note: "G5", time: 3.9, dur: 0.12 },
+
+            // Chord 4: Am (A5 + C6 + E6)
+            { note: "E6", time: 4.2, dur: 0.12 },
+            { note: "C6", time: 4.2, dur: 0.12 },
+            { note: "A5", time: 4.2, dur: 0.12 },
+
+            { note: "E6", time: 4.5, dur: 0.12 },
+            { note: "C6", time: 4.5, dur: 0.12 },
+            { note: "A5", time: 4.5, dur: 0.12 }
+        ],
+        loopLength: 4.8, // seconds
+        playlist: [
+            { title: "Still D.R.E. x Moonlight Sonata", artist: "djon Mashup" },
+            { title: "Still D.R.E.", artist: "Dr. Dre ft. Snoop Dogg" },
+            { title: "Moonlight Sonata (Adagio)", artist: "Ludwig van Beethoven" },
+            { title: "Shook Ones, Pt. II", artist: "Mobb Deep" },
+            { title: "Ms. Jackson", artist: "Outkast" }
+        ]
+    },
+    poprap: {
+        title: "Genre: Millennial Pop Rap",
+        description: "The early 2000s club anthems. Energetic synth lines, infectious hook singing, and beats that defined middle school dances and late-night car rides.",
+        trackTitle: "Usher ft. Lil Jon - Yeah!",
+        bpm: 105,
+        melody: [
+            // Usher's Yeah! Synth line: G#5, G#5, A#5, C#6, A#5, C#6, A#5, G#5
+            { note: "G#5", time: 0.0, dur: 0.15 },
+            { note: "G#5", time: 0.25, dur: 0.15 },
+            { note: "A#5", time: 0.5, dur: 0.15 },
+            { note: "C#6", time: 0.75, dur: 0.15 },
+            { note: "A#5", time: 1.0, dur: 0.15 },
+            { note: "C#6", time: 1.25, dur: 0.15 },
+            { note: "A#5", time: 1.5, dur: 0.15 },
+            { note: "G#5", time: 1.75, dur: 0.25 },
+            
+            { note: "G#5", time: 2.2, dur: 0.15 },
+            { note: "G#5", time: 2.45, dur: 0.15 },
+            { note: "A#5", time: 2.7, dur: 0.15 },
+            { note: "C#6", time: 2.95, dur: 0.15 },
+            { note: "A#5", time: 3.2, dur: 0.15 },
+            { note: "C#6", time: 3.45, dur: 0.15 },
+            { note: "A#5", time: 3.7, dur: 0.15 },
+            { note: "G#5", time: 3.95, dur: 0.25 }
+        ],
+        loopLength: 4.4,
+        playlist: [
+            { title: "Yeah!", artist: "Usher ft. Lil Jon & Ludacris" },
+            { title: "In Da Club", artist: "50 Cent" },
+            { title: "Toxic", artist: "Britney Spears" },
+            { title: "Get Busy", artist: "Sean Paul" },
+            { title: "Lose Control", artist: "Missy Elliott" }
+        ]
+    },
+    dance: {
+        title: "Genre: Pop / Funk / Party Classics",
+        description: "Upbeat pop classics and dance-crossover throwbacks that get everyone from Gen Z to Baby Boomers onto the dance floor. Infectious rhythm and clap-along beats.",
+        trackTitle: "Outkast - Hey Ya!",
+        bpm: 120,
+        melody: [
+            // Outkast's Hey Ya! Chords / Riff: G major, C major, D major, E major
+            // Bar 1: G chord (G5, B5, D6)
+            { note: "G5", time: 0.0, dur: 0.3 }, { note: "B5", time: 0.0, dur: 0.3 }, { note: "D6", time: 0.0, dur: 0.3 },
+            { note: "G5", time: 0.4, dur: 0.3 }, { note: "B5", time: 0.4, dur: 0.3 }, { note: "D6", time: 0.4, dur: 0.3 },
+            // Bar 2: C chord (G5, C6, E6)
+            { note: "G5", time: 0.8, dur: 0.3 }, { note: "C6", time: 0.8, dur: 0.3 }, { note: "E6", time: 0.8, dur: 0.3 },
+            { note: "G5", time: 1.2, dur: 0.3 }, { note: "C6", time: 1.2, dur: 0.3 }, { note: "E6", time: 1.2, dur: 0.3 },
+            // Bar 3: C chord (extra duration)
+            { note: "G5", time: 1.6, dur: 0.3 }, { note: "C6", time: 1.6, dur: 0.3 }, { note: "E6", time: 1.6, dur: 0.3 },
+            // Bar 4: D chord (A5, D6, F#6)
+            { note: "A5", time: 2.0, dur: 0.3 }, { note: "D6", time: 2.0, dur: 0.3 }, { note: "F#6", time: 2.0, dur: 0.3 },
+            // Bar 5: E chord (G#5, B5, E6)
+            { note: "G#5", time: 2.4, dur: 0.3 }, { note: "B5", time: 2.4, dur: 0.3 }, { note: "E6", time: 2.4, dur: 0.3 },
+            { note: "G#5", time: 2.8, dur: 0.3 }, { note: "B5", time: 2.8, dur: 0.3 }, { note: "E6", time: 2.8, dur: 0.3 },
+            // Bar 6: E chord
+            { note: "G#5", time: 3.2, dur: 0.3 }, { note: "B5", time: 3.2, dur: 0.3 }, { note: "E6", time: 3.2, dur: 0.3 },
+            { note: "G#5", time: 3.6, dur: 0.3 }, { note: "B5", time: 3.6, dur: 0.3 }, { note: "E6", time: 3.6, dur: 0.3 }
+        ],
+        loopLength: 4.0,
+        playlist: [
+            { title: "Hey Ya!", artist: "Outkast" },
+            { title: "Crazy In Love", artist: "Beyoncé ft. Jay-Z" },
+            { title: "Mr. Brightside", artist: "The Killers" },
+            { title: "Hollaback Girl", artist: "Gwen Stefani" },
+            { title: "Hot in Herre", artist: "Nelly" }
+        ]
+    }
+};
+
+const noteFreqs = {
+    "G4": 392.00, "G#4": 415.30, "A4": 440.00, "A#4": 466.16, "B4": 493.88,
+    "C5": 523.25, "C#5": 554.37, "D5": 587.33, "D#5": 622.25, "E5": 659.25, "F#5": 739.99,
+    "G5": 783.99, "G#5": 830.61, "A5": 880.00, "A#5": 932.33, "B5": 987.77,
+    "C6": 1046.50, "C#6": 1109.73, "D6": 1174.66, "D#6": 1244.51, "E6": 1318.51,
+    "F6": 1396.91, "F#6": 1479.98, "G6": 1567.98, "G#6": 1661.22
+};
+
+// Audio State
+let audioCtx = null;
+let synthTimer = null;
+let currentTrackData = null;
+let isPlaying = false;
+let startTime = 0;
+let progressInterval = null;
+let activeOscillators = [];
+let nextLoopTime = 0.0;
+
+// DOM elements
+const elPlayPause = document.getElementById("btn-play-pause");
+const elSongTitle = document.getElementById("player-song-title");
+const elBpm = document.getElementById("player-bpm");
+const elStatus = document.getElementById("player-status");
+const elProgressFill = document.getElementById("progress-fill");
+const elProgressBar = document.getElementById("progress-bar");
+const elTurntable = document.getElementById("vinyl-turntable");
+const elCrateTitle = document.getElementById("crate-title");
+const elCrateDesc = document.getElementById("crate-description");
+const elCratePlaylist = document.getElementById("crate-playlist-items");
+const elLoadVinyl = document.getElementById("btn-load-vinyl");
+
+const canvas = document.getElementById("visualizer-canvas");
+const ctx = canvas.getContext("2d");
+let analyserNode = null;
+let animationFrameId = null;
+
+// Set canvas size
+function resizeCanvas() {
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+// Initialize Web Audio
+function initAudio() {
+    if (audioCtx) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+    analyserNode = audioCtx.createAnalyser();
+    analyserNode.fftSize = 64;
+    analyserNode.connect(audioCtx.destination);
+}
+
+// Play note via Web Audio
+function playSynthNote(frequency, startTime, duration) {
+    if (!audioCtx) return;
+    
+    // Create oscillator (chiptune triangle wave)
+    const osc = audioCtx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(frequency, startTime);
+    
+    // Create gain node for envelope
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.001, startTime);
+    // Attack
+    gain.gain.linearRampToValueAtTime(0.12, startTime + 0.03);
+    // Decay/Sustain
+    gain.gain.exponentialRampToValueAtTime(0.08, startTime + duration - 0.05);
+    // Release
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    
+    // Connect to analyser
+    osc.connect(gain);
+    gain.connect(analyserNode);
+    
+    // Track scheduled oscillator
+    activeOscillators.push(osc);
+    osc.onended = () => {
+        const idx = activeOscillators.indexOf(osc);
+        if (idx > -1) {
+            activeOscillators.splice(idx, 1);
+        }
+    };
+    
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+}
+
+// Synth engine scheduler loop
+function startSequencer() {
+    stopSequencer(); // Always guarantee any stale timers or notes are stopped first
+    
+    if (!isPlaying || !currentTrackData) return;
+    
+    initAudio();
+    const loopLength = currentTrackData.loopLength;
+    
+    // Reset our audio clocks
+    startTime = audioCtx.currentTime;
+    nextLoopTime = startTime;
+    
+    // Function to schedule a single loop segment
+    function scheduleLoopSegment(time) {
+        currentTrackData.melody.forEach(noteEvent => {
+            const freq = noteFreqs[noteEvent.note];
+            if (freq) {
+                playSynthNote(freq, time + noteEvent.time, noteEvent.dur);
+            }
+        });
+    }
+
+    // Run scheduler loop every 100ms
+    // Look ahead 300ms to schedule future audio events in the Web Audio thread
+    function scheduler() {
+        if (!isPlaying) return;
+        while (nextLoopTime < audioCtx.currentTime + 0.3) {
+            scheduleLoopSegment(nextLoopTime);
+            nextLoopTime += loopLength;
+        }
+    }
+
+    // Call scheduler immediately
+    scheduler();
+    
+    // Keep scheduling in the background
+    synthTimer = setInterval(scheduler, 100);
+
+    // Track play progress fill smoothly
+    progressInterval = setInterval(() => {
+        if (!isPlaying || !audioCtx) return;
+        const elapsed = audioCtx.currentTime - startTime;
+        const percent = ((elapsed % loopLength) / loopLength) * 100;
+        elProgressFill.style.width = percent + "%";
+    }, 50);
+}
+
+function stopSequencer() {
+    if (synthTimer) {
+        clearInterval(synthTimer);
+        synthTimer = null;
+    }
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+    
+    // Immediately cancel and stop all scheduled/playing audio oscillators
+    activeOscillators.forEach(osc => {
+        try {
+            osc.stop();
+        } catch (e) {
+            // Already ended
+        }
+    });
+    activeOscillators = [];
+    
+    elProgressFill.style.width = "0%";
+}
+
+// Start visualizer animation
+function drawVisualizer() {
+    if (!isPlaying || !analyserNode) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Draw static grid line
+        ctx.strokeStyle = "rgba(255, 102, 0, 0.2)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+        return;
+    }
+
+    animationFrameId = requestAnimationFrame(drawVisualizer);
+    
+    const bufferLength = analyserNode.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyserNode.getByteTimeDomainData(dataArray);
+    
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw grid lines
+    ctx.strokeStyle = "rgba(255, 102, 0, 0.1)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < canvas.width; i += 40) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, canvas.height);
+        ctx.stroke();
+    }
+    
+    ctx.strokeStyle = "#ff6600";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    const sliceWidth = canvas.width / bufferLength;
+    let x = 0;
+    
+    for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * canvas.height) / 2;
+        
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+        
+        x += sliceWidth;
+    }
+    
+    ctx.lineTo(canvas.width, canvas.height / 2);
+    ctx.stroke();
+}
+
+// Load track into the player
+function loadTrack(genreKey) {
+    const data = genresData[genreKey];
+    currentTrackData = data;
+    
+    // Update player labels
+    elSongTitle.innerText = data.trackTitle;
+    
+    elBpm.innerText = data.bpm;
+    
+    // Reset player state
+    if (isPlaying) {
+        stopSequencer();
+        isPlaying = false;
+        elTurntable.classList.remove("spinning");
+        elStatus.innerText = "STOPPED";
+        elPlayPause.innerText = "PLAY";
+    }
+    
+    // Enable play button
+    elPlayPause.removeAttribute("disabled");
+    
+    // Adjust vinyl rotation speed based on BPM
+    const rotateSpeed = 60 / data.bpm * 4; // seconds per spin
+    elTurntable.querySelector(".player-vinyl").style.animationDuration = rotateSpeed + "s";
+}
+
+// Populate playlist container based on selected crate
+function updateCrateDetails(genreKey) {
+    const data = genresData[genreKey];
+    
+    // Set title and description
+    elCrateTitle.innerText = data.title;
+    elCrateDesc.innerText = `"${data.description}"`;
+    
+    // Clear playlist
+    elCratePlaylist.innerHTML = "";
+    
+    // Append items
+    data.playlist.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "crate-playlist-item";
+        li.innerHTML = `
+            <span class="title">${item.title}</span>
+            <span class="artist">${item.artist}</span>
+        `;
+        elCratePlaylist.appendChild(li);
+    });
+    
+    // Set active crate card styling
+    document.querySelectorAll(".crate-vinyl-card").forEach(card => {
+        card.classList.remove("active");
+    });
+    
+    const selectedCard = document.querySelector(`.crate-vinyl-card[data-genre="${genreKey}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add("active");
+    }
+}
+
+// Click Handlers
+document.querySelectorAll(".crate-vinyl-card").forEach(card => {
+    card.addEventListener("click", () => {
+        const genre = card.getAttribute("data-genre");
+        updateCrateDetails(genre);
+    });
+});
+
+elLoadVinyl.addEventListener("click", () => {
+    const activeCard = document.querySelector(".crate-vinyl-card.active");
+    if (activeCard) {
+        const genre = activeCard.getAttribute("data-genre");
+        loadTrack(genre);
+        
+        // Flash feedback on the player
+        elSongTitle.parentElement.style.backgroundColor = "rgba(255, 102, 0, 0.2)";
+        setTimeout(() => {
+            elSongTitle.parentElement.style.backgroundColor = "";
+        }, 150);
+    }
+});
+
+elPlayPause.addEventListener("click", () => {
+    initAudio();
+    
+    // Resume audio context if suspended (browser security)
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
+    if (isPlaying) {
+        // Pause
+        stopSequencer();
+        isPlaying = false;
+        elTurntable.classList.remove("spinning");
+        elStatus.innerText = "PAUSED";
+        elPlayPause.innerText = "PLAY";
+    } else {
+        // Play
+        isPlaying = true;
+        elTurntable.classList.add("spinning");
+        elStatus.innerText = "PLAYING";
+        elPlayPause.innerText = "PAUSE";
+        startSequencer();
+        drawVisualizer();
+    }
+});
+
+// Load default crate on startup
+updateCrateDetails("hiphop");
+loadTrack("hiphop");
+drawVisualizer(); // draws the static visualizer line
+
+</script>
+{% endblock %}

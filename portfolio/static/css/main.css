@@ -458,3 +458,818 @@ a {
         box-shadow: 0 0 0 0 rgba(57, 255, 20, 0);
     }
 }
+
+/* ==========================================================================
+   Homepage Showcase Grid
+   ========================================================================== */
+.sections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2.5rem;
+    max-width: var(--max-width);
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+.section-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition-smooth);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.section-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--border-hover);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 
+                0 0 1px 1px rgba(255, 255, 255, 0.15) inset;
+}
+
+/* Vinyl Sleeve Card Preview */
+.vinyl-sleeve-card {
+    cursor: pointer;
+    background: linear-gradient(145deg, #0e1017 0%, #06070a 100%);
+}
+
+.sleeve-container {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.preview-sleeve {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    background: linear-gradient(135deg, var(--bi-pink), var(--bi-purple));
+    border-radius: 6px;
+    z-index: 2;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transform: translateX(-20px);
+    transition: var(--transition-smooth);
+}
+
+.preview-sleeve span {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    color: #fff;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+}
+
+.preview-vinyl {
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    background: #111;
+    border-radius: 50%;
+    z-index: 1;
+    box-shadow: 0 0 10px rgba(0,0,0,0.8);
+    transform: translateX(10px) rotate(0deg);
+    transition: var(--transition-smooth);
+    border: 1px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-vinyl::after {
+    content: '';
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.05);
+}
+
+.vinyl-grooves {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.vinyl-label {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--bi-purple), var(--bi-blue));
+    border-radius: 50%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vinyl-center-hole {
+    width: 8px;
+    height: 8px;
+    background: #000;
+    border-radius: 50%;
+}
+
+.vinyl-sleeve-card:hover .preview-sleeve {
+    transform: translateX(-40px);
+}
+
+.vinyl-sleeve-card:hover .preview-vinyl {
+    transform: translateX(30px) rotate(90deg);
+}
+
+/* ==========================================================================
+   MySpace Retro Theme & Profile Layout
+   ========================================================================== */
+.myspace-theme-container {
+    background-color: #d6e4f6; /* Soft blue MySpace outer background */
+    background-image: radial-gradient(#618cc5 1px, transparent 1px);
+    background-size: 16px 16px;
+    color: #000000;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 2rem 0;
+    min-height: 100vh;
+}
+
+/* MySpace Wrapper */
+.myspace-container {
+    max-width: 950px;
+    margin: 80px auto 20px;
+    background-color: #ffffff; /* Classic white content area */
+    border: 2px solid #618cc5;
+    padding: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+/* MySpace Header */
+.myspace-header-banner {
+    background-color: #618cc5; /* Classic blue header */
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 15px;
+    border: 1px solid #4a6f9b;
+}
+
+.myspace-header-banner h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0;
+    color: #fff !important;
+    text-transform: lowercase;
+    letter-spacing: -1px;
+}
+
+.myspace-header-banner p {
+    color: #e0ecff !important;
+    font-size: 0.95rem;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* Column Grid */
+.myspace-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 800px) {
+    .myspace-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* MySpace Panels */
+.myspace-panel {
+    border: 2px solid #618cc5;
+    margin-bottom: 20px;
+    background-color: #fff;
+    border-radius: 2px;
+}
+
+.myspace-panel-header {
+    background-color: #618cc5;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+    padding: 4px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.myspace-panel-header-orange {
+    background-color: #ff6600; /* Classic orange heading */
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+    padding: 4px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.myspace-panel-body {
+    padding: 10px;
+    color: #333;
+}
+
+.myspace-panel-body p {
+    color: #444;
+    font-size: 11px;
+    margin-bottom: 8px;
+}
+
+/* MySpace Contact Table */
+.myspace-contact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+    text-align: center;
+}
+
+.myspace-contact-btn {
+    background-color: #c9e0ff;
+    border: 1px solid #618cc5;
+    color: #2b588f;
+    padding: 6px;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 11px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.myspace-contact-btn:hover {
+    background-color: #618cc5;
+    color: #fff;
+}
+
+/* Profile Blurbs & Details */
+.myspace-profile-info {
+    display: flex;
+    gap: 15px;
+}
+
+@media (max-width: 480px) {
+    .myspace-profile-info {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+.myspace-pic-box {
+    text-align: center;
+    width: 170px;
+}
+
+.myspace-pic {
+    width: 170px;
+    height: 170px;
+    border: 1px solid #ccc;
+    background: #ececec;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+}
+
+.myspace-pic img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.myspace-pic-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+}
+
+.myspace-pic-placeholder span {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.myspace-status-text {
+    margin-top: 8px;
+    font-style: italic;
+    color: #ff6600;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.myspace-details-box {
+    flex-grow: 1;
+}
+
+.myspace-details-row {
+    margin-bottom: 6px;
+    font-size: 11px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+}
+
+.myspace-details-label {
+    font-weight: bold;
+    color: #ff6600;
+}
+
+/* MySpace Music Player Widget styling */
+.myspace-player-widget {
+    background-color: #1a1a1a;
+    color: #fff;
+    border: 2px solid #ff6600;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 10px rgba(255, 102, 0, 0.3), 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.player-brand {
+    font-size: 11px;
+    font-weight: bold;
+    color: #ff6600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 4px;
+}
+
+.player-brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.player-main-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Mini Spinning Vinyl */
+.player-vinyl-area {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    border-radius: 50%;
+    border: 1px solid #222;
+}
+
+.player-vinyl {
+    width: 76px;
+    height: 76px;
+    background: radial-gradient(circle, #2a2a2a 20%, #080808 65%, #000 80%);
+    border-radius: 50%;
+    position: relative;
+    animation: vinyl-spin 4s linear infinite;
+    animation-play-state: paused;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    border: 1px solid #111;
+}
+
+.player-vinyl-area.spinning .player-vinyl {
+    animation-play-state: running;
+}
+
+@keyframes vinyl-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.player-vinyl::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255,255,255,0.06);
+}
+
+.player-vinyl-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ff6600;
+    border: 1.5px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.player-vinyl-hole {
+    width: 4px;
+    height: 4px;
+    background: #000;
+    border-radius: 50%;
+}
+
+.player-tonearm {
+    position: absolute;
+    top: -2px;
+    right: 2px;
+    width: 30px;
+    height: 40px;
+    pointer-events: none;
+    transform-origin: top right;
+    transform: rotate(0deg);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 5;
+}
+
+.player-vinyl-area.spinning .player-tonearm {
+    transform: rotate(18deg);
+}
+
+/* Player Screen */
+.player-screen {
+    background-color: #050505;
+    border: 1px solid #ff6600;
+    padding: 6px 10px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #ff6600;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 80px;
+}
+
+.player-ticker-container {
+    overflow: hidden;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(255, 102, 0, 0.2);
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+    width: 100%;
+}
+
+.player-ticker {
+    display: inline-block;
+    padding-left: 100%;
+    animation: ticker 12s linear infinite;
+}
+
+@keyframes ticker {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-100%, 0, 0); }
+}
+
+.player-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-bottom: 4px;
+}
+
+/* Controls */
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.player-btn {
+    background-color: #ff6600;
+    color: #000;
+    border: none;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 10px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    font-family: monospace;
+}
+
+.player-btn:hover {
+    background-color: #ff8533;
+}
+
+.player-btn:active {
+    transform: scale(0.95);
+}
+
+.player-progress-bar {
+    flex-grow: 1;
+    height: 8px;
+    background-color: #111;
+    border: 1px solid #ff6600;
+    position: relative;
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+.player-progress-fill {
+    height: 100%;
+    width: 0%;
+    background-color: #ff6600;
+}
+
+/* Visualizer */
+.player-visualizer-box {
+    margin-top: 10px;
+    background-color: #000;
+    border: 1px solid #333;
+    height: 35px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.player-visualizer-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Top Friends Section */
+.top-friends-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    text-align: center;
+}
+
+.friend-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+}
+
+.friend-cell:hover .friend-pic {
+    border-color: #ff6600;
+}
+
+.friend-cell:hover .friend-name {
+    text-decoration: underline;
+}
+
+.friend-name {
+    color: #618cc5;
+    font-weight: bold;
+    font-size: 10px;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.friend-pic {
+    width: 60px;
+    height: 60px;
+    border: 1px solid #ccc;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    transition: border-color 0.2s;
+}
+
+/* Music Crate Section */
+.crate-container {
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.crate-slider {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scroll-snap-type: x mandatory;
+}
+
+.crate-vinyl-card {
+    flex: 0 0 160px;
+    scroll-snap-align: start;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+    cursor: pointer;
+    text-align: center;
+}
+
+.crate-vinyl-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 12px rgba(0,0,0,0.08);
+    border-color: #ff6600;
+}
+
+.crate-vinyl-sleeve {
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(135deg, #eee, #ccc);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.crate-vinyl-genre {
+    font-weight: bold;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #333;
+    z-index: 2;
+    padding: 0 5px;
+}
+
+.crate-vinyl-card.active {
+    border-color: #ff6600;
+    box-shadow: 0 0 8px rgba(255, 102, 0, 0.3);
+}
+
+.crate-vinyl-card.active .crate-vinyl-sleeve {
+    background: linear-gradient(135deg, #ffe0cc, #ffd1b3);
+    border: 1.5px solid #ff6600;
+}
+
+.crate-details-panel {
+    margin-top: 15px;
+    border-top: 1px dashed #ccc;
+    padding-top: 15px;
+}
+
+.crate-playlist {
+    margin-top: 10px;
+    list-style: none;
+    padding: 0;
+}
+
+.crate-playlist-item {
+    padding: 6px 10px;
+    background-color: #fff;
+    border: 1px solid #eee;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+}
+
+.crate-playlist-item span.title {
+    font-weight: bold;
+    color: #333;
+}
+
+.crate-playlist-item span.artist {
+    color: #666;
+    font-style: italic;
+}
+
+/* Retro Polaroid / Placeholder styling */
+.retro-polaroid {
+    background-color: #fcfcfc;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    padding: 10px 10px 25px;
+    text-align: center;
+    transform: rotate(-2deg);
+    transition: transform 0.3s;
+    margin-bottom: 10px;
+}
+
+.retro-polaroid:hover {
+    transform: rotate(0deg) scale(1.02);
+}
+
+.retro-polaroid-photo {
+    width: 100%;
+    height: 180px;
+    background-color: #ececec;
+    border: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #888;
+}
+
+.retro-polaroid-caption {
+    font-family: 'Outfit', sans-serif;
+    font-weight: bold;
+    font-size: 12px;
+    margin-top: 10px;
+    color: #555;
+}
+
+/* Retro Comments Section */
+.myspace-comments-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.myspace-comment-row {
+    border-bottom: 1px solid #ccc;
+}
+
+.myspace-comment-author {
+    width: 100px;
+    padding: 8px;
+    font-weight: bold;
+    color: #618cc5;
+    text-align: center;
+    vertical-align: top;
+    background-color: #f2f6fb;
+    border-right: 1px solid #ccc;
+}
+
+.myspace-comment-body {
+    padding: 8px;
+    vertical-align: top;
+    font-size: 11px;
+}
+
+.myspace-comment-date {
+    font-size: 9px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.btn-back-home {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #c9e0ff;
+    border: 1px solid #618cc5;
+    color: #2b588f;
+    font-weight: bold;
+    font-size: 11px;
+    text-decoration: none;
+    border-radius: 3px;
+    margin-bottom: 15px;
+    transition: background-color 0.2s;
+}
+
+.btn-back-home:hover {
+    background-color: #618cc5;
+    color: #fff;
+}
+

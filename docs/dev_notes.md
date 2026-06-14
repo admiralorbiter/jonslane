@@ -21,6 +21,16 @@ This log is used to brainstorm new features, track project updates, and maintain
   - Ingestion endpoint `/game/api/sync` that parses, validates bounds, and transactionally commits client attempts (preventing duplicates via UUID checks).
   - Chronological user streak calibration and synchronization.
 
+### 3. Music (djon) Retro Profile Hub & Synthesizer
+- **Goal**: Introduce the first dedicated interest section for the DJ alter-ego "djon" featuring a retro 2000s MySpace theme and interactive audio tools.
+- **Features**:
+  - Modular homepage Sections Grid showcasing the music hub with a slide-out, rotating neon vinyl sleeve card on hover.
+  - Authentic MySpace profile layout containing a customized soft-blue grid background, blue and orange panel headers, Top 8 Friends, and a guestbook comments log.
+  - Standing Web Audio API chiptune synthesizer engine utilizing precise look-ahead scheduling (100ms interval polling, 300ms advance scheduling) to play gapless loops.
+  - Simultaneous, layered chiptune mashup of Beethoven's Moonlight Sonata (triplet arpeggios in the lower register) and Dr. Dre's "Still D.R.E." (staccato chords in the upper register).
+  - Real-time HTML5 Canvas oscilloscope frequency visualizer synced directly to active synth outputs.
+  - "djon's Crates" interactive vinyl selector letting visitors explore genre commentaries, view select playlists, and load tracks onto the retro player deck.
+
 ---
 
 ## 🏗️ Upcoming Ideas & Projects
