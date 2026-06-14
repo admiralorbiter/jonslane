@@ -23,7 +23,6 @@
             <a href="/" class="navbar-logo">Jon's Lane</a>
             <ul class="navbar-links">
                 <li><a href="{{ url_for('main.music') }}" class="navbar-link">DJon</a></li>
-                <li><a href="{{ url_for('piano.index') }}" class="navbar-link">Piano Lab</a></li>
                 <li><a href="{{ url_for('academy.index') }}" class="navbar-link">Academy</a></li>
             </ul>
         </div>
@@ -106,7 +105,7 @@
                 const cmiAttempts = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
                 const pianoAttempts = JSON.parse(localStorage.getItem("attempts")) || [];
                 const allAttempts = [...cmiAttempts, ...pianoAttempts];
-                
+
                 if (allAttempts.length === 0) return;
 
                 try {
@@ -122,7 +121,7 @@
                         const data = await response.json();
                         if (data.success) {
                             const syncedUuids = new Set(allAttempts.map(a => a.client_uuid));
-                            
+
                             // Clear synced items from count_me_in_attempts
                             const currentCmi = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
                             const remainingCmi = currentCmi.filter(a => !syncedUuids.has(a.client_uuid));

@@ -15,22 +15,22 @@
 {% block content %}
 <div class="myspace-theme-container">
     <div class="myspace-container">
-        
+
         <!-- Retro navigation button -->
         <a href="/" class="btn-back-home">&larr; Back to Home</a>
-        
+
         <!-- Header Banner -->
         <div class="myspace-header-banner">
             <h1>djon's Space</h1>
             <p>Pardon me, do you have any djon?</p>
         </div>
-        
+
         <!-- Columns Grid -->
         <div class="myspace-grid">
-            
+
             <!-- LEFT COLUMN -->
             <div class="myspace-col-left">
-                
+
                 <!-- Profile Pic Panel -->
                 <div class="myspace-panel">
                     <div class="myspace-panel-header">djon</div>
@@ -57,7 +57,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Contact Box Panel -->
                 <div class="myspace-panel">
                     <div class="myspace-panel-header">Contacting djon</div>
@@ -70,7 +70,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Interests Panel -->
                 <div class="myspace-panel">
                     <div class="myspace-panel-header">djon's Interests</div>
@@ -123,10 +123,10 @@
                                 <div class="friend-pic" style="background-color: #ffffd2; font-size: 16px;">💿</div>
                                 <span class="friend-name">Vinyl</span>
                             </a>
-                            <!-- Friend 7: BPM -->
-                            <a href="#" class="friend-cell" onclick="return false;">
-                                <div class="friend-pic" style="background-color: #d2ffff; font-size: 16px;">⏱️</div>
-                                <span class="friend-name">BPM</span>
+                            <!-- Friend 7: Piano Lab -->
+                            <a href="{{ url_for('piano.index') }}" class="friend-cell">
+                                <div class="friend-pic" style="background-color: #fdf5e6; font-size: 16px; border: 1px solid #d4af37;">🎹</div>
+                                <span class="friend-name" style="color: #b8860b;">Piano Lab</span>
                             </a>
                             <!-- Friend 8: Count Me In -->
                             <a href="{{ url_for('game.dashboard') }}" class="friend-cell">
@@ -141,7 +141,7 @@
 
             <!-- RIGHT COLUMN -->
             <div class="myspace-col-right">
-                
+
                 <!-- MySpace Music Player Widget -->
                 <div class="myspace-player-widget" id="myspace-player">
                     <div class="player-brand">
@@ -150,7 +150,7 @@
                         </div>
                         <div style="font-size: 9px; opacity: 0.8; font-family: monospace;">chiptune synth v1.2</div>
                     </div>
-                    
+
                     <div class="player-main-grid">
                         <div class="player-vinyl-area" id="vinyl-turntable">
                             <div class="player-vinyl">
@@ -165,7 +165,7 @@
                                 <circle cx="28" cy="2" r="2" fill="#888"/>
                             </svg>
                         </div>
-                        
+
                         <div class="player-screen">
                             <div class="player-ticker-container">
                                 <div class="player-ticker" id="player-song-title">Select a track from the crates below...</div>
@@ -174,7 +174,7 @@
                                 <span>BPM: <strong id="player-bpm">--</strong></span>
                                 <span>Status: <strong id="player-status">STOPPED</strong></span>
                             </div>
-                            
+
                             <!-- Controls and Progress -->
                             <div class="player-controls">
                                 <button class="player-btn" id="btn-play-pause" disabled>PLAY</button>
@@ -184,7 +184,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Waveform Visualizer -->
                     <div class="player-visualizer-box">
                         <canvas class="player-visualizer-canvas" id="visualizer-canvas"></canvas>
@@ -200,7 +200,7 @@
                             Hey! I'm <strong>djon</strong> (pronounced like Dijon, or DJ-on, or just Jon with a silent D). I'm a bedroom mixer turned event DJ who is absolutely obsessed with the music that shaped our generation. I specialize in curated mixes that feature <strong>hip hop</strong>, <strong>pop</strong>, and <strong>millennial throwbacks</strong>.
                         </p>
                         <p>
-                            For me, DJing isn't just about playing hit songs. It's about triggering memories—mixing that one tracks from your middle school dance with a classic hip hop bassline from MTV. 
+                            For me, DJing isn't just about playing hit songs. It's about triggering memories—mixing that one tracks from your middle school dance with a classic hip hop bassline from MTV.
                         </p>
 
                         <h3 style="color:#ff6600; font-size: 13px; font-weight: bold; margin-top: 14px; margin-bottom: 6px;">Event Booking & DJ Services:</h3>
@@ -218,7 +218,7 @@
                     <div class="myspace-panel-header">djon's Crates (Select a Genre)</div>
                     <div class="myspace-panel-body">
                         <p style="margin-bottom: 10px;">Dig through my record bins! Click on a genre crate to view my select tracks and load their signature melody snippet into the MySpace player.</p>
-                        
+
                         <div class="crate-slider">
                             <!-- Crate 1: Hip Hop -->
                             <div class="crate-vinyl-card active" data-genre="hiphop">
@@ -228,7 +228,7 @@
                                 <strong style="font-size: 11px;">Still D.R.E. x Moonlight</strong>
                                 <p style="font-size: 9px; margin-top: 2px;">95 BPM | djon Mashup</p>
                             </div>
-                            
+
                             <!-- Crate 2: Trap / Club - Throw It Up -->
                             <div class="crate-vinyl-card" data-genre="poprap">
                                 <div class="crate-vinyl-sleeve" style="background: linear-gradient(135deg, #1a0a2e, #4a0e6b, #8b1a8b); border: 2px solid #c039ff; box-shadow: 0 0 10px #c039ff55;">
@@ -237,7 +237,7 @@
                                 <strong style="font-size: 11px;">Throw It Up</strong>
                                 <p style="font-size: 9px; margin-top: 2px;">146 BPM | Lux Aeterna</p>
                             </div>
-                            
+
                             <!-- Crate 3: Pop Rock / Dance -->
                             <div class="crate-vinyl-card" data-genre="dance">
                                 <div class="crate-vinyl-sleeve" style="background: linear-gradient(135deg, #ffd2d2, #ffa4a4);">
@@ -252,9 +252,9 @@
                         <div class="crate-details-panel">
                             <h3 id="crate-title" style="color: #618cc5; font-size: 13px; font-weight: bold; margin-bottom: 6px;">Genre: Golden Era Hip Hop</h3>
                             <p id="crate-description" style="font-style: italic;">"Nothing beats the head-nod factor of late 90s and early 2000s hip hop. Deep basslines, sharp drums, and iconic instrumental hooks that grab attention immediately."</p>
-                            
+
                             <button class="player-btn" id="btn-load-vinyl" style="margin: 5px 0 15px; background-color: #ff6600; color:#fff; padding: 6px 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer;">💿 Load Crate Track onto Turntable</button>
-                            
+
                             <strong style="display:block; margin-bottom: 5px;">djon's Sample Crate Tracks:</strong>
                             <ul class="crate-playlist" id="crate-playlist-items">
                                 <!-- Loaded dynamically -->
@@ -341,37 +341,37 @@ const genresData = {
             { note: "G#4", time: 0.0, dur: 0.15 },
             { note: "C#5", time: 0.2, dur: 0.15 },
             { note: "E5", time: 0.4, dur: 0.15 },
-            
+
             // Beat 2: G#4 - C#5 - E5
             { note: "G#4", time: 0.6, dur: 0.15 },
             { note: "C#5", time: 0.8, dur: 0.15 },
             { note: "E5", time: 1.0, dur: 0.15 },
-            
+
             // Beat 3: G#4 - C#5 - E5
             { note: "G#4", time: 1.2, dur: 0.15 },
             { note: "C#5", time: 1.4, dur: 0.15 },
             { note: "E5", time: 1.6, dur: 0.15 },
-            
+
             // Beat 4: G#4 - C#5 - E5
             { note: "G#4", time: 1.8, dur: 0.15 },
             { note: "C#5", time: 2.0, dur: 0.15 },
             { note: "E5", time: 2.2, dur: 0.15 },
-            
+
             // Beat 5: A4 - C#5 - E5
             { note: "A4", time: 2.4, dur: 0.15 },
             { note: "C#5", time: 2.6, dur: 0.15 },
             { note: "E5", time: 2.8, dur: 0.15 },
-            
+
             // Beat 6: A4 - D5 - F#5
             { note: "A4", time: 3.0, dur: 0.15 },
             { note: "D5", time: 3.2, dur: 0.15 },
             { note: "F#5", time: 3.4, dur: 0.15 },
-            
+
             // Beat 7: G#4 - B4 - D#5
             { note: "G#4", time: 3.6, dur: 0.15 },
             { note: "B4", time: 3.8, dur: 0.15 },
             { note: "D#5", time: 4.0, dur: 0.15 },
-            
+
             // Beat 8: G#4 - C#5 - E5
             { note: "G#4", time: 4.2, dur: 0.15 },
             { note: "C#5", time: 4.4, dur: 0.15 },
@@ -611,14 +611,14 @@ function initAudio() {
 function playSynthNote(frequency, startTime, duration, waveform) {
     if (!audioCtx) return;
     waveform = waveform || "triangle";
-    
+
     const isDramatic = (waveform === "sawtooth");
-    
+
     // ── Primary Oscillator ──────────────────────────────────────
     const osc = audioCtx.createOscillator();
     osc.type = waveform;
     osc.frequency.setValueAtTime(frequency, startTime);
-    
+
     const gain = audioCtx.createGain();
     const peakGain = isDramatic ? 0.20 : 0.12;
     const sustainGain = isDramatic ? 0.14 : 0.08;
@@ -626,7 +626,7 @@ function playSynthNote(frequency, startTime, duration, waveform) {
     gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.02);    // snappy attack
     gain.gain.exponentialRampToValueAtTime(sustainGain, startTime + duration - 0.04);
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-    
+
     osc.connect(gain);
     gain.connect(analyserNode);
     activeOscillators.push(osc);
@@ -636,25 +636,25 @@ function playSynthNote(frequency, startTime, duration, waveform) {
     };
     osc.start(startTime);
     osc.stop(startTime + duration);
-    
+
     // ── Sub Oscillator (Lux Aeterna "orchestral" layer) ─────────
     // Adds a square-wave one octave below for cinematic body
     if (isDramatic) {
         const sub = audioCtx.createOscillator();
         sub.type = "square";
         sub.frequency.setValueAtTime(frequency / 2, startTime);
-        
+
         const subGain = audioCtx.createGain();
         subGain.gain.setValueAtTime(0.001, startTime);
         subGain.gain.linearRampToValueAtTime(0.07, startTime + 0.03);
         subGain.gain.exponentialRampToValueAtTime(0.04, startTime + duration - 0.04);
         subGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-        
+
         // Subtle high-pass filter to keep sub from muddying
         const hpf = audioCtx.createBiquadFilter();
         hpf.type = "highpass";
         hpf.frequency.value = 80;
-        
+
         sub.connect(hpf);
         hpf.connect(subGain);
         subGain.connect(analyserNode);
@@ -671,16 +671,16 @@ function playSynthNote(frequency, startTime, duration, waveform) {
 // Synth engine scheduler loop
 function startSequencer() {
     stopSequencer(); // Always guarantee any stale timers or notes are stopped first
-    
+
     if (!isPlaying || !currentTrackData) return;
-    
+
     initAudio();
     const loopLength = currentTrackData.loopLength;
-    
+
     // Reset our audio clocks
     startTime = audioCtx.currentTime;
     nextLoopTime = startTime;
-    
+
     // Function to schedule a single loop segment
     function scheduleLoopSegment(time) {
         const waveform = currentTrackData.waveform || "triangle";
@@ -704,7 +704,7 @@ function startSequencer() {
 
     // Call scheduler immediately
     scheduler();
-    
+
     // Keep scheduling in the background
     synthTimer = setInterval(scheduler, 100);
 
@@ -726,7 +726,7 @@ function stopSequencer() {
         clearInterval(progressInterval);
         progressInterval = null;
     }
-    
+
     // Immediately cancel and stop all scheduled/playing audio oscillators
     activeOscillators.forEach(osc => {
         try {
@@ -736,7 +736,7 @@ function stopSequencer() {
         }
     });
     activeOscillators = [];
-    
+
     elProgressFill.style.width = "0%";
 }
 
@@ -755,14 +755,14 @@ function drawVisualizer() {
     }
 
     animationFrameId = requestAnimationFrame(drawVisualizer);
-    
+
     const bufferLength = analyserNode.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     analyserNode.getByteTimeDomainData(dataArray);
-    
+
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Draw grid lines
     ctx.strokeStyle = "rgba(255, 102, 0, 0.1)";
     ctx.lineWidth = 1;
@@ -772,27 +772,27 @@ function drawVisualizer() {
         ctx.lineTo(i, canvas.height);
         ctx.stroke();
     }
-    
+
     ctx.strokeStyle = "#ff6600";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    
+
     const sliceWidth = canvas.width / bufferLength;
     let x = 0;
-    
+
     for (let i = 0; i < bufferLength; i++) {
         const v = dataArray[i] / 128.0;
         const y = (v * canvas.height) / 2;
-        
+
         if (i === 0) {
             ctx.moveTo(x, y);
         } else {
             ctx.lineTo(x, y);
         }
-        
+
         x += sliceWidth;
     }
-    
+
     ctx.lineTo(canvas.width, canvas.height / 2);
     ctx.stroke();
 }
@@ -801,12 +801,12 @@ function drawVisualizer() {
 function loadTrack(genreKey) {
     const data = genresData[genreKey];
     currentTrackData = data;
-    
+
     // Update player labels
     elSongTitle.innerText = data.trackTitle;
-    
+
     elBpm.innerText = data.bpm;
-    
+
     // Reset player state
     if (isPlaying) {
         stopSequencer();
@@ -815,10 +815,10 @@ function loadTrack(genreKey) {
         elStatus.innerText = "STOPPED";
         elPlayPause.innerText = "PLAY";
     }
-    
+
     // Enable play button
     elPlayPause.removeAttribute("disabled");
-    
+
     // Adjust vinyl rotation speed based on BPM
     const rotateSpeed = 60 / data.bpm * 4; // seconds per spin
     elTurntable.querySelector(".player-vinyl").style.animationDuration = rotateSpeed + "s";
@@ -827,14 +827,14 @@ function loadTrack(genreKey) {
 // Populate playlist container based on selected crate
 function updateCrateDetails(genreKey) {
     const data = genresData[genreKey];
-    
+
     // Set title and description
     elCrateTitle.innerText = data.title;
     elCrateDesc.innerText = `"${data.description}"`;
-    
+
     // Clear playlist
     elCratePlaylist.innerHTML = "";
-    
+
     // Append items
     data.playlist.forEach(item => {
         const li = document.createElement("li");
@@ -845,12 +845,12 @@ function updateCrateDetails(genreKey) {
         `;
         elCratePlaylist.appendChild(li);
     });
-    
+
     // Set active crate card styling
     document.querySelectorAll(".crate-vinyl-card").forEach(card => {
         card.classList.remove("active");
     });
-    
+
     const selectedCard = document.querySelector(`.crate-vinyl-card[data-genre="${genreKey}"]`);
     if (selectedCard) {
         selectedCard.classList.add("active");
@@ -870,7 +870,7 @@ elLoadVinyl.addEventListener("click", () => {
     if (activeCard) {
         const genre = activeCard.getAttribute("data-genre");
         loadTrack(genre);
-        
+
         // Flash feedback on the player
         elSongTitle.parentElement.style.backgroundColor = "rgba(255, 102, 0, 0.2)";
         setTimeout(() => {
@@ -881,12 +881,12 @@ elLoadVinyl.addEventListener("click", () => {
 
 elPlayPause.addEventListener("click", () => {
     initAudio();
-    
+
     // Resume audio context if suspended (browser security)
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
-    
+
     if (isPlaying) {
         // Pause
         stopSequencer();

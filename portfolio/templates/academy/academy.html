@@ -124,7 +124,7 @@
     .level-badge.locked { background: #374151; color: #9CA3AF; }
     .level-badge.unlocked { background: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
     .level-badge.mastered { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
-    
+
     .level-name {
         font-size: 1.15rem;
         font-weight: 700;
@@ -200,7 +200,7 @@
             <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; color: #F3F4F6;">
                 Curriculum Progression
             </h3>
-            
+
             {% set levels = [
                 {"id": 0, "name": "Find the Pulse", "desc": "Develop basic tempo synchronization and pulse entrainment. Tap along to the groove and maintain stable inter-onset intervals.", "gate": "Tap Consistency SD <= 50ms over 4 of the last 5 attempts across 2 days.", "play_url": url_for('game.play_anchor', anchor_bpm=120) ~ "?level=1&origin=academy"},
                 {"id": 1, "name": "Meter & Downbeat", "desc": "Internalize bars and downbeats. Align your tap to Beat 1 (downbeat) with low phase error.", "gate": "Downbeat Phase Error <= 60ms over 4 of the last 5 attempts across 2 days.", "play_url": url_for('game.play_anchor', anchor_bpm=120) ~ "?level=2&origin=academy"},
@@ -211,7 +211,7 @@
                 {"id": 6, "name": "Phrasing & Loop Alignment", "desc": "Track structured form boundaries and alignment drift across 4, 8, and 16-bar phrase blocks.", "gate": "Phrase Loop Alignment Error <= 75ms.", "play_url": ""},
                 {"id": 7, "name": "Professional Beatmatch & Drift", "desc": "Adjust audio speed and phase drift in real-time, matching two rhythms with high accuracy.", "gate": "Final Nudge Phase Drift <= 40ms.", "play_url": ""}
             ] %}
-            
+
             <div class="timeline">
                 {% for lvl in levels %}
                 {% set status = stats.progression[lvl.id] if stats else "locked" %}
@@ -224,7 +224,7 @@
                         </div>
                         <div class="level-name">{{ lvl.name }}</div>
                         <p style="color: #9CA3AF; font-size: 0.88rem; margin: 8px 0 0 0; line-height: 1.4;">{{ lvl.desc }}</p>
-                        
+
                         <div class="level-details" id="details-{{ lvl.id }}">
                             <div style="font-size: 0.82rem; color: #9CA3AF; margin-bottom: 12px; background: rgba(59, 130, 246, 0.05); padding: 8px 12px; border-radius: 4px; border-left: 2.5px solid #3B82F6;">
                                 🎯 <strong>Mastery Gate:</strong> {{ lvl.gate }}
@@ -266,7 +266,7 @@
                         <circle cx="130" cy="110" r="45" class="radar-grid" fill="none" />
                         <circle cx="130" cy="110" r="30" class="radar-grid" fill="none" />
                         <circle cx="130" cy="110" r="15" class="radar-grid" fill="none" />
-                        
+
                         <!-- Axis Lines -->
                         <!-- 0 deg (top): Pulse -->
                         <line x1="130" y1="110" x2="130" y2="50" class="radar-axis" />
@@ -278,10 +278,10 @@
                         <line x1="130" y1="110" x2="94.7" y2="158.6" class="radar-axis" />
                         <!-- 288 deg: Ambiguity -->
                         <line x1="130" y1="110" x2="72.9" y2="91.5" class="radar-axis" />
-                        
+
                         <!-- The Dynamic Polygon -->
                         <polygon id="radar-poly" points="130,110 130,110 130,110 130,110 130,110" class="radar-poly" />
-                        
+
                         <!-- Axis Labels -->
                         <text x="130" y="38" text-anchor="middle" class="radar-label">Pulse</text>
                         <text x="194" y="95" text-anchor="start" class="radar-label">Anchor Memory</text>
@@ -337,6 +337,17 @@
                 </div>
             </div>
 
+            <!-- Piano Lab Rhythmic Integration -->
+            <div class="slate-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: #D1D5DB;">
+                    🎹 Piano Lab Rhythm Trainer
+                </h3>
+                <p style="font-size: 0.82rem; color: #9CA3AF; line-height: 1.5; margin-bottom: 12px;">
+                    Practice beat divisions, tempo stability, and hand independence using a MIDI keyboard or computer keys.
+                </p>
+                <a href="{{ url_for('piano.index') }}" class="btn-action-hub" style="margin-top: 0; display: inline-block;">Launch Piano Lab</a>
+            </div>
+
             <!-- Piano Lab Melodic Integration -->
             <div class="slate-card" style="opacity: 0.7; border-style: dashed;">
                 <h3 style="font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: #D1D5DB;">
@@ -357,14 +368,14 @@
     function toggleDetails(levelId) {
         const details = document.getElementById(`details-${levelId}`);
         const node = document.querySelector(`.timeline-node[data-id="${levelId}"]`);
-        
+
         if (node.classList.contains('locked')) return; // locked levels can't expand
 
         const isDisplayed = details.style.display === 'block';
-        
+
         // Collapse all others
         document.querySelectorAll('.level-details').forEach(el => el.style.display = 'none');
-        
+
         // Toggle this one
         details.style.display = isDisplayed ? 'none' : 'block';
     }
@@ -375,7 +386,7 @@
             const response = await fetch('/academy/api/skills');
             if (response.ok) {
                 const skills = await response.json();
-                
+
                 // Map skills to values (default to 0 if missing)
                 const pulse = skills.pulse_entrainment || 0;
                 const anchor = skills.absolute_tempo_memory || 0;
@@ -421,7 +432,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         loadRadarChart();
-        
+
         // Auto-expand the highest unlocked level details
         const unlockedNodes = document.querySelectorAll('.timeline-node.unlocked, .timeline-node.mastered');
         if (unlockedNodes.length > 0) {
