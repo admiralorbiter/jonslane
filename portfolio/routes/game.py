@@ -2,7 +2,7 @@ import json
 import random
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, jsonify, render_template, request
 
 from portfolio import db
 from portfolio.models import Attempt, Challenge, Crate, ReferenceTrack, User
@@ -548,10 +548,12 @@ def dashboard():
 
     user_id = session.get("user_id")
     user = db.session.get(User, user_id) if user_id else None
-    if user:
-        return redirect(url_for("academy.index"))
 
     stats = None
+    if user:
+        attempts = Attempt.query.filter_by(user_id=user.id).all()
+        stats = calculate_user_stats(user, attempts)
+
     crates = Crate.query.all()
     return render_template("game/dashboard.html", crates=crates, stats=stats)
 
