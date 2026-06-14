@@ -1,0 +1,434 @@
+/* ==========================================================================
+   Jon's Portfolio Design System & Stylesheet
+   ========================================================================== */
+
+/* Typography & Base Imports */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap');
+
+:root {
+    /* Color Palette */
+    --bg-main: #05060a;
+    --bg-surface: #0e1017;
+    --bg-glass: rgba(14, 16, 23, 0.7);
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+
+    /* Typography */
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+
+    /* Text colors */
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    /* Bisexual Pride Flag Colors (Optimized for Dark Mode) */
+    --bi-pink: hsl(329, 85%, 56%);    /* Pink/Magenta */
+    --bi-purple: hsl(302, 60%, 54%);  /* Purple/Lavender */
+    --bi-blue: hsl(220, 85%, 55%);    /* Royal Blue */
+
+    /* Brand Accents */
+    --primary-color: var(--bi-purple);
+    --primary-glow: rgba(155, 79, 150, 0.15);
+    --accent-blue: var(--bi-blue);
+    --accent-pink: var(--bi-pink);
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 50%, #64748b 100%);
+    --gradient-accent: linear-gradient(135deg, var(--bi-pink) 0%, var(--bi-purple) 50%, var(--bi-blue) 100%);
+    --gradient-accent-hover: linear-gradient(135deg, hsl(329, 95%, 65%) 0%, hsl(302, 75%, 63%) 50%, hsl(220, 95%, 65%) 100%);
+    --gradient-glow: radial-gradient(circle, rgba(155, 79, 150, 0.15) 0%, rgba(0,0,0,0) 70%);
+
+    /* Layout */
+    --max-width: 1200px;
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global Resets */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Background Glowing Orbs (Bi pride themed gradients) */
+body::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    right: -5%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(214, 2, 112, 0.07) 0%, rgba(0, 0, 0, 0) 75%);
+    z-index: -2;
+    pointer-events: none;
+}
+
+body::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, rgba(0, 56, 168, 0.06) 0%, rgba(0, 0, 0, 0) 75%);
+    z-index: -2;
+    pointer-events: none;
+}
+
+/* Typography elements */
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+p {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   Navigation Bar
+   ========================================================================== */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 1.25rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-logo {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: -0.03em;
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: var(--transition-smooth);
+}
+
+.navbar-logo:hover {
+    filter: brightness(1.2);
+}
+
+.navbar-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+}
+
+.navbar-link {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: var(--transition-smooth);
+    position: relative;
+    padding: 0.25rem 0;
+}
+
+.navbar-link:hover {
+    color: var(--text-primary);
+}
+
+.navbar-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--gradient-accent);
+    transition: var(--transition-smooth);
+}
+
+.navbar-link:hover::after {
+    width: 100%;
+}
+
+/* ==========================================================================
+   Hero Section
+   ========================================================================== */
+.hero {
+    padding: 10rem 2rem 6rem;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+}
+
+.hero-subtitle {
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    background: var(--primary-glow);
+    border-radius: 9999px;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.hero-title {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-description {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    max-width: 650px;
+    margin: 0 auto 2.5rem;
+    color: var(--text-secondary);
+}
+
+.btn-primary {
+    display: inline-block;
+    padding: 0.85rem 2rem;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 8px;
+    background: var(--gradient-accent);
+    color: #ffffff;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(124, 58, 237, 0.4);
+    background: var(--gradient-accent-hover);
+}
+
+/* ==========================================================================
+   Content Sections
+   ========================================================================== */
+.section {
+    padding: 4rem 2rem;
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.section-title {
+    font-size: 2rem;
+    position: relative;
+}
+
+/* ==========================================================================
+   Project Cards Grid
+   ========================================================================== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition-smooth);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: var(--border-hover);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                0 0 1px 1px rgba(255, 255, 255, 0.15) inset;
+}
+
+/* Highlight badge by category */
+.badge {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid transparent;
+}
+
+.badge-project {
+    background: rgba(124, 58, 237, 0.1);
+    color: #a78bfa;
+    border-color: rgba(124, 58, 237, 0.2);
+}
+
+.badge-research {
+    background: rgba(13, 148, 136, 0.1);
+    color: #2dd4bf;
+    border-color: rgba(13, 148, 136, 0.2);
+}
+
+.badge-experiment {
+    background: rgba(234, 88, 12, 0.1);
+    color: #fb923c;
+    border-color: rgba(234, 88, 12, 0.2);
+}
+
+.card-title {
+    font-size: 1.35rem;
+    margin-bottom: 0.85rem;
+    margin-right: 5rem; /* Make space for badge */
+    line-height: 1.3;
+}
+
+.card-body {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tag {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.card-links {
+    display: flex;
+    gap: 1.25rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.25rem;
+}
+
+.card-link {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: var(--transition-smooth);
+}
+
+.card-link:hover {
+    color: var(--primary-color);
+    transform: translateX(2px);
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.footer {
+    border-top: 1px solid var(--border-color);
+    padding: 4rem 2rem;
+    text-align: center;
+    background-color: #040507;
+    margin-top: 8rem;
+}
+
+.footer-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    list-style: none;
+    margin-top: 1.5rem;
+}
+
+.footer-link {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: var(--transition-smooth);
+}
+
+.footer-link:hover {
+    color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Responsive Utilities
+   ========================================================================== */
+@media (max-width: 768px) {
+    .navbar-container {
+        padding: 1rem;
+    }
+
+    .navbar-links {
+        gap: 1rem;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        padding: 8rem 1rem 4rem;
+    }
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Jon's Portfolio & Research{% endblock %}</title>
+
+    <!-- Meta tags for SEO -->
+    <meta name="description" content="{% block meta_description %}Welcome to my portfolio and research space.{% endblock %}">
+
+    <!-- Custom theme stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+    <!-- Page-specific styles -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Floating Navigation Bar -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-logo">Jon's Lane</a>
+        </div>
+    </nav>
+
+    <!-- Main Content Injection -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <p class="footer-text">&copy; 2026 Jon's Lane. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Page-specific Javascript -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
