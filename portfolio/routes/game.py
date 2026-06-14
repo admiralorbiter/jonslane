@@ -121,6 +121,7 @@ def calculate_user_stats(user, attempts):
         a
         for a in attempts
         if not getattr(a, "is_anchor", False)
+        and getattr(a, "module", "count_me_in") == "count_me_in"
         and a.bpm_error is not None
         and a.percent_error is not None
     ]
@@ -267,6 +268,42 @@ def calculate_score_and_rating(guess, true_bpm, clue_level=4):
     )
 
 
+def calculate_piano_score_and_rating(skill_tag, tap_stability=None, phase_error_ms=None):
+    """Return (score, rating, is_success, percent_error, bpm_error, metrical_multiplier) for a piano attempt."""
+    if skill_tag == "subdivision":
+        if tap_stability is None:
+            return 0, "Needs Practice", False, 0.0, 0.0, 1.0
+        if tap_stability <= 35.0:
+            return 100, "Tempo Wizard", True, 0.0, 0.0, 1.0
+        elif tap_stability <= 45.0:
+            return 80, "DJ-Ready", True, 0.0, 0.0, 1.0
+        elif tap_stability <= 60.0:
+            return 60, "Solid Ear", True, 0.0, 0.0, 1.0
+        elif tap_stability <= 80.0:
+            return 40, "Getting There", False, 0.0, 0.0, 1.0
+        else:
+            return 10, "Needs Practice", False, 0.0, 0.0, 1.0
+    elif skill_tag == "phase_alignment":
+        if phase_error_ms is None:
+            return 0, "Needs Practice", False, 0.0, 0.0, 1.0
+        abs_err = abs(phase_error_ms)
+        if abs_err <= 30.0:
+            score = int(100 - (abs_err / 30.0) * 20)
+            return score, "Tempo Wizard", True, 0.0, 0.0, 1.0
+        elif abs_err <= 60.0:
+            score = int(80 - ((abs_err - 30.0) / 30.0) * 20)
+            return score, "DJ-Ready", True, 0.0, 0.0, 1.0
+        elif abs_err <= 100.0:
+            score = int(60 - ((abs_err - 60.0) / 40.0) * 20)
+            return score, "Solid Ear", True, 0.0, 0.0, 1.0
+        elif abs_err <= 150.0:
+            score = int(40 - ((abs_err - 100.0) / 50.0) * 20)
+            return score, "Getting There", False, 0.0, 0.0, 1.0
+        else:
+            return 10, "Needs Practice", False, 0.0, 0.0, 1.0
+    return 10, "Needs Practice", False, 0.0, 0.0, 1.0
+
+
 def validate_and_parse_attempt_data(att_data):
     """Validate and parse a single raw attempt data dict, returning parsed fields or None."""
     client_uuid = att_data.get("client_uuid")
@@ -372,7 +409,7 @@ def validate_and_parse_attempt_data(att_data):
 def recalculate_user_streaks(user):
     """Recalculate and persist chronological streaks for a user. Callers must commit transaction."""
     # Bounded query to avoid full-table scan on huge histories.
-    recent_attempts = Attempt.query.filter_by(user_id=user.id)\
+    recent_attempts = Attempt.query.filter_by(user_id=user.id, module="count_me_in")\
         .order_by(Attempt.created_at.desc())\
         .limit(500)\
         .all()
@@ -847,48 +884,57 @@ def sync():
             continue
 
         # Securely recalculate score and rating on the server side
-        score, rating, is_success, percent_error, bpm_error, metrical_multiplier = (
-            calculate_score_and_rating(parsed["guessed_bpm"], parsed["true_bpm"], parsed.get("clue_level", 4))
-        )
+        if parsed.get("module") == "piano_lab":
+            score, rating, is_success, percent_error, bpm_error, metrical_multiplier = (
+                calculate_piano_score_and_rating(
+                    parsed.get("skill_tag"),
+                    tap_stability=parsed.get("tap_stability"),
+                    phase_error_ms=parsed.get("phase_error_ms")
+                )
+            )
+        else:
+            score, rating, is_success, percent_error, bpm_error, metrical_multiplier = (
+                calculate_score_and_rating(parsed["guessed_bpm"], parsed["true_bpm"], parsed.get("clue_level", 4))
+            )
 
         try:
-            attempt = Attempt(
-                user_id=user.id,
-                challenge_id=None,
-                guessed_bpm=parsed["guessed_bpm"],
-                true_bpm=parsed["true_bpm"],
-                bpm_error=bpm_error,
-                percent_error=percent_error,
-                score=score,
-                rating=rating,
-                crate_name=parsed["crate_name"],
-                client_uuid=parsed["client_uuid"],
-                metrical_multiplier=metrical_multiplier,
-                tap_stability=parsed["tap_stability"],
-                is_anchor=parsed["is_anchor"],
-                anchor_bpm=parsed["anchor_bpm"],
-                anchor_level=parsed["anchor_level"],
-                module=parsed["module"],
-                skill_tag=parsed["skill_tag"],
-                input_method=parsed["input_method"],
-                phase_error_ms=parsed["phase_error_ms"],
-                hand=parsed["hand"],
-                phrase_length=parsed["phrase_length"],
-                created_at=parsed["created_at"],
-            )
-            db.session.add(attempt)
-            new_attempts.append(attempt)
-            
-            # Track anchor info for seeding
-            if parsed["is_anchor"] and parsed["anchor_bpm"]:
-                bpm = parsed["anchor_bpm"]
-                if bpm not in anchor_attempts_map:
-                    anchor_attempts_map[bpm] = []
-                anchor_attempts_map[bpm].append(percent_error)
+            with db.session.begin_nested():
+                attempt = Attempt(
+                    user_id=user.id,
+                    challenge_id=None,
+                    guessed_bpm=parsed["guessed_bpm"],
+                    true_bpm=parsed["true_bpm"],
+                    bpm_error=bpm_error,
+                    percent_error=percent_error,
+                    score=score,
+                    rating=rating,
+                    crate_name=parsed["crate_name"],
+                    client_uuid=parsed["client_uuid"],
+                    metrical_multiplier=metrical_multiplier,
+                    tap_stability=parsed["tap_stability"],
+                    is_anchor=parsed["is_anchor"],
+                    anchor_bpm=parsed["anchor_bpm"],
+                    anchor_level=parsed["anchor_level"],
+                    module=parsed["module"],
+                    skill_tag=parsed["skill_tag"],
+                    input_method=parsed["input_method"],
+                    phase_error_ms=parsed["phase_error_ms"],
+                    hand=parsed["hand"],
+                    phrase_length=parsed["phrase_length"],
+                    created_at=parsed["created_at"],
+                )
+                db.session.add(attempt)
+                new_attempts.append(attempt)
+                
+                # Track anchor info for seeding
+                if parsed["is_anchor"] and parsed["anchor_bpm"]:
+                    bpm = parsed["anchor_bpm"]
+                    if bpm not in anchor_attempts_map:
+                        anchor_attempts_map[bpm] = []
+                    anchor_attempts_map[bpm].append(percent_error)
             
             synced_count += 1
         except Exception:
-            db.session.rollback()
             continue
 
     if synced_count > 0:

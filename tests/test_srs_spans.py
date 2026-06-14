@@ -87,18 +87,20 @@ class SRSTestCase(unittest.TestCase):
         update_schedule_after_attempt(user_id, anchor_bpm, "Metrical Match", base_time)
         schedule = AnchorSchedule.query.filter_by(user_id=user_id, anchor_bpm=anchor_bpm).first()
         self.assertEqual(schedule.metrical_match_streak, 1)
-        self.assertEqual(schedule.repetitions, 0) # Reset due to quality < 3
+        self.assertEqual(schedule.repetitions, 1) # Increments due to quality = 3
         
         update_schedule_after_attempt(user_id, anchor_bpm, "Metrical Match", base_time + timedelta(hours=19))
         schedule = AnchorSchedule.query.filter_by(user_id=user_id, anchor_bpm=anchor_bpm).first()
         self.assertEqual(schedule.metrical_match_streak, 2)
+        self.assertEqual(schedule.repetitions, 2)
         
         update_schedule_after_attempt(user_id, anchor_bpm, "Metrical Match", base_time + timedelta(hours=38))
         schedule = AnchorSchedule.query.filter_by(user_id=user_id, anchor_bpm=anchor_bpm).first()
         self.assertEqual(schedule.metrical_match_streak, 3)
+        self.assertEqual(schedule.repetitions, 3)
         
-        # Capping should restrict interval_days to <= 7 and ease_factor to <= 2.5
-        self.assertTrue(schedule.interval_days <= 7)
+        # Capping should restrict interval_days to exactly 7 (since calculated interval would be 6 * 2.5 = 15)
+        self.assertEqual(schedule.interval_days, 7)
         self.assertTrue(schedule.ease_factor <= 2.5)
         
         # Now hit a true success (Quality 4) -> streak should reset

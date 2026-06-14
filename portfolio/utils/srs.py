@@ -6,7 +6,7 @@ RATING_QUALITY_MAP = {
     "Tempo Wizard": 5,
     "DJ-Ready": 4,
     "Solid Ear": 3,
-    "Metrical Match": 2,
+    "Metrical Match": 3,
     "Getting There": 2,
     "Needs Practice": 0
 }

@@ -1,0 +1,1420 @@
+{% extends "base.html" %}
+
+{% block title %}Piano Lab & MIDI Trainer - Jon's Lane{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/piano.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1100px; margin: 100px auto 40px; padding: 0 20px;">
+    <!-- Lab Header -->
+    <div class="piano-card" style="padding: 25px; margin-bottom: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h1 style="margin: 0; font-size: 2rem;">Piano Lab & MIDI Trainer</h1>
+                <p style="margin: 5px 0 0; color: #bca08d; font-size: 1.05rem;">Precision timing, chord debouncing, and hands-independence drills.</p>
+            </div>
+            <!-- MIDI status widget -->
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="badge-status" id="midi-status-badge">MIDI: Disconnected</div>
+                <button class="btn-brass" id="connect-midi-btn" onclick="initializeMIDI()">Connect MIDI Controller</button>
+            </div>
+        </div>
+
+        <!-- Latency and Calibration widget -->
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #4a362f; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: 600; color: #e6c594;">System Latency Offset:</span>
+                <span id="latency-display-val" style="font-family: monospace;">0 ms</span>
+            </div>
+            <button class="btn-brass" id="calibrate-latency-btn" style="padding: 6px 12px; font-size: 0.9rem;" onclick="startLatencyCalibration()">Calibrate Latency</button>
+        </div>
+        
+        <!-- MIDI Split Point Transposition widget -->
+        <div id="midi-split-settings" style="margin-top: 15px; display: none; gap: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
+            <div>
+                <span style="color: #e6c594; font-weight: 600; font-size: 0.9rem;">Left/Right Split Note:</span>
+                <input type="number" id="midi-split-key" value="60" min="21" max="108" style="width: 60px; background: #231815; border: 1px solid #4a362f; color: #fffdfa; padding: 4px; border-radius: 4px; text-align: center; margin-left: 5px;">
+                <span style="font-size: 0.8rem; color: #a48c82;">(Middle C = 60)</span>
+            </div>
+            <div>
+                <span style="color: #e6c594; font-weight: 600; font-size: 0.9rem;">Octave Transpose:</span>
+                <select id="midi-transpose" style="background: #231815; border: 1px solid #4a362f; color: #fffdfa; padding: 4px; border-radius: 4px; margin-left: 5px;">
+                    <option value="-24">-2 Octaves</option>
+                    <option value="-12">-1 Octave</option>
+                    <option value="0" selected>None</option>
+                    <option value="12">+1 Octave</option>
+                    <option value="24">+2 Octaves</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- main Layout -->
+    <div style="display: grid; grid-template-columns: 280px 1fr; gap: 25px; align-items: start;">
+        <!-- Sidebar Navigation -->
+        <div class="piano-card" style="padding: 15px;">
+            <h3 style="margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #4a362f; font-size: 1.15rem;">Practice Labs</h3>
+            <ul id="lab-menu" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                <li><button class="menu-item active" onclick="switchLab('subdivision')" style="width: 100%; text-align: left; background: none; border: none; color: inherit; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Subdivision Trainer</button></li>
+                <li><button class="menu-item" onclick="switchLab('metronome')" style="width: 100%; text-align: left; background: none; border: none; color: inherit; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Invisible Metronome</button></li>
+                <li><button class="menu-item" onclick="switchLab('phrase')" style="width: 100%; text-align: left; background: none; border: none; color: inherit; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Phrase Boundary Counter</button></li>
+                <li><button class="menu-item" onclick="switchLab('limb')" style="width: 100%; text-align: left; background: none; border: none; color: inherit; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Limb Independence</button></li>
+            </ul>
+        </div>
+
+        <!-- Practice Area Viewport -->
+        <div class="piano-card" id="practice-viewport" style="padding: 30px; min-height: 450px; display: flex; flex-direction: column; justify-content: space-between;">
+            <!-- Content will be dynamically swapped here -->
+            <div id="drill-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Tone.js and Piano Lab scripts -->
+<script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
+<script src="{{ url_for('static', filename='js/midi_manager.js') }}"></script>
+<script>
+    // Force active body class theme
+    document.body.classList.add("piano-lab-theme");
+
+    // Global variables
+    let audioContext = null;
+    let midiManager = null;
+    let audioSync = null;
+    let currentDrill = "subdivision";
+    let latencyOffsetMs = 0;
+    
+    // Polyphonic MIDI Synthesizer
+    let polySynth = null;
+    
+    // Metronome Synth
+    let clickSynth = null;
+
+    // Background rhythm loops
+    let loopPart = null;
+
+    // Latency calibration state
+    let isCalibrating = false;
+    let calibrationTaps = [];
+    let calibrationInterval = null;
+
+    // Active keyboard listener references for cleanup
+    let activeKeydownListener = null;
+    let activeKeyupListener = null;
+
+    // MIDI Initialization
+    async function initializeMIDI() {
+        // Ensure audio is started on user gesture
+        try {
+            await ensureAudioStarted();
+        } catch (e) {
+            console.warn("Failed to initialize audio on MIDI connection gesture:", e);
+        }
+
+        if (!midiManager) {
+            midiManager = new window.MidiDeviceManager();
+            midiManager.onStateChangeCallback = updateMIDIWidgets;
+            
+            // Set live synth callbacks
+            midiManager.onNoteOnCallback = (note, velocity) => {
+                if (polySynth) {
+                    const freq = Tone.Frequency(note + getTranspositionOffset(), "midi").toFrequency();
+                    polySynth.triggerAttack(freq, Tone.now(), velocity / 127);
+                }
+                highlightKey(note, true);
+            };
+            
+            midiManager.onNoteOffCallback = (note) => {
+                if (polySynth) {
+                    const freq = Tone.Frequency(note + getTranspositionOffset(), "midi").toFrequency();
+                    polySynth.triggerRelease(freq);
+                }
+                highlightKey(note, false);
+            };
+        }
+
+        try {
+            await midiManager.requestAccess();
+            document.getElementById("connect-midi-btn").style.display = "none";
+            document.getElementById("midi-split-settings").style.display = "flex";
+            updateMIDIWidgets();
+        } catch (err) {
+            alert(err.message);
+        }
+    }
+
+    function updateMIDIWidgets() {
+        const badge = document.getElementById("midi-status-badge");
+        if (midiManager && midiManager.inputs.length > 0) {
+            badge.innerText = `MIDI: ${midiManager.inputs[0].name}`;
+            badge.style.background = "rgba(212, 175, 55, 0.2)";
+        } else {
+            badge.innerText = "MIDI: Disconnected";
+            badge.style.background = "rgba(100, 100, 100, 0.1)";
+        }
+    }
+
+    function getTranspositionOffset() {
+        const select = document.getElementById("midi-transpose");
+        return select ? parseInt(select.value) : 0;
+    }
+
+    function highlightKey(midiNote, isActive) {
+        // Map midiNote to C4-C6 range (MIDI 60 to 84)
+        let noteInOctave = midiNote;
+        while (noteInOctave < 60) noteInOctave += 12;
+        while (noteInOctave > 84) noteInOctave -= 12;
+
+        const key = document.querySelector(`.piano-key[data-note="${noteInOctave}"]`);
+        if (key) {
+            if (isActive) {
+                key.classList.add("active");
+            } else {
+                key.classList.remove("active");
+            }
+        }
+    }
+
+    // Precision Audio setup
+    async function ensureAudioStarted() {
+        if (Tone.context.state !== "running") {
+            await Tone.start();
+        }
+        if (!audioContext) {
+            audioContext = Tone.context;
+            audioSync = new window.PrecisionAudioSync(audioContext);
+            
+            // Create low-latency polyphonic synth for user feedback
+            polySynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 0.4 }
+            }).toDestination();
+            polySynth.volume.value = -6; // slightly quieter
+            
+            // Create click synth
+            clickSynth = new Tone.Synth({
+                oscillator: { type: "square" },
+                envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 }
+            }).toDestination();
+        }
+    }
+
+    // Latency Calibration
+    async function startLatencyCalibration() {
+        await ensureAudioStarted();
+        if (isCalibrating) return;
+        
+        isCalibrating = true;
+        calibrationTaps = [];
+        document.getElementById("calibrate-latency-btn").innerText = "Tapping along...";
+        document.getElementById("calibrate-latency-btn").disabled = true;
+
+        let clickCount = 0;
+        const targetInterval = 500; // click every 500ms
+        const startTime = Tone.now() + 0.5;
+
+        // Visual notice
+        const container = document.getElementById("drill-container");
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 0;">
+                <h2>System Latency Calibration</h2>
+                <p>Tap the <strong>Spacebar</strong> or play any <strong>MIDI key</strong> in sync with the steady metronome clicks.</p>
+                <div id="calibration-indicator" class="subdivision-pulse-indicator" style="width: 40px; height: 40px;"></div>
+                <div style="margin-top: 20px; font-size: 1.2rem; font-weight: 600;" id="calibration-count">Taps: 0 / 8</div>
+            </div>
+        `;
+
+        // Temporary tap listener
+        const tapListener = (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                recordCalibrationTap(e.timeStamp);
+            }
+        };
+        document.addEventListener("keydown", tapListener);
+
+        if (midiManager) {
+            midiManager.onStrokeCallback = (stroke) => {
+                recordCalibrationTap(stroke.timestamp);
+            };
+        }
+
+        // Schedule metronome clicks
+        const scheduledTimes = [];
+        for (let i = 0; i < 10; i++) {
+            const time = startTime + i * (targetInterval / 1000);
+            scheduledTimes.push(time);
+            clickSynth.triggerAttackRelease("C5", "16n", time);
+        }
+
+        // Visual flash updates
+        let intervalId = setInterval(() => {
+            const ind = document.getElementById("calibration-indicator");
+            if (ind) {
+                ind.style.backgroundColor = "#d4af37";
+                setTimeout(() => { ind.style.backgroundColor = "#4a362f"; }, 80);
+            }
+            clickCount++;
+            if (clickCount >= 10) {
+                clearInterval(intervalId);
+                // Finish calibration
+                setTimeout(() => {
+                    document.removeEventListener("keydown", tapListener);
+                    if (midiManager) midiManager.onStrokeCallback = null;
+                    
+                    evaluateCalibration(scheduledTimes, targetInterval);
+                }, 1000);
+            }
+        }, targetInterval);
+    }
+
+    function recordCalibrationTap(domTimestamp) {
+        if (!isCalibrating) return;
+        calibrationTaps.push(domTimestamp);
+        const counter = document.getElementById("calibration-count");
+        if (counter) {
+            counter.innerText = `Taps: ${Math.min(8, calibrationTaps.length)} / 8`;
+        }
+    }
+
+    function evaluateCalibration(scheduledTimes, targetIntervalMs) {
+        isCalibrating = false;
+        document.getElementById("calibrate-latency-btn").innerText = "Calibrate Latency";
+        document.getElementById("calibrate-latency-btn").disabled = false;
+
+        if (calibrationTaps.length < 4) {
+            alert("Calibration failed: Not enough taps detected. Please try again.");
+            switchLab(currentDrill);
+            return;
+        }
+
+        // Translate scheduled times to DOM performance timestamp space
+        const rawCtx = audioContext.rawContext || audioContext;
+        const timestamp = rawCtx.getOutputTimestamp ? rawCtx.getOutputTimestamp() : null;
+        if (!timestamp || timestamp.performanceTime === null || timestamp.contextTime === null) {
+            alert("Your browser does not support precision timing loopback. Defaulting to 15ms latency.");
+            latencyOffsetMs = 15;
+            updateLatencyDisplay();
+            switchLab(currentDrill);
+            return;
+        }
+
+        const clockOffset = timestamp.performanceTime - (timestamp.contextTime * 1000);
+
+        // Find matches
+        const offsets = [];
+        calibrationTaps.forEach(tapTime => {
+            // Find the closest scheduled beat time
+            let minDiff = Infinity;
+            scheduledTimes.forEach(sTime => {
+                const perfTarget = (sTime * 1000) + clockOffset;
+                const diff = tapTime - perfTarget;
+                if (Math.abs(diff) < Math.abs(minDiff)) {
+                    minDiff = diff;
+                }
+            });
+            if (Math.abs(minDiff) < 150) {
+                offsets.push(minDiff);
+            }
+        });
+
+        if (offsets.length > 0) {
+            // Average offset is our latency
+            const avg = offsets.reduce((a, b) => a + b, 0) / offsets.length;
+            latencyOffsetMs = Math.max(0, Math.round(avg));
+            updateLatencyDisplay();
+            alert(`Calibration successful! Average latency offset: ${latencyOffsetMs} ms.`);
+        } else {
+            alert("Calibration failed: Taps were too far off. Please try again.");
+        }
+        switchLab(currentDrill);
+    }
+
+    function updateLatencyDisplay() {
+        document.getElementById("latency-display-val").innerText = `${latencyOffsetMs} ms`;
+    }
+
+    // Drill Swapping (SPA Architecture)
+    async function switchLab(drillName) {
+        // Stop any active play/loops
+        stopActiveDrills();
+
+        // Attempt to start audio context on menu click gesture
+        try {
+            await ensureAudioStarted();
+        } catch (e) {}
+
+        currentDrill = drillName;
+        document.querySelectorAll("#lab-menu button").forEach(btn => btn.classList.remove("active"));
+        
+        // Find matching menu button
+        const menuButtons = document.querySelectorAll("#lab-menu button");
+        menuButtons.forEach(btn => {
+            if (btn.getAttribute("onclick").includes(drillName)) {
+                btn.classList.add("active");
+            }
+        });
+
+        // Load drill contents
+        const container = document.getElementById("drill-container");
+        if (drillName === "subdivision") {
+            loadSubdivisionTrainer(container);
+        } else if (drillName === "metronome") {
+            loadInvisibleMetronome(container);
+        } else if (drillName === "phrase") {
+            loadPhraseCounter(container);
+        } else if (drillName === "limb") {
+            loadLimbIndependence(container);
+        }
+    }
+
+    function stopActiveDrills() {
+        if (loopPart) {
+            loopPart.stop();
+            loopPart.dispose();
+            loopPart = null;
+        }
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        
+        // Reset any MIDI callbacks
+        if (midiManager) {
+            midiManager.onStrokeCallback = null;
+        }
+
+        // Clean up keyboard fallback event listeners
+        if (activeKeydownListener) {
+            document.removeEventListener("keydown", activeKeydownListener);
+            activeKeydownListener = null;
+        }
+        if (activeKeyupListener) {
+            document.removeEventListener("keyup", activeKeyupListener);
+            activeKeyupListener = null;
+        }
+    }
+
+    // 1. Subdivision Trainer Panel
+    let subdivisionAttempts = [];
+    let isSubdivisionPlaying = false;
+    
+    function loadSubdivisionTrainer(target) {
+        target.innerHTML = `
+            <h2>LH & RH Subdivision Trainer</h2>
+            <p style="margin-bottom: 20px; color: #a48c82;">
+                LH plays quarter notes, RH plays eighth notes. The backing track will play for 4 bars and then fade, forcing you to maintain subdivisions independently.
+            </p>
+            
+            <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 8px; color: #e6c594; font-size: 1rem;">How to Practice:</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #bca08d; line-height: 1.45;">
+                    <li><strong>Left Hand (LH):</strong> Play the base pulse (quarter notes: on beats 1, 2, 3, 4). Tap key <code>A</code>/<code>S</code> or play any note <strong>below Middle C (Note 59 and below)</strong>.</li>
+                    <li><strong>Right Hand (RH):</strong> Play twice as fast (eighth notes: on 1, &, 2, &, 3, &, 4, &). Tap key <code>K</code>/<code>L</code> or play any note <strong>Middle C and above (Note 60+)</strong>.</li>
+                    <li><strong>Fading Challenge:</strong> Play along with the guide track. After 4 bars, the chords and bass fade out—maintain the rhythm on your own in silence!</li>
+                </ul>
+            </div>
+            
+            <div style="display: flex; justify-content: center; gap: 20px; margin: 25px 0;">
+                <div style="text-align: center;">
+                    <div class="subdivision-pulse-indicator" id="pulse-lh"></div>
+                    <div style="margin-top: 5px; font-weight: 600; font-size: 0.9rem;">LH (Quarters)</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="subdivision-pulse-indicator" id="pulse-rh"></div>
+                    <div style="margin-top: 5px; font-weight: 600; font-size: 0.9rem;">RH (Eighths)</div>
+                </div>
+            </div>
+
+            <!-- Keyboard fallback and zones indicator -->
+            <div style="text-align: center; margin: 15px 0 5px; font-size: 0.9rem; color: #bca08d;">
+                Keyboard keys: <strong>A/S</strong> (LH) & <strong>K/L</strong> (RH)
+            </div>
+
+            <div style="display: flex; justify-content: space-between; max-width: 600px; margin: 0 auto -10px; padding: 0 10px; font-size: 0.8rem; font-weight: 600; color: #a48c82; text-transform: uppercase; letter-spacing: 0.5px;">
+                <span>← Left Hand Zone</span>
+                <span>Right Hand Zone →</span>
+            </div>
+
+            <div class="piano-keyboard-view">
+                <!-- White Keys (Naturals) -->
+                <div class="piano-key white" data-note="60"></div>
+                <div class="piano-key white" data-note="62"></div>
+                <div class="piano-key white" data-note="64"></div>
+                <div class="piano-key white" data-note="65"></div>
+                <div class="piano-key white" data-note="67"></div>
+                <div class="piano-key white" data-note="69"></div>
+                <div class="piano-key white" data-note="71"></div>
+                <div class="piano-key white" data-note="72"></div>
+                <div class="piano-key white" data-note="74"></div>
+                <div class="piano-key white" data-note="76"></div>
+                <div class="piano-key white" data-note="77"></div>
+                <div class="piano-key white" data-note="79"></div>
+                <div class="piano-key white" data-note="81"></div>
+                <div class="piano-key white" data-note="83"></div>
+                <div class="piano-key white" data-note="84"></div>
+
+                <!-- Black Keys (Accidentals) -->
+                <div class="piano-key black" data-note="61" style="left: 4.42%;"></div>
+                <div class="piano-key black" data-note="63" style="left: 11.08%;"></div>
+                <div class="piano-key black" data-note="66" style="left: 24.42%;"></div>
+                <div class="piano-key black" data-note="68" style="left: 31.08%;"></div>
+                <div class="piano-key black" data-note="70" style="left: 37.75%;"></div>
+                <div class="piano-key black" data-note="73" style="left: 51.08%;"></div>
+                <div class="piano-key black" data-note="75" style="left: 57.75%;"></div>
+                <div class="piano-key black" data-note="78" style="left: 71.08%;"></div>
+                <div class="piano-key black" data-note="80" style="left: 77.75%;"></div>
+                <div class="piano-key black" data-note="82" style="left: 84.42%;"></div>
+            </div>
+
+            <div id="subdivision-results" style="margin: 20px 0; display: none; text-align: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #e6c594;">Drill Finished</h3>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #d4af37;" id="subdivision-score-val">--</div>
+                <div style="font-size: 1.1rem; margin-top: 5px;" id="subdivision-rating-val">--</div>
+                <div style="margin-top: 10px; color: #bca08d; font-size: 0.9rem;" id="subdivision-stats-val"></div>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <button class="btn-brass" id="start-subdivision-btn" onclick="toggleSubdivisionTrainer()">Start Trainer</button>
+            </div>
+        `;
+    }
+
+    async function toggleSubdivisionTrainer() {
+        if (isSubdivisionPlaying) {
+            stopActiveDrills();
+            isSubdivisionPlaying = false;
+            document.getElementById("start-subdivision-btn").innerText = "Start Trainer";
+            return;
+        }
+
+        await ensureAudioStarted();
+        isSubdivisionPlaying = true;
+        document.getElementById("start-subdivision-btn").innerText = "Stop Trainer";
+        document.getElementById("subdivision-results").style.display = "none";
+
+        // Setup subdivision playback
+        const bpm = 100;
+        Tone.Transport.bpm.value = bpm;
+        const beatInterval = 60 / bpm; // 600ms
+        const quarterMs = beatInterval * 1000;
+        const eighthMs = quarterMs / 2;
+
+        const lhTargetIntervals = [];
+        const rhTargetIntervals = [];
+
+        // Precalculate target timestamps
+        const startTime = Tone.now() + 0.5;
+        const startPerfTime = (startTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
+        
+        // Generate grid targets for 16 bars
+        // Quarters: 4 beats per bar * 16 = 64 beats
+        for (let beat = 0; beat < 64; beat++) {
+            lhTargetIntervals.push(startPerfTime + (beat * quarterMs));
+        }
+        // Eighths: 8 subdivisions per bar * 16 = 128 subdivs
+        for (let sub = 0; sub < 128; sub++) {
+            rhTargetIntervals.push(startPerfTime + (sub * eighthMs));
+        }
+
+        const lhUserTaps = [];
+        const rhUserTaps = [];
+
+        // Backing track components
+        const bassSynth = new Tone.MonoSynth({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.02, decay: 0.1, sustain: 0.4, release: 0.3 }
+        }).toDestination();
+        bassSynth.volume.value = -8;
+
+        const backingChords = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 }
+        }).toDestination();
+        backingChords.volume.value = -12;
+
+        let barCount = 0;
+        
+        // Loop structure
+        loopPart = new Tone.Loop(time => {
+            // Play quarters on LH
+            bassSynth.triggerAttackRelease("F2", "8n", time);
+            
+            // Visual pulse LH
+            Tone.Draw.schedule(() => {
+                const ind = document.getElementById("pulse-lh");
+                if (ind) {
+                    ind.classList.add("active-lh");
+                    setTimeout(() => { ind.classList.remove("active-lh"); }, 100);
+                }
+            }, time);
+
+            // Play eighth notes (offbeats) on RH
+            backingChords.triggerAttackRelease(["A3", "C4", "F4"], "16n", time + (eighthMs / 1000));
+            Tone.Draw.schedule(() => {
+                const ind = document.getElementById("pulse-rh");
+                if (ind) {
+                    ind.classList.add("active-rh");
+                    setTimeout(() => { ind.classList.remove("active-rh"); }, 80);
+                }
+            }, time + (eighthMs / 1000));
+
+            barCount++;
+            
+            // Fading backing track: drop volume after 4 bars (4 beats/bar = 16 beats)
+            if (barCount >= 16) {
+                bassSynth.volume.rampTo(-60, eighthMs / 1000);
+                backingChords.volume.rampTo(-60, eighthMs / 1000);
+            }
+        }, "4n");
+
+        loopPart.start(startTime);
+        Tone.Transport.start();
+
+        // Inputs handler
+        const handleSubdivisionTap = (domTimestamp, isLeft) => {
+            const compTimestamp = domTimestamp - latencyOffsetMs;
+            if (isLeft) {
+                lhUserTaps.push(compTimestamp);
+            } else {
+                rhUserTaps.push(compTimestamp);
+            }
+        };
+
+        const keyboardListener = (e) => {
+            if (e.repeat) return;
+            let note = null;
+            let isLeft = false;
+            if (e.code === "KeyA" || e.code === "KeyS") {
+                isLeft = true;
+                note = 60;
+            } else if (e.code === "KeyK" || e.code === "KeyL") {
+                isLeft = false;
+                note = 72;
+            }
+
+            if (note !== null) {
+                handleSubdivisionTap(e.timeStamp, isLeft);
+                if (polySynth) {
+                    const freq = Tone.Frequency(note, "midi").toFrequency();
+                    polySynth.triggerAttack(freq, Tone.now(), 0.8);
+                }
+                highlightKey(note, true);
+            }
+        };
+
+        const keyboardUpListener = (e) => {
+            let note = null;
+            if (e.code === "KeyA" || e.code === "KeyS") {
+                note = 60;
+            } else if (e.code === "KeyK" || e.code === "KeyL") {
+                note = 72;
+            }
+
+            if (note !== null) {
+                if (polySynth) {
+                    const freq = Tone.Frequency(note, "midi").toFrequency();
+                    polySynth.triggerRelease(freq);
+                }
+                highlightKey(note, false);
+            }
+        };
+
+        activeKeydownListener = keyboardListener;
+        activeKeyupListener = keyboardUpListener;
+        document.addEventListener("keydown", keyboardListener);
+        document.addEventListener("keyup", keyboardUpListener);
+
+        if (midiManager) {
+            midiManager.onStrokeCallback = (stroke) => {
+                // Determine LH/RH based on split setting
+                const splitKey = parseInt(document.getElementById("midi-split-key").value) || 60;
+                const isLeft = stroke.notes.some(n => n < splitKey);
+                handleSubdivisionTap(stroke.timestamp, isLeft);
+            };
+        }
+
+        // Auto-end after 16 bars (64 seconds @ 100 BPM is about 38 seconds)
+        setTimeout(() => {
+            stopActiveDrills();
+            isSubdivisionPlaying = false;
+            
+            const btn = document.getElementById("start-subdivision-btn");
+            if (btn) btn.innerText = "Start Trainer";
+            
+            evaluateSubdivision(lhUserTaps, lhTargetIntervals, rhUserTaps, rhTargetIntervals);
+        }, 16 * 4 * quarterMs + 1000);
+    }
+
+    function evaluateSubdivision(lhTaps, lhGrid, rhTaps, rhGrid) {
+        // Evaluate LH quarters stability
+        const lhErrors = [];
+        lhTaps.forEach(tap => {
+            let minDiff = Infinity;
+            lhGrid.forEach(gridTime => {
+                const diff = tap - gridTime;
+                if (Math.abs(diff) < Math.abs(minDiff)) {
+                    minDiff = diff;
+                }
+            });
+            if (Math.abs(minDiff) < 180) {
+                lhErrors.push(minDiff);
+            }
+        });
+
+        // Evaluate RH eighths stability
+        const rhErrors = [];
+        rhTaps.forEach(tap => {
+            let minDiff = Infinity;
+            rhGrid.forEach(gridTime => {
+                const diff = tap - gridTime;
+                if (Math.abs(diff) < Math.abs(minDiff)) {
+                    minDiff = diff;
+                }
+            });
+            if (Math.abs(minDiff) < 100) {
+                rhErrors.push(minDiff);
+            }
+        });
+
+        // Compute Standard Deviations (Bessel correction)
+        const computeSD = (errors) => {
+            if (errors.length < 4) return 999.0;
+            const mean = errors.reduce((a, b) => a + b, 0) / errors.length;
+            const variance = errors.reduce((sum, err) => sum + Math.pow(err - mean, 2), 0) / (errors.length - 1);
+            return Math.sqrt(variance);
+        };
+
+        const lhSD = computeSD(lhErrors);
+        const rhSD = computeSD(rhErrors);
+        
+        const avgSD = (lhSD + rhSD) / 2;
+
+        let rating = "Needs Practice";
+        let score = 10;
+
+        if (avgSD <= 35.0) {
+            score = 100;
+            rating = "Tempo Wizard";
+        } else if (avgSD <= 45.0) {
+            score = 80;
+            rating = "DJ-Ready";
+        } else if (avgSD <= 60.0) {
+            score = 60;
+            rating = "Solid Ear";
+        } else if (avgSD <= 80.0) {
+            score = 40;
+            rating = "Getting There";
+        }
+
+        // Show results
+        document.getElementById("subdivision-results").style.display = "block";
+        document.getElementById("subdivision-score-val").innerText = `${score} pts`;
+        document.getElementById("subdivision-rating-val").innerText = rating;
+        document.getElementById("subdivision-stats-val").innerText = `LH Consistency: ${lhSD === 999.0 ? 'N/A' : Math.round(lhSD) + 'ms'} | RH Consistency: ${rhSD === 999.0 ? 'N/A' : Math.round(rhSD) + 'ms'}`;
+
+        // Save attempts
+        savePianoAttempt({
+            skill_tag: "subdivision",
+            tap_stability: Math.round(avgSD),
+            input_method: midiManager && midiManager.inputs.length > 0 ? "midi" : "tap",
+        });
+    }
+
+    // 2. Invisible Metronome Panel
+    let isMetronomePlaying = false;
+    
+    function loadInvisibleMetronome(target) {
+        target.innerHTML = `
+            <h2>Invisible Metronome (Rhythmic Entrainment)</h2>
+            <p style="margin-bottom: 20px; color: #a48c82;">
+                The metronome click will sound for 8 beats, and then go completely silent for 8 beats. Tap continuously through the silence to maintain the pulse.
+            </p>
+
+            <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 8px; color: #e6c594; font-size: 1rem;">How to Practice:</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #bca08d; line-height: 1.45;">
+                    <li><strong>Audible Beats (0-8):</strong> Listen to the metronome and lock into the tempo by tapping in sync on every click.</li>
+                    <li><strong>Silent Beats (8-16):</strong> The clicks stop! Continue tapping the beat at exactly the same tempo in total silence.</li>
+                    <li><strong>Input Key:</strong> Tap the <strong>Spacebar</strong> or play <strong>any key on your MIDI keyboard</strong>.</li>
+                </ul>
+            </div>
+
+            <div class="metronome-visualizer-container">
+                <div class="metronome-sweep-bar" id="metro-sweep" style="left: 0; display: none;"></div>
+                <div class="beat-node" style="left: 10%;"></div>
+                <div class="beat-node" style="left: 35%;"></div>
+                <div class="beat-node" style="left: 60%;"></div>
+                <div class="beat-node" style="left: 85%;"></div>
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-size: 0.95rem; color: #bca08d;">
+                Tap <strong>Spacebar</strong> or any <strong>MIDI key</strong> on the beat.
+            </div>
+
+            <div id="metro-results" style="margin: 20px 0; display: none; text-align: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #e6c594;">Drill Finished</h3>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #d4af37;" id="metro-score-val">--</div>
+                <div style="font-size: 1.1rem; margin-top: 5px;" id="metro-rating-val">--</div>
+                <div style="margin-top: 10px; color: #bca08d; font-size: 0.9rem;" id="metro-stats-val"></div>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <button class="btn-brass" id="start-metro-btn" onclick="toggleInvisibleMetronome()">Start Metronome</button>
+            </div>
+        `;
+    }
+
+    async function toggleInvisibleMetronome() {
+        if (isMetronomePlaying) {
+            stopActiveDrills();
+            isMetronomePlaying = false;
+            document.getElementById("start-metro-btn").innerText = "Start Metronome";
+            return;
+        }
+
+        await ensureAudioStarted();
+        isMetronomePlaying = true;
+        document.getElementById("start-metro-btn").innerText = "Stop Metronome";
+        document.getElementById("metro-results").style.display = "none";
+
+        const bpm = 100;
+        const beatIntervalMs = (60 / bpm) * 1000;
+
+        const startTime = Tone.now() + 0.5;
+        const startPerfTime = (startTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
+
+        const targetTimes = [];
+        // Beats 0-7: Audible clicks. Beats 8-15: Silent clicks
+        for (let beat = 0; beat < 16; beat++) {
+            targetTimes.push(startPerfTime + (beat * beatIntervalMs));
+        }
+
+        const userTaps = [];
+
+        // Play audible clicks for first 8 beats
+        for (let beat = 0; beat < 8; beat++) {
+            clickSynth.triggerAttackRelease("C5", "16n", startTime + (beat * beatIntervalMs / 1000));
+        }
+
+        // Tap tracking
+        const handleMetroTap = (domTimestamp) => {
+            const compTimestamp = domTimestamp - latencyOffsetMs;
+            userTaps.push(compTimestamp);
+        };
+
+        const keyboardListener = (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                if (e.repeat) return;
+                handleMetroTap(e.timeStamp);
+                if (polySynth) {
+                    polySynth.triggerAttack("C4", Tone.now(), 0.8);
+                }
+                highlightKey(60, true);
+            }
+        };
+
+        const keyboardUpListener = (e) => {
+            if (e.code === "Space") {
+                if (polySynth) {
+                    polySynth.triggerRelease("C4");
+                }
+                highlightKey(60, false);
+            }
+        };
+
+        activeKeydownListener = keyboardListener;
+        activeKeyupListener = keyboardUpListener;
+        document.addEventListener("keydown", keyboardListener);
+        document.addEventListener("keyup", keyboardUpListener);
+
+        if (midiManager) {
+            midiManager.onStrokeCallback = (stroke) => {
+                handleMetroTap(stroke.timestamp);
+            };
+        }
+
+        // Run sweep animation
+        const sweep = document.getElementById("metro-sweep");
+        if (sweep) {
+            sweep.style.display = "block";
+            sweep.style.transition = "none";
+            sweep.style.left = "0%";
+            setTimeout(() => {
+                sweep.style.transition = "left 9.6s linear"; // 16 beats * 0.6s
+                sweep.style.left = "100%";
+            }, 100);
+        }
+
+        // Stop after 16 beats (9.6s)
+        setTimeout(() => {
+            stopActiveDrills();
+            isMetronomePlaying = false;
+            
+            const btn = document.getElementById("start-metro-btn");
+            if (btn) btn.innerText = "Start Metronome";
+            if (sweep) sweep.style.display = "none";
+            
+            evaluateInvisibleMetronome(userTaps, targetTimes);
+        }, 16 * beatIntervalMs + 500);
+    }
+
+    function evaluateInvisibleMetronome(taps, targets) {
+        // Calculate phase error for taps falling into the silent region (beats 8 to 15)
+        const silentTargets = targets.slice(8, 16);
+        const silentTaps = taps.filter(tap => tap >= targets[7] + 300);
+
+        const errors = [];
+        silentTaps.forEach(tap => {
+            let minDiff = Infinity;
+            silentTargets.forEach(gridTime => {
+                const diff = tap - gridTime;
+                if (Math.abs(diff) < Math.abs(minDiff)) {
+                    minDiff = diff;
+                }
+            });
+            if (Math.abs(minDiff) < 150) {
+                errors.push(minDiff);
+            }
+        });
+
+        if (errors.length === 0) {
+            alert("No taps detected in the silent interval.");
+            return;
+        }
+
+        // Standard Deviation (Consistency) & Average absolute error (Accuracy)
+        const mean = errors.reduce((a, b) => a + b, 0) / errors.length;
+        const variance = errors.reduce((sum, err) => sum + Math.pow(err - mean, 2), 0) / errors.length;
+        const stdDev = Math.sqrt(variance);
+        
+        const absoluteErrors = errors.map(Math.abs);
+        const meanAbsoluteError = absoluteErrors.reduce((a, b) => a + b, 0) / errors.length;
+
+        // Scoring Formula mapping exactly 30ms to 80% competency score
+        const k = 0.00743;
+        const accuracyScore = 100 * Math.exp(-k * meanAbsoluteError);
+        const consistencyScore = 100 * Math.exp(-k * stdDev);
+        const compositeScore = Math.round((consistencyScore * 0.6) + (accuracyScore * 0.4));
+
+        let rating = "Needs Practice";
+        if (compositeScore >= 90) rating = "Tempo Wizard";
+        else if (compositeScore >= 80) rating = "DJ-Ready";
+        else if (compositeScore >= 60) rating = "Solid Ear";
+        else if (compositeScore >= 40) rating = "Getting There";
+
+        // Show results
+        document.getElementById("metro-results").style.display = "block";
+        document.getElementById("metro-score-val").innerText = `${compositeScore} pts`;
+        document.getElementById("metro-rating-val").innerText = rating;
+        document.getElementById("metro-stats-val").innerText = `Average Offset: ${Math.round(meanAbsoluteError)} ms | Consistency (SD): ${Math.round(stdDev)} ms`;
+
+        // Save
+        savePianoAttempt({
+            skill_tag: "phase_alignment",
+            phase_error_ms: Math.round(meanAbsoluteError),
+            input_method: midiManager && midiManager.inputs.length > 0 ? "midi" : "tap",
+        });
+    }
+
+    // 3. Phrase Boundary Counter Panel
+    let isPhrasePlaying = false;
+    
+    function loadPhraseCounter(target) {
+        target.innerHTML = `
+            <h2>Phrase Boundary Counter</h2>
+            <p style="margin-bottom: 20px; color: #a48c82;">
+                The loop progression plays a 4-chord sequence continuously (1 chord every 2 bars, 8 bars total). Tap exactly on beat 1 of every new 8-bar phrase boundary.
+            </p>
+
+            <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 8px; color: #e6c594; font-size: 1rem;">How to Practice:</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #bca08d; line-height: 1.45;">
+                    <li><strong>Chord Loops:</strong> A 4-chord progression loop plays continuously (2 bars per chord, repeating every 8 bars).</li>
+                    <li><strong>Hypermeter Counting:</strong> Count the bars internally. Hit the key exactly on <strong>Beat 1 of Bar 1</strong> of every new 8-bar phrase (i.e. Bar 1, Bar 9, Bar 17, etc.).</li>
+                    <li><strong>Input Key:</strong> Tap the <strong>Spacebar</strong> or play <strong>any key on your MIDI keyboard</strong>.</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <div style="font-size: 1.2rem; color: #e6c594; font-weight: bold;">Current Phrase count:</div>
+                <div style="font-size: 3rem; font-weight: 900; color: #fffdfa; margin-top: 10px;" id="phrase-bar-counter">Phrase 1 | Bar 1</div>
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-size: 0.95rem; color: #bca08d;">
+                Press <strong>Spacebar</strong> or play a <strong>MIDI key</strong> on the Phrase boundary (Bar 1, Bar 9, Bar 17, etc.).
+            </div>
+
+            <div id="phrase-results" style="margin: 20px 0; display: none; text-align: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #e6c594;">Drill Finished</h3>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #d4af37;" id="phrase-score-val">--</div>
+                <div style="font-size: 1.1rem; margin-top: 5px;" id="phrase-rating-val">--</div>
+                <div style="margin-top: 10px; color: #bca08d; font-size: 0.9rem;" id="phrase-stats-val"></div>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <button class="btn-brass" id="start-phrase-btn" onclick="togglePhraseCounter()">Start Drill</button>
+            </div>
+        `;
+    }
+
+    async function togglePhraseCounter() {
+        if (isPhrasePlaying) {
+            stopActiveDrills();
+            isPhrasePlaying = false;
+            document.getElementById("start-phrase-btn").innerText = "Start Drill";
+            return;
+        }
+
+        await ensureAudioStarted();
+        isPhrasePlaying = true;
+        document.getElementById("start-phrase-btn").innerText = "Stop Drill";
+        document.getElementById("phrase-results").style.display = "none";
+
+        const bpm = 120;
+        Tone.Transport.bpm.value = bpm;
+        const barMs = (240 / bpm) * 1000; // 2 seconds
+
+        const startTime = Tone.now() + 0.5;
+        const startPerfTime = (startTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
+
+        // Targets are beat 1 of bar 1 (0ms), bar 9 (8 bars = 16 seconds), bar 17 (32 seconds)
+        const phraseTargets = [
+            startPerfTime,
+            startPerfTime + (8 * barMs),
+            startPerfTime + (16 * barMs)
+        ];
+
+        const userTaps = [];
+
+        // Synthesizer loop chords: I-V-vi-IV loop where each chord is 2 bars
+        // Total = 8 bars. Same chords used repeating twice so there is no change in chord structure.
+        const backingChords = new Tone.PolySynth(Tone.Synth).toDestination();
+        backingChords.volume.value = -15;
+
+        const chordProgression = [
+            ["C4", "E4", "G4"], // I
+            ["G3", "B3", "D4"], // V
+            ["A3", "C4", "E4"], // vi
+            ["F3", "A3", "C4"]  // IV
+        ];
+
+        let barCount = 0;
+        loopPart = new Tone.Loop(time => {
+            // Play a chord every 2 bars
+            const chordIndex = Math.floor((barCount % 8) / 2);
+            backingChords.triggerAttackRelease(chordProgression[chordIndex], "1n", time);
+
+            Tone.Draw.schedule(() => {
+                const phraseNum = Math.floor(barCount / 8) + 1;
+                const barNum = (barCount % 8) + 1;
+                const display = document.getElementById("phrase-bar-counter");
+                if (display) {
+                    display.innerText = `Phrase ${phraseNum} | Bar ${barNum}`;
+                }
+            }, time);
+
+            barCount++;
+        }, "1m");
+
+        loopPart.start(startTime);
+        Tone.Transport.start();
+
+        const handlePhraseTap = (domTimestamp) => {
+            const compTimestamp = domTimestamp - latencyOffsetMs;
+            userTaps.push(compTimestamp);
+        };
+
+        const keyboardListener = (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                if (e.repeat) return;
+                handlePhraseTap(e.timeStamp);
+                if (polySynth) {
+                    polySynth.triggerAttack("C4", Tone.now(), 0.8);
+                }
+                highlightKey(60, true);
+            }
+        };
+
+        const keyboardUpListener = (e) => {
+            if (e.code === "Space") {
+                if (polySynth) {
+                    polySynth.triggerRelease("C4");
+                }
+                highlightKey(60, false);
+            }
+        };
+
+        activeKeydownListener = keyboardListener;
+        activeKeyupListener = keyboardUpListener;
+        document.addEventListener("keydown", keyboardListener);
+        document.addEventListener("keyup", keyboardUpListener);
+
+        if (midiManager) {
+            midiManager.onStrokeCallback = (stroke) => {
+                handlePhraseTap(stroke.timestamp);
+            };
+        }
+
+        // Run for 24 bars (48 seconds)
+        setTimeout(() => {
+            stopActiveDrills();
+            isPhrasePlaying = false;
+            
+            const btn = document.getElementById("start-phrase-btn");
+            if (btn) btn.innerText = "Start Drill";
+            
+            evaluatePhraseCounter(userTaps, phraseTargets);
+        }, 24 * barMs + 500);
+    }
+
+    function evaluatePhraseCounter(taps, targets) {
+        // Find nearest tap offset for each of the target boundaries (excluding start boundary if no tap occurred)
+        const offsets = [];
+        targets.forEach(targetTime => {
+            let minDiff = Infinity;
+            taps.forEach(tap => {
+                const diff = tap - targetTime;
+                if (Math.abs(diff) < Math.abs(minDiff)) {
+                    minDiff = diff;
+                }
+            });
+            if (Math.abs(minDiff) < 800) { // must be within 800ms of boundary
+                offsets.push(minDiff);
+            }
+        });
+
+        if (offsets.length === 0) {
+            alert("No taps detected near phrase boundaries.");
+            return;
+        }
+
+        const absOffsets = offsets.map(Math.abs);
+        const avgOffset = absOffsets.reduce((a, b) => a + b, 0) / offsets.length;
+
+        let rating = "Needs Practice";
+        let score = 10;
+
+        if (avgOffset <= 50) {
+            score = 100;
+            rating = "Tempo Wizard";
+        } else if (avgOffset <= 100) {
+            score = 80;
+            rating = "DJ-Ready";
+        } else if (avgOffset <= 150) {
+            score = 60;
+            rating = "Solid Ear";
+        } else if (avgOffset <= 250) {
+            score = 40;
+            rating = "Getting There";
+        }
+
+        document.getElementById("phrase-results").style.display = "block";
+        document.getElementById("phrase-score-val").innerText = `${score} pts`;
+        document.getElementById("phrase-rating-val").innerText = rating;
+        document.getElementById("phrase-stats-val").innerText = `Average Phrase Offset: ${Math.round(avgOffset)} ms`;
+
+        savePianoAttempt({
+            skill_tag: "phrasing",
+            phase_error_ms: Math.round(avgOffset),
+            phrase_length: 8,
+            input_method: midiManager && midiManager.inputs.length > 0 ? "midi" : "tap",
+        });
+    }
+
+    // 4. Limb Independence Panel
+    let isLimbPlaying = false;
+    
+    function loadLimbIndependence(target) {
+        target.innerHTML = `
+            <h2>Limb Independence Trainer</h2>
+            <p style="margin-bottom: 20px; color: #a48c82;">
+                Train your foot/hand synchronization: Foot taps on beat 1 and 3 (LH key), Hands clap/tap on beat 2 and 4 (RH key) in sync with the clicks.
+            </p>
+
+            <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 8px; color: #e6c594; font-size: 1rem;">How to Practice:</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #bca08d; line-height: 1.45;">
+                    <li><strong>Foot (LH):</strong> Tap on beats 1 and 3 (the main heavy beats). Tap key <code>A</code>/<code>S</code> or any MIDI note <strong>below C4 (Note 59 and below)</strong>.</li>
+                    <li><strong>Hand (RH):</strong> Tap on beats 2 and 4 (the offbeats). Tap key <code>K</code>/<code>L</code> or any MIDI note <strong>C4 and above (Note 60+)</strong>.</li>
+                    <li><strong>Coordination:</strong> Play in sync with the metronome clicks. Clicks alternate: high pitch on beat 1, low pitch on beats 2, 3, 4.</li>
+                </ul>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 20px; margin: 30px 0;">
+                <div style="text-align: center;">
+                    <div class="subdivision-pulse-indicator" id="limb-foot"></div>
+                    <div style="margin-top: 5px; font-weight: 600; font-size: 0.9rem;">Foot (Beats 1 & 3)</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="subdivision-pulse-indicator" id="limb-hand"></div>
+                    <div style="margin-top: 5px; font-weight: 600; font-size: 0.9rem;">Hand (Beats 2 & 4)</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-size: 0.95rem; color: #bca08d;">
+                Use <strong>A/S</strong> (Foot) and <strong>K/L</strong> (Hand), or splits on MIDI.
+            </div>
+
+            <div id="limb-results" style="margin: 20px 0; display: none; text-align: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #e6c594;">Drill Finished</h3>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #d4af37;" id="limb-score-val">--</div>
+                <div style="font-size: 1.1rem; margin-top: 5px;" id="limb-rating-val">--</div>
+                <div style="margin-top: 10px; color: #bca08d; font-size: 0.9rem;" id="limb-stats-val"></div>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <button class="btn-brass" id="start-limb-btn" onclick="toggleLimbIndependence()">Start Drill</button>
+            </div>
+        `;
+    }
+
+    async function toggleLimbIndependence() {
+        if (isLimbPlaying) {
+            stopActiveDrills();
+            isLimbPlaying = false;
+            document.getElementById("start-limb-btn").innerText = "Start Drill";
+            return;
+        }
+
+        await ensureAudioStarted();
+        isLimbPlaying = true;
+        document.getElementById("start-limb-btn").innerText = "Stop Drill";
+        document.getElementById("limb-results").style.display = "none";
+
+        const bpm = 100;
+        Tone.Transport.bpm.value = bpm;
+        const beatMs = (60 / bpm) * 1000;
+
+        const startTime = Tone.now() + 0.5;
+        const startPerfTime = (startTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
+
+        const footTargets = [];
+        const handTargets = [];
+
+        // Generate target grid for 8 bars (32 beats)
+        for (let beat = 0; beat < 32; beat++) {
+            const beatTime = startPerfTime + (beat * beatMs);
+            if (beat % 4 === 0 || beat % 4 === 2) {
+                footTargets.push(beatTime);
+            } else {
+                handTargets.push(beatTime);
+            }
+        }
+
+        const footTaps = [];
+        const handTaps = [];
+
+        // Loop play metronome click
+        let count = 0;
+        loopPart = new Tone.Loop(time => {
+            clickSynth.triggerAttackRelease(count % 4 === 0 ? "C5" : "C4", "16n", time);
+
+            Tone.Draw.schedule(() => {
+                const footInd = document.getElementById("limb-foot");
+                const handInd = document.getElementById("limb-hand");
+                
+                if (count % 4 === 0 || count % 4 === 2) {
+                    if (footInd) {
+                        footInd.classList.add("active-lh");
+                        setTimeout(() => { footInd.classList.remove("active-lh"); }, 100);
+                    }
+                } else {
+                    if (handInd) {
+                        handInd.classList.add("active-rh");
+                        setTimeout(() => { handInd.classList.remove("active-rh"); }, 100);
+                    }
+                }
+            }, time);
+
+            count++;
+        }, "4n");
+
+        loopPart.start(startTime);
+        Tone.Transport.start();
+
+        const handleLimbTap = (domTimestamp, isFoot) => {
+            const compTimestamp = domTimestamp - latencyOffsetMs;
+            if (isFoot) {
+                footTaps.push(compTimestamp);
+            } else {
+                handTaps.push(compTimestamp);
+            }
+        };
+
+        const keyboardListener = (e) => {
+            if (e.repeat) return;
+            let note = null;
+            let isFoot = false;
+            if (e.code === "KeyA" || e.code === "KeyS") {
+                isFoot = true;
+                note = 60;
+            } else if (e.code === "KeyK" || e.code === "KeyL") {
+                isFoot = false;
+                note = 72;
+            }
+
+            if (note !== null) {
+                handleLimbTap(e.timeStamp, isFoot);
+                if (polySynth) {
+                    const freq = Tone.Frequency(note, "midi").toFrequency();
+                    polySynth.triggerAttack(freq, Tone.now(), 0.8);
+                }
+                highlightKey(note, true);
+            }
+        };
+
+        const keyboardUpListener = (e) => {
+            let note = null;
+            if (e.code === "KeyA" || e.code === "KeyS") {
+                note = 60;
+            } else if (e.code === "KeyK" || e.code === "KeyL") {
+                note = 72;
+            }
+
+            if (note !== null) {
+                if (polySynth) {
+                    const freq = Tone.Frequency(note, "midi").toFrequency();
+                    polySynth.triggerRelease(freq);
+                }
+                highlightKey(note, false);
+            }
+        };
+
+        activeKeydownListener = keyboardListener;
+        activeKeyupListener = keyboardUpListener;
+        document.addEventListener("keydown", keyboardListener);
+        document.addEventListener("keyup", keyboardUpListener);
+
+        if (midiManager) {
+            midiManager.onStrokeCallback = (stroke) => {
+                const splitKey = parseInt(document.getElementById("midi-split-key").value) || 60;
+                const isFoot = stroke.notes.some(n => n < splitKey);
+                handleLimbTap(stroke.timestamp, isFoot);
+            };
+        }
+
+        // Run for 8 bars (19.2 seconds)
+        setTimeout(() => {
+            stopActiveDrills();
+            isLimbPlaying = false;
+            
+            const btn = document.getElementById("start-limb-btn");
+            if (btn) btn.innerText = "Start Drill";
+            
+            evaluateLimbIndependence(footTaps, footTargets, handTaps, handTargets);
+        }, 32 * beatMs + 500);
+    }
+
+    function evaluateLimbIndependence(footTaps, footGrid, handTaps, handGrid) {
+        const footErrors = [];
+        footTaps.forEach(tap => {
+            let minDiff = Infinity;
+            footGrid.forEach(gridTime => {
+                const diff = tap - gridTime;
+                if (Math.abs(diff) < Math.abs(minDiff)) {
+                    minDiff = diff;
+                }
+            });
+            if (Math.abs(minDiff) < 180) {
+                footErrors.push(minDiff);
+            }
+        });
+
+        const handErrors = [];
+        handTaps.forEach(tap => {
+            let minDiff = Infinity;
+            handGrid.forEach(gridTime => {
+                const diff = tap - gridTime;
+                if (Math.abs(diff) < Math.abs(minDiff)) {
+                    minDiff = diff;
+                }
+            });
+            if (Math.abs(minDiff) < 180) {
+                handErrors.push(minDiff);
+            }
+        });
+
+        const allErrors = [...footErrors, ...handErrors];
+        if (allErrors.length === 0) {
+            alert("No taps detected.");
+            return;
+        }
+
+        const absErrors = allErrors.map(Math.abs);
+        const avgErr = absErrors.reduce((a, b) => a + b, 0) / allErrors.length;
+
+        // Compute consistency (SD)
+        const mean = allErrors.reduce((a, b) => a + b, 0) / allErrors.length;
+        const variance = allErrors.reduce((sum, err) => sum + Math.pow(err - mean, 2), 0) / allErrors.length;
+        const stdDev = Math.sqrt(variance);
+
+        let rating = "Needs Practice";
+        let score = 10;
+
+        if (stdDev <= 40.0) {
+            score = 100;
+            rating = "Tempo Wizard";
+        } else if (stdDev <= 55.0) {
+            score = 80;
+            rating = "DJ-Ready";
+        } else if (stdDev <= 75.0) {
+            score = 60;
+            rating = "Solid Ear";
+        } else if (stdDev <= 95.0) {
+            score = 40;
+            rating = "Getting There";
+        }
+
+        document.getElementById("limb-results").style.display = "block";
+        document.getElementById("limb-score-val").innerText = `${score} pts`;
+        document.getElementById("limb-rating-val").innerText = rating;
+        document.getElementById("limb-stats-val").innerText = `Limb Sync Accuracy (SD): ${Math.round(stdDev)} ms | Mean Offset: ${Math.round(avgErr)} ms`;
+
+        savePianoAttempt({
+            skill_tag: "subdivision",
+            tap_stability: Math.round(stdDev),
+            input_method: midiManager && midiManager.inputs.length > 0 ? "midi" : "tap",
+        });
+    }
+
+    // Save Attempt helper
+    function savePianoAttempt(data) {
+        const client_uuid = 'piano_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+        const payload = {
+            client_uuid: client_uuid,
+            guessed_bpm: 120.0,
+            true_bpm: 120.0,
+            module: "piano_lab",
+            ...data
+        };
+
+        // Determine if authenticated or guest
+        const isAuth = document.body.getAttribute("data-authenticated") === "true";
+        if (isAuth) {
+            // Post directly to DB
+            fetch("/piano/api/attempts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(json => {
+                console.log("Logged attempt directly saved:", json);
+            })
+            .catch(err => console.error("Failed to save logged attempt:", err));
+        } else {
+            // Save to localStorage
+            const localAttempts = JSON.parse(localStorage.getItem("attempts") || "[]");
+            localAttempts.push(payload);
+            localStorage.setItem("attempts", JSON.stringify(localAttempts));
+            console.log("Guest attempt saved to LocalStorage:", payload);
+        }
+    }
+
+    // Load initial lab view
+    switchLab(currentDrill);
+</script>
+{% endblock %}

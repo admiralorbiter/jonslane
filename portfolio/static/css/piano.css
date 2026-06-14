@@ -1,0 +1,209 @@
+/* Piano Lab Stylesheet - Warm Acoustic Mahogany & Brass theme */
+
+body.piano-lab-theme {
+    background-color: #160f0d;
+    background-image: radial-gradient(circle at center, #231815 0%, #0d0908 100%);
+    color: #f7ece1;
+    font-family: 'Outfit', 'Georgia', serif;
+}
+
+/* Base card layout overrides */
+.piano-lab-theme .piano-card {
+    background: rgba(30, 21, 19, 0.7);
+    border: 1px solid #4a362f;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.piano-lab-theme .piano-card:hover {
+    border-color: #d4af37;
+    transform: translateY(-2px);
+}
+
+.piano-lab-theme h1, 
+.piano-lab-theme h2, 
+.piano-lab-theme h3 {
+    color: #e6c594;
+    font-family: 'Georgia', serif;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Warm brass buttons */
+.piano-lab-theme .btn-brass {
+    background: linear-gradient(135deg, #b8860b 0%, #8b6508 100%);
+    color: #fffdfa;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.piano-lab-theme .btn-brass:hover {
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.2);
+    transform: translateY(-1px);
+}
+
+.piano-lab-theme .btn-brass:active {
+    transform: translateY(1px);
+}
+
+/* Ivory & Ebony visual keys representation */
+.piano-keyboard-view {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    height: 180px;
+    margin: 20px auto;
+    padding: 10px;
+    background: #3a2822;
+    border: 3px solid #1a100d;
+    border-radius: 8px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    width: 100%;
+    max-width: 600px;
+    overflow: hidden;
+}
+
+.piano-key.white {
+    background: #fffdfe;
+    border: 1px solid #c8b9b5;
+    border-bottom: 5px solid #dcd1cd;
+    border-radius: 0 0 4px 4px;
+    width: calc(100% / 15 - 2px);
+    margin: 0 1px;
+    height: 100%;
+    z-index: 1;
+    position: relative;
+    cursor: pointer;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+    transition: background 0.1s;
+}
+
+.piano-key.white.active {
+    background: #e6c594;
+    border-bottom-width: 1px;
+    border-top: 4px solid #b8860b;
+    box-shadow: inset 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.piano-key.black {
+    background: #1a1513;
+    border: 1px solid #0a0605;
+    border-bottom: 5px solid #000;
+    border-radius: 0 0 3px 3px;
+    width: 4.5%;
+    height: 60%;
+    position: absolute;
+    z-index: 10;
+    cursor: pointer;
+    box-shadow: 0 3px 5px rgba(0,0,0,0.5);
+    transition: background 0.1s;
+}
+
+.piano-key.black.active {
+    background: #b8860b;
+    border-bottom: 2px solid #8b6508;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Custom state badges */
+.piano-lab-theme .badge-status {
+    background: rgba(212, 175, 55, 0.1);
+    color: #d4af37;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Timing feedback animations */
+.timing-feedback {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    margin: 15px 0;
+    min-height: 2.2rem;
+    transition: opacity 0.15s ease-out;
+}
+
+.timing-feedback.early {
+    color: #e69c24;
+}
+
+.timing-feedback.perfect {
+    color: #d4af37;
+    text-shadow: 0 0 10px rgba(212,175,55,0.4);
+}
+
+.timing-feedback.late {
+    color: #cd5c5c;
+}
+
+/* Subdivision visualizers */
+.subdivision-pulse-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #4a362f;
+    border: 2px solid #5a453d;
+    display: inline-block;
+    margin: 0 10px;
+    transition: transform 0.1s, background-color 0.1s;
+}
+
+.subdivision-pulse-indicator.active-lh {
+    background-color: #d4af37;
+    box-shadow: 0 0 12px #d4af37;
+    transform: scale(1.15);
+}
+
+.subdivision-pulse-indicator.active-rh {
+    background-color: #f7ece1;
+    box-shadow: 0 0 12px #f7ece1;
+    transform: scale(1.15);
+}
+
+/* Timeline metronome indicator styling */
+.metronome-visualizer-container {
+    height: 40px;
+    width: 100%;
+    background: #231815;
+    border-radius: 6px;
+    position: relative;
+    margin: 15px 0;
+    overflow: hidden;
+    border: 1px solid #4a362f;
+}
+
+.metronome-sweep-bar {
+    width: 4px;
+    height: 100%;
+    background: #d4af37;
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-shadow: 0 0 8px #d4af37;
+}
+
+.beat-node {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4a362f;
+    position: absolute;
+    top: 16px;
+    transform: translateX(-50%);
+}
+
+.beat-node.active {
+    background: #d4af37;
+    box-shadow: 0 0 6px #d4af37;
+}

@@ -13,7 +13,7 @@
     }
     .academy-container {
         max-width: 1200px;
-        margin: 40px auto;
+        margin: 110px auto 40px;
         padding: 0 20px;
     }
     .academy-grid {
@@ -260,34 +260,34 @@
                     Rhythm Skill Profile
                 </h3>
                 <div class="radar-container">
-                    <svg viewBox="0 0 220 220" class="radar-chart">
+                    <svg viewBox="0 0 260 220" class="radar-chart">
                         <!-- Background Grid Rings -->
-                        <circle cx="110" cy="110" r="70" class="radar-grid" fill="none" />
-                        <circle cx="110" cy="110" r="52.5" class="radar-grid" fill="none" />
-                        <circle cx="110" cy="110" r="35" class="radar-grid" fill="none" />
-                        <circle cx="110" cy="110" r="17.5" class="radar-grid" fill="none" />
+                        <circle cx="130" cy="110" r="60" class="radar-grid" fill="none" />
+                        <circle cx="130" cy="110" r="45" class="radar-grid" fill="none" />
+                        <circle cx="130" cy="110" r="30" class="radar-grid" fill="none" />
+                        <circle cx="130" cy="110" r="15" class="radar-grid" fill="none" />
                         
                         <!-- Axis Lines -->
                         <!-- 0 deg (top): Pulse -->
-                        <line x1="110" y1="110" x2="110" y2="40" class="radar-axis" />
+                        <line x1="130" y1="110" x2="130" y2="50" class="radar-axis" />
                         <!-- 72 deg: Anchor -->
-                        <line x1="110" y1="110" x2="176.5" y2="89" class="radar-axis" />
+                        <line x1="130" y1="110" x2="187.1" y2="91.5" class="radar-axis" />
                         <!-- 144 deg: Subdivision -->
-                        <line x1="110" y1="110" x2="151.1" y2="166.5" class="radar-axis" />
+                        <line x1="130" y1="110" x2="165.3" y2="158.6" class="radar-axis" />
                         <!-- 216 deg: Downbeat -->
-                        <line x1="110" y1="110" x2="68.8" y2="166.5" class="radar-axis" />
+                        <line x1="130" y1="110" x2="94.7" y2="158.6" class="radar-axis" />
                         <!-- 288 deg: Ambiguity -->
-                        <line x1="110" y1="110" x2="43.4" y2="89" class="radar-axis" />
+                        <line x1="130" y1="110" x2="72.9" y2="91.5" class="radar-axis" />
                         
                         <!-- The Dynamic Polygon -->
-                        <polygon id="radar-poly" points="110,110 110,110 110,110 110,110 110,110" class="radar-poly" />
+                        <polygon id="radar-poly" points="130,110 130,110 130,110 130,110 130,110" class="radar-poly" />
                         
                         <!-- Axis Labels -->
-                        <text x="110" y="28" text-anchor="middle" class="radar-label">Pulse</text>
-                        <text x="183" y="93" text-anchor="start" class="radar-label">Anchor Memory</text>
-                        <text x="156" y="177" text-anchor="start" class="radar-label">Subdivision</text>
-                        <text x="64" y="177" text-anchor="end" class="radar-label">Downbeat</text>
-                        <text x="37" y="93" text-anchor="end" class="radar-label">Ambiguity</text>
+                        <text x="130" y="38" text-anchor="middle" class="radar-label">Pulse</text>
+                        <text x="194" y="95" text-anchor="start" class="radar-label">Anchor Memory</text>
+                        <text x="170" y="170" text-anchor="start" class="radar-label">Subdivision</text>
+                        <text x="90" y="170" text-anchor="end" class="radar-label">Downbeat</text>
+                        <text x="66" y="95" text-anchor="end" class="radar-label">Ambiguity</text>
                     </svg>
                 </div>
                 <div style="font-size: 0.8rem; color: #9CA3AF; text-align: center; margin-top: 10px;">
@@ -384,9 +384,9 @@
                 const ambiguity = skills.metrical_ambiguity || 0;
 
                 // Center coordinates
-                const cx = 110;
+                const cx = 130;
                 const cy = 110;
-                const maxRadius = 70;
+                const maxRadius = 60;
 
                 // Helper to compute coordinate for an axis (angle in radians)
                 function getPoint(value, angleRad) {
