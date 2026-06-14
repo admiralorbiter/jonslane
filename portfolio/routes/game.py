@@ -84,10 +84,92 @@ def calculate_user_stats(user, attempts):
     return stats
 
 
+def calculate_score_and_rating(percent_error):
+    """Return (score, rating, is_success) for a given percent error."""
+    if percent_error < 1.0:
+        return 100, "Tempo Wizard", True
+    if percent_error <= 3.0:
+        return 75, "DJ-Ready", True
+    if percent_error <= 5.0:
+        return 50, "Solid Ear", True
+    if percent_error <= 8.0:
+        return 25, "Getting There", False
+    return 10, "Needs Practice", False
+
+
+def validate_and_parse_attempt_data(att_data):
+    """Validate and parse a single raw attempt data dict, returning parsed fields or None."""
+    client_uuid = att_data.get("client_uuid")
+    if not client_uuid:
+        return None
+
+    try:
+        guessed = float(att_data.get("guessed_bpm"))
+        true_bpm = float(att_data.get("true_bpm"))
+        bpm_error = float(att_data.get("bpm_error"))
+        percent_error = float(att_data.get("percent_error"))
+        score = int(att_data.get("score"))
+        rating = str(att_data.get("rating"))
+        crate_name = str(att_data.get("crate_name", "Unknown Crate"))
+
+        if not (1.0 <= guessed <= 300.0) or not (1.0 <= true_bpm <= 300.0):
+            return None
+        if not (0 <= percent_error <= 100.0) or not (0 <= score <= 200):
+            return None
+    except (ValueError, TypeError):
+        return None
+
+    try:
+        created_at_dt = datetime.fromisoformat(att_data.get("created_at").replace("Z", "+00:00"))
+    except (ValueError, TypeError, AttributeError):
+        created_at_dt = datetime.now(timezone.utc)
+
+    return {
+        "client_uuid": client_uuid,
+        "guessed_bpm": guessed,
+        "true_bpm": true_bpm,
+        "bpm_error": bpm_error,
+        "percent_error": percent_error,
+        "score": score,
+        "rating": rating,
+        "crate_name": crate_name,
+        "created_at": created_at_dt,
+    }
+
+
+def recalculate_user_streaks(user):
+    """Recalculate and persist chronological streaks for a user."""
+    all_attempts = Attempt.query.filter_by(user_id=user.id).order_by(Attempt.created_at.asc()).all()
+    current_streak = 0
+    max_streak = user.max_streak
+
+    for a in all_attempts:
+        if a.percent_error <= 5.0:
+            current_streak += 1
+            if current_streak > max_streak:
+                max_streak = current_streak
+        else:
+            current_streak = 0
+
+    user.current_streak = current_streak
+    user.max_streak = max_streak
+    db.session.commit()
+
+
 @game_bp.route("/dashboard")
 def dashboard():
+    from flask import session
+
+    user_id = session.get("user_id")
+    user = User.query.get(user_id) if user_id else None
+
+    stats = None
+    if user:
+        attempts = Attempt.query.filter_by(user_id=user.id).all()
+        stats = calculate_user_stats(user, attempts)
+
     crates = Crate.query.all()
-    return render_template("game/dashboard.html", crates=crates)
+    return render_template("game/dashboard.html", crates=crates, stats=stats)
 
 
 @game_bp.route("/play/<int:crate_id>")
@@ -135,33 +217,19 @@ def submit():
     percent_error = (abs_error / true_bpm) * 100
 
     # Score & Rating calculation
-    if percent_error < 1.0:
-        rating = "Tempo Wizard"
-        score = 100
-        is_success = True
-    elif percent_error <= 3.0:
-        rating = "DJ-Ready"
-        score = 75
-        is_success = True
-    elif percent_error <= 5.0:
-        rating = "Solid Ear"
-        score = 50
-        is_success = True
-    elif percent_error <= 8.0:
-        rating = "Getting There"
-        score = 25
-        is_success = False
-    else:
-        rating = "Needs Practice"
-        score = 10
-        is_success = False
+    score, rating, is_success = calculate_score_and_rating(percent_error)
 
     # Get user
-    user = User.query.first()
+    from flask import session
+
+    user_id = session.get("user_id")
+    user = User.query.get(user_id) if user_id else None
     if not user:
-        user = User(display_name="Guest DJ")
-        db.session.add(user)
-        db.session.commit()
+        user = User.query.first()
+        if not user:
+            user = User(display_name="Guest DJ")
+            db.session.add(user)
+            db.session.commit()
 
     # Update Streak
     if is_success:
@@ -202,70 +270,49 @@ def submit():
 @game_bp.route("/api/sync", methods=["POST"])
 def sync():
     """Sync client-side local storage attempts to database."""
+    from flask import session
+
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required to sync data."}), 401
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
     data = request.get_json() or {}
     attempts_data = data.get("attempts", [])
 
-    user = User.query.first()
-    if not user:
-        user = User(display_name="Guest DJ")
-        db.session.add(user)
-        db.session.commit()
-
     synced_count = 0
     for att_data in attempts_data:
-        client_uuid = att_data.get("client_uuid")
-        if not client_uuid:
+        parsed = validate_and_parse_attempt_data(att_data)
+        if not parsed:
             continue
 
         # Prevent duplicate insertion
-        existing = Attempt.query.filter_by(client_uuid=client_uuid).first()
+        existing = Attempt.query.filter_by(client_uuid=parsed["client_uuid"]).first()
         if existing:
             continue
 
-        try:
-            created_at_dt = datetime.fromisoformat(
-                att_data.get("created_at").replace("Z", "+00:00")
-            )
-        except (ValueError, TypeError, AttributeError):
-            created_at_dt = datetime.now(timezone.utc)
-
         attempt = Attempt(
             user_id=user.id,
-            challenge_id=None,  # guest play does not require challenges in DB
-            guessed_bpm=float(att_data.get("guessed_bpm")),
-            true_bpm=float(att_data.get("true_bpm")),
-            bpm_error=float(att_data.get("bpm_error")),
-            percent_error=float(att_data.get("percent_error")),
-            score=int(att_data.get("score")),
-            rating=att_data.get("rating"),
-            crate_name=att_data.get("crate_name"),
-            client_uuid=client_uuid,
-            created_at=created_at_dt,
+            challenge_id=None,
+            guessed_bpm=parsed["guessed_bpm"],
+            true_bpm=parsed["true_bpm"],
+            bpm_error=parsed["bpm_error"],
+            percent_error=parsed["percent_error"],
+            score=parsed["score"],
+            rating=parsed["rating"],
+            crate_name=parsed["crate_name"],
+            client_uuid=parsed["client_uuid"],
+            created_at=parsed["created_at"],
         )
         db.session.add(attempt)
         synced_count += 1
 
     if synced_count > 0:
         db.session.commit()
-
-        # Recalculate streak chronologically to keep database integrity
-        all_attempts = (
-            Attempt.query.filter_by(user_id=user.id).order_by(Attempt.created_at.asc()).all()
-        )
-        current_streak = 0
-        max_streak = user.max_streak
-
-        for a in all_attempts:
-            if a.percent_error <= 5.0:
-                current_streak += 1
-                if current_streak > max_streak:
-                    max_streak = current_streak
-            else:
-                current_streak = 0
-
-        user.current_streak = current_streak
-        user.max_streak = max_streak
-        db.session.commit()
+        recalculate_user_streaks(user)
 
     return jsonify(
         {

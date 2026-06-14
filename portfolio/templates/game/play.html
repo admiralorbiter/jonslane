@@ -52,18 +52,22 @@
             <div class="guess-display">
                 <div class="guess-label">Input Guess BPM</div>
                 <input type="number" step="0.1" min="1" max="300" id="guess-input" class="guess-input" placeholder="---" autocomplete="off" required>
+                <!-- Potential Points HUD -->
+                <div id="potential-points-hud" style="font-size: 0.85rem; color: var(--neon-yellow); margin-top: 15px; font-family: monospace; letter-spacing: 1px; text-transform: uppercase;">
+                    Max Payout: <span id="max-payout-val">100</span> pts
+                </div>
             </div>
 
-            <button class="btn-submit" id="submit-btn">Submit Guess</button>
+            <button class="btn-submit" id="submit-btn" style="margin-bottom: 20px;">Submit Guess</button>
 
             <!-- Clue Reveal Layer -->
             <div class="clue-box">
                 <div class="clue-title">Clue Reveal Layers</div>
                 <div class="clues-list">
-                    <div class="clue-badge" data-level="1"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[1]</span> Kick Only (0.5x)</div>
-                    <div class="clue-badge" data-level="2"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[2]</span> Kick + Snare (0.6x)</div>
-                    <div class="clue-badge" data-level="3"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[3]</span> Kick + Snare + Hat (0.75x)</div>
-                    <div class="clue-badge active" data-level="4"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[4]</span> Full Groove (1.0x)</div>
+                    <button type="button" class="clue-badge" data-level="1"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[1]</span> Kick Only (0.5x)</button>
+                    <button type="button" class="clue-badge" data-level="2"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[2]</span> Kick + Snare (0.6x)</button>
+                    <button type="button" class="clue-badge" data-level="3"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[3]</span> Kick + Snare + Hat (0.75x)</button>
+                    <button type="button" class="clue-badge active" data-level="4"><span style="color: var(--neon-cyan); font-weight: 700; font-family: monospace;">[4]</span> Full Groove (1.0x)</button>
                 </div>
             </div>
         </div>

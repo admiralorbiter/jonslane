@@ -14,17 +14,18 @@ This log is used to brainstorm new features, track project updates, and maintain
   - Browser `localStorage` stats tracking (Total drills, average error, range categorization, streaks) capped at a 1,000 sliding window.
   - Accessibility hotkeys (`Space`, `Enter`, `1`-`4`) and focus indicators.
 
+### 2. Flask User Sign-in & Sync Ingestion API
+- **Goal**: Implement secure user registrations, logins, and session management alongside transactional client-side local storage synchronization.
+- **Features**:
+  - Secure blueprints under `/auth/register`, `/auth/login`, and `/auth/logout` using Werkzeug password hashing.
+  - Ingestion endpoint `/game/api/sync` that parses, validates bounds, and transactionally commits client attempts (preventing duplicates via UUID checks).
+  - Chronological user streak calibration and synchronization.
+
 ---
 
 ## 🏗️ Upcoming Ideas & Projects
 
-### 1. Flask User Sign-in & Sync Ingestion API
-- **Goal**: Implement user logins (email, password hash, sessions) so players can persist their local attempts data permanently in the server database.
-- **Features**:
-  - Ingestion endpoint `/game/api/sync` that parses, deduplicates (via UUID check), and writes client attempts to SQLite.
-  - Interactive profile page displaying global leaderboards, historic progress graphs, and account settings.
-
-### 2. External Audio Importers & Admin Queue
+### 1. External Audio Importers & Admin Queue
 - **Goal**: Integrate licensed or public domain real-world tracks for advanced ear training.
 - **Features**:
   - Freesound/Jamendo API integrations for query pulling.

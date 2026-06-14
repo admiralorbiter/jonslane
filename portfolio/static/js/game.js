@@ -174,7 +174,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Update running engine dynamically
-        window.audioEngine.clueLevel = level;
+        if (window.audioEngine) {
+            window.audioEngine.clueLevel = level;
+        }
+
+        // Update potential points HUD
+        const maxPayoutVal = document.getElementById("max-payout-val");
+        if (maxPayoutVal) {
+            const multipliers = { 1: 0.5, 2: 0.6, 3: 0.75, 4: 1.0 };
+            const mult = multipliers[level] || 1.0;
+            maxPayoutVal.textContent = Math.round(100 * mult);
+        }
     }
 
     // --- CLIENT SIDE LOCAL STORAGE SCORING ---
@@ -280,6 +290,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Pop up the results
         showResults(newAttempt, currentStreak);
+
+        // Trigger immediate data sync if user is logged in
+        syncLocalAttempts();
     }
 
     function showResults(attempt, currentStreak) {
@@ -326,6 +339,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
+        let cachedWidth = 0;
+        let cachedHeight = 80;
+
         // Responsive High-DPI resizing
         const resizeCanvas = () => {
             const rect = canvas.parentElement.getBoundingClientRect();
@@ -337,6 +353,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             canvas.style.width = `${rect.width}px`;
             canvas.style.height = "80px";
+
+            cachedWidth = rect.width;
+            cachedHeight = 80;
 
             // Pre-compile Visualizer Gradient outside of the requestAnimationFrame loop
             cachedGradient = ctx.createLinearGradient(0, 80, 0, 0);
@@ -361,8 +380,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             analyser.getByteFrequencyData(dataArray);
 
-            const w = canvas.width / (window.devicePixelRatio || 1);
-            const h = 80;
+            const w = cachedWidth;
+            const h = cachedHeight;
 
             ctx.fillStyle = "rgba(13, 15, 18, 0.2)"; // Motion trailing blur
             ctx.fillRect(0, 0, w, h);
@@ -392,4 +411,51 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.fillStyle = "#0d0f12";
         ctx.fillRect(0, 0, w, h);
     }
+
+    // --- TRANSACTIONAL LOCAL STORAGE SYNC ---
+
+    async function syncLocalAttempts() {
+        const isAuthenticated = document.body.getAttribute("data-authenticated") === "true";
+        if (!isAuthenticated) return;
+
+        const attempts = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
+        if (attempts.length === 0) return;
+
+        const attemptsToSync = [...attempts];
+
+        try {
+            const response = await fetch("/game/api/sync", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ attempts: attemptsToSync })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Filter out matching synced attempts from local storage
+                    const syncedUuids = new Set(attemptsToSync.map(a => a.client_uuid));
+                    const currentLocalAttempts = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
+                    const remainingAttempts = currentLocalAttempts.filter(a => !syncedUuids.has(a.client_uuid));
+
+                    localStorage.setItem("count_me_in_attempts", JSON.stringify(remainingAttempts));
+
+                    // Overwrite local streaks with server calculated values
+                    localStorage.setItem("count_me_in_streak", data.current_streak.toString());
+                    localStorage.setItem("count_me_in_max_streak", data.max_streak.toString());
+
+                    console.log(`Synced ${data.synced_count} attempts successfully.`);
+                }
+            } else {
+                console.error("Failed to sync attempts to server.", response.statusText);
+            }
+        } catch (error) {
+            console.error("Network error during sync:", error);
+        }
+    }
+
+    // Trigger sync on page load if authenticated
+    syncLocalAttempts();
 });

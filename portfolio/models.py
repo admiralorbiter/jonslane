@@ -49,11 +49,27 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     display_name = db.Column(db.String(100), nullable=False, default="Guest DJ")
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    password_hash = db.Column(db.String(255), nullable=True)
     current_streak = db.Column(db.Integer, nullable=False, default=0)
     max_streak = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     attempts = db.relationship("Attempt", backref="user", lazy=True, cascade="all, delete-orphan")
+
+    def set_password(self, password):
+        """Hash and set the user's password."""
+        from werkzeug.security import generate_password_hash
+
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Verify the user's password."""
+        from werkzeug.security import check_password_hash
+
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f"<User {self.display_name}>"
@@ -121,8 +137,41 @@ class Attempt(db.Model):
 
 def seed_database():
     """Seed the database with initial Crates and a default guest user if needed."""
+    from sqlalchemy import text
+
     from portfolio import db
     from portfolio.models import Crate, User
+
+    # Raw SQL schema checks to execute alterations if columns are missing (simple DB migration)
+    try:
+        db.session.execute(text("SELECT email FROM users LIMIT 1"))
+    except Exception:
+        db.session.rollback()
+        try:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR(120)"))
+            db.session.execute(
+                text("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
+            )
+            db.session.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+    try:
+        db.session.execute(text("SELECT client_uuid FROM attempts LIMIT 1"))
+    except Exception:
+        db.session.rollback()
+        try:
+            db.session.execute(text("ALTER TABLE attempts ADD COLUMN client_uuid VARCHAR(100)"))
+            db.session.execute(
+                text(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_attempts_client_uuid ON attempts(client_uuid)"
+                )
+            )
+            db.session.execute(text("ALTER TABLE attempts ADD COLUMN crate_name VARCHAR(100)"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     # Seed Default User if not exists
     if not User.query.first():

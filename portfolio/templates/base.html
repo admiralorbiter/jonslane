@@ -14,7 +14,7 @@
     <!-- Page-specific styles -->
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body data-authenticated="{% if current_user %}true{% else %}false{% endif %}">
 
     <!-- Floating Navigation Bar -->
     <nav class="navbar" id="navbar">
@@ -25,6 +25,18 @@
 
     <!-- Main Content Injection -->
     <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages-container" style="max-width: 600px; margin: 90px auto -50px; padding: 0 20px; z-index: 50; position: relative;">
+                    {% for category, message in messages %}
+                        <div class="glass-card flash-message {{ category }}" style="padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid {% if category == 'error' %}var(--neon-pink){% elif category == 'success' %}var(--neon-green){% else %}var(--neon-cyan){% endif %}; display: flex; justify-content: space-between; align-items: center; background: rgba(30, 37, 48, 0.85);">
+                            <span style="font-size: 0.95rem; font-weight: 500;">{{ message }}</span>
+                            <button onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2rem; font-weight: bold; line-height: 1;">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </main>
 
@@ -37,5 +49,46 @@
 
     <!-- Page-specific Javascript -->
     {% block extra_js %}{% endblock %}
+
+    <!-- Secret Keyboard Triggers -->
+    <script>
+        (function() {
+            let typedKeys = "";
+            document.addEventListener("keydown", function(e) {
+                // Ignore keys if typing in input fields
+                if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) {
+                    return;
+                }
+                typedKeys += e.key.toLowerCase();
+                if (typedKeys.length > 20) {
+                    typedKeys = typedKeys.slice(-20);
+                }
+
+                // Secret triggers:
+                // 1. "jonlane" -> slide open logo glitch and login
+                if (typedKeys.endsWith("jonlane")) {
+                    const logo = document.querySelector(".navbar-logo");
+                    if (logo) {
+                        logo.style.textShadow = "0 0 20px var(--neon-cyan), 0 0 30px var(--neon-pink)";
+                        logo.style.transform = "scale(1.1) rotate(-3deg)";
+                        logo.style.transition = "all 0.1s ease";
+                    }
+                    document.body.style.filter = "invert(1) hue-rotate(180deg)";
+                    document.body.style.transition = "filter 0.3s ease";
+                    setTimeout(function() {
+                        window.location.href = "{{ url_for('auth.login') }}";
+                    }, 300);
+                }
+                // 2. "jonlogout" -> logout
+                else if (typedKeys.endsWith("jonlogout")) {
+                    document.body.style.opacity = "0.5";
+                    document.body.style.transition = "opacity 0.3s ease";
+                    setTimeout(function() {
+                        window.location.href = "{{ url_for('auth.logout') }}";
+                    }, 200);
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

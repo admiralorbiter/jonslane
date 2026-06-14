@@ -85,6 +85,7 @@ For interactive, zero-latency applications like the BPM ear trainer, we employ a
 - **Resource Disposal**: When navigating away or stopping playback, the custom engine calls `.dispose()` on all active synth nodes and loops to free Web Audio memory.
 - **Background Throttling**: Tab changes (`visibilitychange` listener) automatically suspend the loops to conserve client battery.
 
-### 4. Future Auth & Synchronization Path
-- The database `Attempt` schema includes `client_uuid` (unique) and nullable `challenge_id` columns.
-- Upon implementing the authentication system, a bulk `POST` endpoint at `/game/api/sync` will accept the client's `localStorage` JSON history, match UUIDs to avoid duplicates, write attempts to SQLite, and chronologically compute user streaks.
+### 4. Auth & Synchronization Integration
+- **Session-Based Authentication**: Provides Register, Login, and Logout functionality using secure Werkzeug password hashing and cryptographic Flask sessions.
+- **Transactional Client-Side Sync**: Copies local storage attempts, posts them to `/game/api/sync` on page load/interaction, and transactionally filters out successfully synced items (using unique UUID keys) to prevent duplicate database writes and preserve in-flight gameplay logs.
+- **Streak Calibration**: The backend chronologically aggregates all synced attempts to calibrate streaks, which then overwrite the local storage streak values.

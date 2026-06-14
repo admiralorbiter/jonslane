@@ -17,19 +17,25 @@
     <div class="stats-grid">
         <div class="glass-card stat-box">
             <div class="stat-lbl">Total Drills</div>
-            <div id="stat-total-attempts" class="stat-val">0</div>
+            <div id="stat-total-attempts" class="stat-val">{% if stats %}{{ stats.total_attempts }}{% else %}0{% endif %}</div>
         </div>
         <div class="glass-card stat-box">
             <div class="stat-lbl">Average Error</div>
-            <div id="stat-avg-error" class="stat-val">0.0 <span style="font-size: 1rem; color: var(--text-secondary);">BPM</span></div>
+            <div id="stat-avg-error" class="stat-val">
+                {% if stats %}
+                    {{ stats.avg_error }} <span style="font-size: 1rem; color: var(--text-secondary);">BPM</span>
+                {% else %}
+                    0.0 <span style="font-size: 1rem; color: var(--text-secondary);">BPM</span>
+                {% endif %}
+            </div>
         </div>
         <div class="glass-card stat-box">
             <div class="stat-lbl">Percent Accuracy</div>
-            <div id="stat-accuracy" class="stat-val">100.0%</div>
+            <div id="stat-accuracy" class="stat-val">{% if stats %}{{ (100.0 - stats.avg_percent_error)|round(1) }}%{% else %}100.0%{% endif %}</div>
         </div>
         <div class="glass-card stat-box streak">
             <div class="stat-lbl">Active Streak</div>
-            <div id="stat-streak" class="stat-val">0 / 0</div>
+            <div id="stat-streak" class="stat-val">{% if stats %}{{ stats.streak }} / {{ stats.max_streak }}{% else %}0 / 0{% endif %}</div>
         </div>
     </div>
 
@@ -64,7 +70,7 @@
 
             <div class="stat-lbl" style="margin-bottom: 5px;">Best Tempo Zone</div>
             <div id="stat-best-range" style="font-size: 1.1rem; font-weight: 700; color: var(--neon-cyan); font-family: monospace; margin-bottom: 30px;">
-                N/A
+                {% if stats %}{{ stats.best_range }}{% else %}N/A{% endif %}
             </div>
 
             <div class="rating-progress-container">
@@ -72,53 +78,83 @@
                     Rating Distribution
                 </h4>
 
+                {% if stats %}
+                    {% set wizard_count = stats.rating_breakdown['Tempo Wizard'] %}
+                    {% set wizard_pct = ((wizard_count / stats.total_attempts * 100)|round|int) if stats.total_attempts > 0 else 0 %}
+                {% else %}
+                    {% set wizard_count = 0 %}{% set wizard_pct = 0 %}
+                {% endif %}
                 <div class="rating-row">
                     <div class="rating-row-header">
                         <span class="rating-row-lbl">Tempo Wizard</span>
-                        <span id="cnt-wizard" class="rating-row-cnt">0 (0%)</span>
+                        <span id="cnt-wizard" class="rating-row-cnt">{{ wizard_count }} ({{ wizard_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-wizard" class="rating-bar-fill wizard" style="width: 0%;"></div>
+                        <div id="bar-wizard" class="rating-bar-fill wizard" style="width: {{ wizard_pct }}%;"></div>
                     </div>
                 </div>
 
+                {% if stats %}
+                    {% set ready_count = stats.rating_breakdown['DJ-Ready'] %}
+                    {% set ready_pct = ((ready_count / stats.total_attempts * 100)|round|int) if stats.total_attempts > 0 else 0 %}
+                {% else %}
+                    {% set ready_count = 0 %}{% set ready_pct = 0 %}
+                {% endif %}
                 <div class="rating-row">
                     <div class="rating-row-header">
                         <span class="rating-row-lbl">DJ-Ready</span>
-                        <span id="cnt-ready" class="rating-row-cnt">0 (0%)</span>
+                        <span id="cnt-ready" class="rating-row-cnt">{{ ready_count }} ({{ ready_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-ready" class="rating-bar-fill ready" style="width: 0%;"></div>
+                        <div id="bar-ready" class="rating-bar-fill ready" style="width: {{ ready_pct }}%;"></div>
                     </div>
                 </div>
 
+                {% if stats %}
+                    {% set solid_count = stats.rating_breakdown['Solid Ear'] %}
+                    {% set solid_pct = ((solid_count / stats.total_attempts * 100)|round|int) if stats.total_attempts > 0 else 0 %}
+                {% else %}
+                    {% set solid_count = 0 %}{% set solid_pct = 0 %}
+                {% endif %}
                 <div class="rating-row">
                     <div class="rating-row-header">
                         <span class="rating-row-lbl">Solid Ear</span>
-                        <span id="cnt-solid" class="rating-row-cnt">0 (0%)</span>
+                        <span id="cnt-solid" class="rating-row-cnt">{{ solid_count }} ({{ solid_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-solid" class="rating-bar-fill solid" style="width: 0%;"></div>
+                        <div id="bar-solid" class="rating-bar-fill solid" style="width: {{ solid_pct }}%;"></div>
                     </div>
                 </div>
 
+                {% if stats %}
+                    {% set getting_count = stats.rating_breakdown['Getting There'] %}
+                    {% set getting_pct = ((getting_count / stats.total_attempts * 100)|round|int) if stats.total_attempts > 0 else 0 %}
+                {% else %}
+                    {% set getting_count = 0 %}{% set getting_pct = 0 %}
+                {% endif %}
                 <div class="rating-row">
                     <div class="rating-row-header">
                         <span class="rating-row-lbl">Getting There</span>
-                        <span id="cnt-getting" class="rating-row-cnt">0 (0%)</span>
+                        <span id="cnt-getting" class="rating-row-cnt">{{ getting_count }} ({{ getting_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-getting" class="rating-bar-fill getting" style="width: 0%;"></div>
+                        <div id="bar-getting" class="rating-bar-fill getting" style="width: {{ getting_pct }}%;"></div>
                     </div>
                 </div>
 
+                {% if stats %}
+                    {% set needs_count = stats.rating_breakdown['Needs Practice'] %}
+                    {% set needs_pct = ((needs_count / stats.total_attempts * 100)|round|int) if stats.total_attempts > 0 else 0 %}
+                {% else %}
+                    {% set needs_count = 0 %}{% set needs_pct = 0 %}
+                {% endif %}
                 <div class="rating-row">
                     <div class="rating-row-header">
                         <span class="rating-row-lbl">Needs Practice</span>
-                        <span id="cnt-needs" class="rating-row-cnt">0 (0%)</span>
+                        <span id="cnt-needs" class="rating-row-cnt">{{ needs_count }} ({{ needs_pct }}%)</span>
                     </div>
                     <div class="rating-bar-bg">
-                        <div id="bar-needs" class="rating-bar-fill needs" style="width: 0%;"></div>
+                        <div id="bar-needs" class="rating-bar-fill needs" style="width: {{ needs_pct }}%;"></div>
                     </div>
                 </div>
             </div>
@@ -134,6 +170,54 @@
 {% endblock %}
 
 {% block extra_js %}
+{% if stats %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    async function syncLocalAttempts() {
+        const attempts = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
+        if (attempts.length === 0) return;
+
+        const attemptsToSync = [...attempts];
+
+        try {
+            const response = await fetch("/game/api/sync", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ attempts: attemptsToSync })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Filter out matching synced attempts from local storage
+                    const syncedUuids = new Set(attemptsToSync.map(a => a.client_uuid));
+                    const currentLocalAttempts = JSON.parse(localStorage.getItem("count_me_in_attempts")) || [];
+                    const remainingAttempts = currentLocalAttempts.filter(a => !syncedUuids.has(a.client_uuid));
+
+                    localStorage.setItem("count_me_in_attempts", JSON.stringify(remainingAttempts));
+
+                    // Overwrite local streaks with server calculated values
+                    localStorage.setItem("count_me_in_streak", data.current_streak.toString());
+                    localStorage.setItem("count_me_in_max_streak", data.max_streak.toString());
+
+                    console.log(`Synced ${data.synced_count} attempts successfully.`);
+
+                    if (data.synced_count > 0) {
+                        window.location.reload();
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Network error during sync:", error);
+        }
+    }
+
+    syncLocalAttempts();
+});
+</script>
+{% else %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     // Read local history from LocalStorage
@@ -241,4 +325,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 </script>
+{% endif %}
 {% endblock %}

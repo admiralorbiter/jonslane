@@ -209,6 +209,14 @@ class BpmAudioEngine {
 
     dispose() {
         this.stop(false);
+        if (this.analyser) {
+            try {
+                Tone.Destination.disconnect(this.analyser);
+            } catch (e) {
+                console.warn("Error disconnecting visualizer analyser:", e);
+            }
+            this.analyser = null;
+        }
         if (this.kick) this.kick.dispose();
         if (this.snare) this.snare.dispose();
         if (this.hat) this.hat.dispose();
