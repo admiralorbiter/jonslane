@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from sqlalchemy.orm import validates
 
 from portfolio import db
 
@@ -130,7 +131,27 @@ class Attempt(db.Model):
     client_uuid = db.Column(db.String(100), unique=True, nullable=True)
     crate_name = db.Column(db.String(100), nullable=True)
     metrical_multiplier = db.Column(db.Float, nullable=False, default=1.0)
+    tap_stability = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    @validates("tap_stability")
+    def validate_tap_stability(self, key, value):
+        if value is None:
+            return None
+        
+        try:
+            val_float = float(value)
+        except (TypeError, ValueError) as e:
+            raise ValueError("tap_stability must be a valid float.") from e
+            
+        import math
+        if math.isnan(val_float) or math.isinf(val_float):
+            raise ValueError("tap_stability cannot be NaN or Infinity.")
+            
+        if not (0.0 <= val_float <= 5000.0):
+            raise ValueError("tap_stability must be between 0.0 and 5000.0 ms.")
+            
+        return val_float
 
     __table_args__ = (
         db.Index("idx_attempts_user_created", "user_id", "created_at"),

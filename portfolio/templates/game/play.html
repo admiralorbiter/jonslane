@@ -55,9 +55,45 @@
 
         <!-- Deck B: Guess Input & Clues -->
         <div class="glass-card deck-section guess-panel">
-            <div class="guess-display">
-                <div class="guess-label">Input Guess BPM</div>
-                <input type="number" step="0.1" min="1" max="300" id="guess-input" class="guess-input" placeholder="---" autocomplete="off" required>
+            <div class="input-tabs">
+                <button type="button" class="tab-btn active" id="tab-keyboard">Keyboard</button>
+                <button type="button" class="tab-btn" id="tab-tap">Tap Tempo</button>
+            </div>
+
+            <div class="guess-display" style="margin-top: 15px;">
+                <!-- Keyboard Panel -->
+                <div id="keyboard-input-container" class="input-mode-container active">
+                    <div class="guess-label">Input Guess BPM</div>
+                    <input type="number" step="0.1" min="1" max="400" id="guess-input" class="guess-input" placeholder="---" autocomplete="off" required>
+                </div>
+
+                <!-- Tap Tempo Panel -->
+                <div id="tap-input-container" class="input-mode-container" style="display: none;">
+                    <div class="tap-pad" id="tap-pad">
+                        <span class="tap-pad-lbl">Tap Space or Click Here</span>
+                        <span class="tap-pad-sub">Tapping Space registers tempo. Use mouse or ESC to stop audio.</span>
+                    </div>
+                    
+                    <div class="tap-metrics-row">
+                        <div class="tap-metric-col">
+                            <span class="tap-metric-lbl">Taps</span>
+                            <span class="tap-metric-val" id="tap-count-val">0</span>
+                        </div>
+                        <div class="tap-metric-col">
+                            <span class="tap-metric-lbl">Tapped BPM</span>
+                            <span class="tap-metric-val" id="tap-bpm-val">--</span>
+                        </div>
+                        <div class="tap-metric-col">
+                            <span class="tap-metric-lbl">Stability</span>
+                            <span class="tap-metric-val" id="tap-stability-val">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tap-action-row">
+                        <button type="button" class="btn-action btn-reset-taps" id="reset-taps-btn" style="padding: 5px 12px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--text-secondary); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--neon-pink)'; this.style.color='var(--neon-pink)';" onmouseout="this.style.borderColor='var(--text-secondary)'; this.style.color='var(--text-secondary)';">Reset Taps</button>
+                    </div>
+                </div>
+
                 <!-- Potential Points HUD -->
                 <div id="potential-points-hud" style="font-size: 0.85rem; color: var(--neon-yellow); margin-top: 15px; font-family: monospace; letter-spacing: 1px; text-transform: uppercase;">
                     Max Payout: <span id="max-payout-val">100</span> pts
@@ -99,6 +135,7 @@
             <div class="result-metric">Error Deviation: <span id="error-val" style="font-family: monospace;">--</span></div>
             <div class="result-metric">Percent Error: <span id="error-pct-val" style="font-family: monospace;">--</span></div>
             <div class="result-metric">Score Earned: <span id="score-val" style="color: var(--neon-yellow); font-family: monospace;">0</span> pts</div>
+            <div class="result-metric" id="result-stability-row" style="display: none;">Tap Consistency: <span id="result-stability-val" style="color: var(--neon-cyan); font-family: monospace;">--</span></div>
             <div class="result-metric" style="margin-top: 15px; font-weight: 700;">Current Streak: <span id="streak-val" style="color: var(--neon-pink); font-family: monospace;">0</span></div>
 
             <div id="result-research-tip" class="result-research-tip" style="display: none;"></div>

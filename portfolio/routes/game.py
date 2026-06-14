@@ -49,6 +49,7 @@ def calculate_user_stats(user, attempts):
             "Getting There": 0,
             "Needs Practice": 0,
         },
+        "avg_stability": None,
     }
 
     if total_attempts > 0:
@@ -56,6 +57,10 @@ def calculate_user_stats(user, attempts):
         total_pct_error = sum(a.percent_error for a in attempts)
         stats["avg_error"] = round(total_error / total_attempts, 2)
         stats["avg_percent_error"] = round(total_pct_error / total_attempts, 2)
+
+        tapped_stabilities = [a.tap_stability for a in attempts if getattr(a, "tap_stability", None) is not None]
+        if tapped_stabilities:
+            stats["avg_stability"] = round(sum(tapped_stabilities) / len(tapped_stabilities), 2)
 
         # Count ratings
         for a in attempts:
@@ -146,6 +151,16 @@ def validate_and_parse_attempt_data(att_data):
         # Support percent errors up to 600.0% to prevent discarding syncs on poor guesses
         if not (0.0 <= percent_error <= 600.0) or not (0 <= score <= 200):
             return None
+
+        # Parse tap_stability securely for guests
+        tap_stability = None
+        tap_stability_val = att_data.get("tap_stability")
+        if tap_stability_val is not None:
+            import math
+            val = float(tap_stability_val)
+            if math.isnan(val) or math.isinf(val) or not (0.0 <= val <= 5000.0):
+                return None
+            tap_stability = round(val, 2)
     except (ValueError, TypeError):
         return None
 
@@ -164,6 +179,7 @@ def validate_and_parse_attempt_data(att_data):
         "rating": rating,
         "crate_name": crate_name,
         "metrical_multiplier": metrical_multiplier,
+        "tap_stability": tap_stability,
         "created_at": created_at_dt,
     }
 
@@ -341,6 +357,19 @@ def submit_attempt():
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid data format."}), 400
 
+    # Validate tap_stability (direct submits)
+    tap_stability = None
+    tap_stability_val = data.get("tap_stability")
+    if tap_stability_val is not None:
+        try:
+            import math
+            val = float(tap_stability_val)
+            if math.isnan(val) or math.isinf(val) or not (0.0 <= val <= 5000.0):
+                return jsonify({"error": "Invalid tap stability value."}), 400
+            tap_stability = round(val, 2)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid tap stability format."}), 400
+
     # Cryptographically verify the play token
     challenge_data = verify_challenge_token(challenge_token)
     if not challenge_data:
@@ -379,6 +408,7 @@ def submit_attempt():
             crate_name=crate_name,
             client_uuid=client_uuid,
             metrical_multiplier=metrical_multiplier,
+            tap_stability=tap_stability,
             created_at=datetime.now(timezone.utc)
         )
         db.session.add(attempt)
@@ -446,6 +476,7 @@ def sync():
                     crate_name=parsed["crate_name"],
                     client_uuid=parsed["client_uuid"],
                     metrical_multiplier=parsed["metrical_multiplier"],
+                    tap_stability=parsed["tap_stability"],
                     created_at=parsed["created_at"],
                 )
                 db.session.add(attempt)

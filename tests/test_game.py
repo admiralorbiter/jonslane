@@ -318,6 +318,112 @@ class GameTestCase(unittest.TestCase):
         self.assertIsNotNone(a2)
         self.assertEqual(a2.metrical_multiplier, 2.0)
 
+    def test_tap_stability_validation_and_persistence(self):
+        """Test tap_stability checks in direct submission (bounds, NaN, Inf, and saving)."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        from portfolio.utils.security import generate_challenge_token
+        token = generate_challenge_token(120.0, "House Crate")
+
+        # 1. Reject NaN
+        payload = {
+            "guess": 120.0,
+            "challenge_token": token,
+            "clue_level": 4,
+            "client_uuid": "stability-test-nan",
+            "tap_stability": "NaN"
+        }
+        res_nan = self.client.post("/game/api/attempt", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res_nan.status_code, 400)
+
+        # 2. Reject negative value
+        payload["tap_stability"] = -15.5
+        payload["client_uuid"] = "stability-test-neg"
+        res_neg = self.client.post("/game/api/attempt", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res_neg.status_code, 400)
+
+        # 3. Reject too large value
+        payload["tap_stability"] = 6000.0
+        payload["client_uuid"] = "stability-test-large"
+        res_large = self.client.post("/game/api/attempt", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res_large.status_code, 400)
+
+        # 4. Accept valid value, verify rounding and database storage
+        payload["tap_stability"] = 12.3456
+        payload["client_uuid"] = "stability-test-valid"
+        res_valid = self.client.post("/game/api/attempt", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res_valid.status_code, 201)
+
+        saved = Attempt.query.filter_by(client_uuid="stability-test-valid").first()
+        self.assertIsNotNone(saved)
+        self.assertEqual(saved.tap_stability, 12.35) # Rounds to 2 decimal places
+
+    def test_sync_tap_stability_sanitization(self):
+        """Test syncing local storage attempts with tap_stability, verifying sanitization."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        payload = {
+            "attempts": [
+                {
+                    "client_uuid": "sync-valid-stability",
+                    "guessed_bpm": 120.0,
+                    "true_bpm": 120.0,
+                    "bpm_error": 0.0,
+                    "percent_error": 0.0,
+                    "score": 100,
+                    "rating": "Tempo Wizard",
+                    "crate_name": "House Crate",
+                    "tap_stability": 22.456,
+                    "created_at": "2026-06-14T10:00:00Z"
+                },
+                {
+                    "client_uuid": "sync-invalid-stability",
+                    "guessed_bpm": 120.0,
+                    "true_bpm": 120.0,
+                    "bpm_error": 0.0,
+                    "percent_error": 0.0,
+                    "score": 100,
+                    "rating": "Tempo Wizard",
+                    "crate_name": "House Crate",
+                    "tap_stability": "Infinity", # Should be rejected
+                    "created_at": "2026-06-14T10:05:00Z"
+                }
+            ]
+        }
+
+        res = self.client.post("/game/api/sync", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data.decode("utf-8"))
+        self.assertEqual(data["synced_count"], 1) # Only the valid one should sync
+
+        a_valid = Attempt.query.filter_by(client_uuid="sync-valid-stability").first()
+        self.assertIsNotNone(a_valid)
+        self.assertEqual(a_valid.tap_stability, 22.46)
+
+        a_invalid = Attempt.query.filter_by(client_uuid="sync-invalid-stability").first()
+        self.assertIsNone(a_invalid)
+
+    def test_dashboard_stats_with_mixed_stability(self):
+        """Test stats calculation filters out None/null values and averages correctly without errors."""
+        user = User.query.first()
+        # Seed attempts
+        a1 = Attempt(user_id=user.id, guessed_bpm=120.0, true_bpm=120.0, bpm_error=0.0, percent_error=0.0, score=100, rating="Tempo Wizard", tap_stability=10.0)
+        a2 = Attempt(user_id=user.id, guessed_bpm=120.0, true_bpm=120.0, bpm_error=0.0, percent_error=0.0, score=100, rating="Tempo Wizard", tap_stability=20.0)
+        a3 = Attempt(user_id=user.id, guessed_bpm=120.0, true_bpm=120.0, bpm_error=0.0, percent_error=0.0, score=100, rating="Tempo Wizard", tap_stability=None) # keyboard attempt
+        db.session.add_all([a1, a2, a3])
+        db.session.commit()
+
+        from portfolio.routes.game import calculate_user_stats
+        attempts = Attempt.query.filter_by(user_id=user.id).all()
+        stats = calculate_user_stats(user, attempts)
+
+        self.assertEqual(stats["total_attempts"], 3)
+        self.assertEqual(stats["avg_stability"], 15.0) # Average of [10.0, 20.0]
+
 
 if __name__ == "__main__":
     unittest.main()

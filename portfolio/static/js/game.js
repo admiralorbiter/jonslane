@@ -19,11 +19,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const scoreVal = document.getElementById("score-val");
     const streakVal = document.getElementById("streak-val");
 
+    // Tap Tempo elements
+    const tabKeyboard = document.getElementById("tab-keyboard");
+    const tabTap = document.getElementById("tab-tap");
+    const keyboardInputContainer = document.getElementById("keyboard-input-container");
+    const tapInputContainer = document.getElementById("tap-input-container");
+    const tapPad = document.getElementById("tap-pad");
+    const tapCountVal = document.getElementById("tap-count-val");
+    const tapBpmVal = document.getElementById("tap-bpm-val");
+    const tapStabilityVal = document.getElementById("tap-stability-val");
+    const resetTapsBtn = document.getElementById("reset-taps-btn");
+
+    const resultStabilityRow = document.getElementById("result-stability-row");
+    const resultStabilityVal = document.getElementById("result-stability-val");
+
     let recipe = null;
     let visualizerFrameId = null;
     let currentClueLevel = 4; // Default to full beat
     let isBraking = false;
     let isSubmitting = false;
+
+    // Tap Tempo state
+    let tapTimes = [];
+    let currentTapStability = null;
+    const MAX_TAPS = 12;
 
     // Outer visualizer state
     let cachedWidth = 0;
@@ -68,19 +87,167 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Tab Switching
+    if (tabKeyboard && tabTap) {
+        tabKeyboard.addEventListener("click", () => {
+            if (isSubmitting) return;
+            tabKeyboard.classList.add("active");
+            tabTap.classList.remove("active");
+            keyboardInputContainer.classList.add("active");
+            keyboardInputContainer.style.display = "block";
+            tapInputContainer.classList.remove("active");
+            tapInputContainer.style.display = "none";
+            if (guessInput) guessInput.focus();
+        });
+
+        tabTap.addEventListener("click", () => {
+            if (isSubmitting) return;
+            tabTap.classList.add("active");
+            tabKeyboard.classList.remove("active");
+            tapInputContainer.classList.add("active");
+            tapInputContainer.style.display = "block";
+            keyboardInputContainer.classList.remove("active");
+            keyboardInputContainer.style.display = "none";
+            if (guessInput) guessInput.blur();
+        });
+    }
+
+    // Tap Tempo Engine functions
+    function handleTapRegistration() {
+        const now = performance.now();
+        const N = tapTimes.length;
+
+        // Visual feedback on pad
+        if (tapPad) {
+            tapPad.classList.add("active");
+            setTimeout(() => {
+                tapPad.classList.remove("active");
+            }, 80);
+        }
+
+        // Debounce check: discard tap if < 150 ms since previous tap
+        if (N > 0 && now - tapTimes[N - 1] < 150) {
+            return;
+        }
+
+        // Reset check: if pause > 3000 ms, start a new sequence but retain current tap
+        if (N > 0 && now - tapTimes[N - 1] > 3000) {
+            tapTimes = [];
+        }
+
+        tapTimes.push(now);
+        if (tapTimes.length > MAX_TAPS) {
+            tapTimes.shift();
+        }
+
+        const currentCount = tapTimes.length;
+        if (tapCountVal) tapCountVal.textContent = currentCount;
+
+        if (currentCount < 2) {
+            if (tapBpmVal) tapBpmVal.textContent = "--";
+            if (tapStabilityVal) tapStabilityVal.textContent = "--";
+            currentTapStability = null;
+            return;
+        }
+
+        const intervals = [];
+        for (let i = 0; i < currentCount - 1; i++) {
+            intervals.push(tapTimes[i + 1] - tapTimes[i]);
+        }
+
+        const M = intervals.length;
+        const sum = intervals.reduce((acc, val) => acc + val, 0);
+        const meanInterval = sum / M;
+        const bpm = 60000 / meanInterval;
+
+        // Populate guess value starting at 4 taps
+        if (currentCount >= 4) {
+            const bpmRounded = parseFloat(bpm.toFixed(1));
+            if (tapBpmVal) tapBpmVal.textContent = `${bpmRounded} BPM`;
+            if (guessInput) {
+                guessInput.value = bpmRounded;
+                guessInput.dispatchEvent(new Event("input"));
+            }
+        } else {
+            if (tapBpmVal) tapBpmVal.textContent = "Estimating...";
+        }
+
+        // Calculate Sample Standard Deviation (Bessel's Correction) for N >= 3
+        if (currentCount >= 3) {
+            const variance = intervals.reduce((acc, val) => acc + Math.pow(val - meanInterval, 2), 0) / (M - 1);
+            const stdDev = Math.sqrt(variance);
+            currentTapStability = parseFloat(stdDev.toFixed(2));
+            if (tapStabilityVal) tapStabilityVal.textContent = `±${stdDev.toFixed(1)} ms`;
+        } else {
+            if (tapStabilityVal) tapStabilityVal.textContent = "--";
+            currentTapStability = null;
+        }
+    }
+
+    function resetTaps() {
+        tapTimes = [];
+        currentTapStability = null;
+        if (tapCountVal) tapCountVal.textContent = "0";
+        if (tapBpmVal) tapBpmVal.textContent = "--";
+        if (tapStabilityVal) tapStabilityVal.textContent = "--";
+        if (guessInput) {
+            guessInput.value = "";
+            guessInput.dispatchEvent(new Event("input"));
+        }
+    }
+
+    if (resetTapsBtn) {
+        resetTapsBtn.addEventListener("click", resetTaps);
+    }
+
+    if (tapPad) {
+        tapPad.addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            if (isSubmitting) return;
+            if (!window.audioEngine.playing) {
+                startPlayback();
+            }
+            handleTapRegistration();
+        });
+    }
+
     // Keyboard Hotkeys
     document.addEventListener("keydown", (e) => {
         // Skip hotkeys if user is currently typing in the guess input field or submitting
         if (document.activeElement === guessInput || isSubmitting) return;
 
-        if (e.code === "Space") {
-            e.preventDefault();
-            if (window.audioEngine.playing) {
-                stopPlayback(false);
-            } else {
-                startPlayback();
+        const isTapActive = tabTap && tabTap.classList.contains("active");
+
+        if (isTapActive) {
+            if (e.code === "Space" || e.key.toLowerCase() === "t") {
+                e.preventDefault();
+                if (e.code === "Space" && !window.audioEngine.playing) {
+                    startPlayback();
+                    return;
+                }
+                handleTapRegistration();
+                return;
             }
-        } else if (e.key >= "1" && e.key <= "4") {
+            if (e.key === "Escape") {
+                e.preventDefault();
+                if (window.audioEngine.playing) {
+                    stopPlayback(false);
+                }
+                return;
+            }
+        } else {
+            if (e.code === "Space") {
+                e.preventDefault();
+                if (window.audioEngine.playing) {
+                    stopPlayback(false);
+                } else {
+                    startPlayback();
+                }
+                return;
+            }
+        }
+
+        if (e.key >= "1" && e.key <= "4") {
             const level = parseInt(e.key);
             setClueLevel(level);
         }
@@ -206,6 +373,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!recipe || isBraking) return;
 
+        // LOCK IMMEDIATELY FOR BOTH GUEST AND AUTHENTICATED PATHS
+        isSubmitting = true;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+        }
+        if (guessInput) guessInput.disabled = true;
+        clueBadges.forEach(btn => btn.disabled = true);
+
+        // Stop playback immediately for responsive UX
+        stopPlayback(true);
+
         // Generate attempt UUID
         const attemptUuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
@@ -217,20 +396,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (isAuthenticated) {
             // AUTHENTICATED PATH - Saves directly to SQLite via API, bypasses localStorage
-            isSubmitting = true;
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Submitting...";
-            guessInput.disabled = true;
-            clueBadges.forEach(btn => btn.disabled = true);
-
-            // Stop playback immediately for responsive UX
-            stopPlayback(true);
-
             const payload = {
                 guess: Number(guessVal.toFixed(1)),
                 challenge_token: challengeToken,
                 clue_level: currentClueLevel,
-                client_uuid: attemptUuid
+                client_uuid: attemptUuid,
+                tap_stability: currentTapStability
             };
 
             fetch("/game/api/attempt", {
@@ -354,6 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 rating: rating,
                 crate_name: crateName,
                 metrical_multiplier: metricalMultiplier,
+                tap_stability: currentTapStability,
                 created_at: new Date().toISOString()
             };
 
@@ -392,6 +564,16 @@ document.addEventListener("DOMContentLoaded", () => {
         errorPctVal.textContent = `${attempt.percent_error}%`;
         scoreVal.textContent = attempt.score;
         streakVal.textContent = currentStreak;
+
+        // Display Tap Consistency if available
+        if (resultStabilityRow && resultStabilityVal) {
+            if (attempt.tap_stability !== undefined && attempt.tap_stability !== null) {
+                resultStabilityVal.textContent = `±${attempt.tap_stability} ms`;
+                resultStabilityRow.style.display = "block";
+            } else {
+                resultStabilityRow.style.display = "none";
+            }
+        }
 
         // Apply rating CSS class and text
         resultRating.className = "result-rating";

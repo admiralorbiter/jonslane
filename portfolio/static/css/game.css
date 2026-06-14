@@ -741,3 +741,121 @@ a:focus-visible,
 .rating-bar-fill.getting { background-color: var(--neon-orange); }
 .rating-bar-fill.needs { background-color: var(--neon-pink); }
 .rating-bar-fill.metrical { background-color: var(--neon-orange); }
+
+/* Tap Tempo V2 Styling */
+.input-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    padding: 10px;
+    font-size: 0.90rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    color: var(--neon-cyan);
+    border-bottom: 2px solid var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.tap-pad {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.tap-pad:hover {
+    background: rgba(0, 240, 255, 0.05);
+    border-color: rgba(0, 240, 255, 0.4);
+}
+
+.tap-pad:active, .tap-pad.active {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--neon-cyan);
+    transform: scale(0.98);
+}
+
+.tap-pad-lbl {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.tap-pad-sub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    max-width: 80%;
+    line-height: 1.3;
+}
+
+.tap-metrics-row {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.5fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tap-metric-col {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tap-metric-lbl {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.tap-metric-val {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    font-family: monospace;
+}
+
+#tap-stability-val {
+    color: var(--neon-yellow);
+}
+
+.tap-action-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
