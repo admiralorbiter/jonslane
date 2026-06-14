@@ -220,6 +220,104 @@ class GameTestCase(unittest.TestCase):
         data_dup = json.loads(response_dup.data.decode("utf-8"))
         self.assertEqual(data_dup["error"], "Attempt already recorded.")
 
+    def test_metrical_match_scoring_and_streak(self):
+        """Test that half/double BPM guesses within 3% score 50, rating is 'Metrical Match', and streak is preserved."""
+        crate = Crate.query.filter_by(genre="house").first()
+        challenge = Challenge(
+            crate_id=crate.id,
+            true_bpm=120.0,
+            genre="house",
+            beat_recipe_json=json.dumps({"genre": "house", "bpm": 120.0, "elements": ["kick"]}),
+        )
+        db.session.add(challenge)
+        db.session.commit()
+
+        # 1. Half-time guess: 60.5 BPM (target: 60.0 BPM). Error relative to 60.0 is 0.5 / 60.0 = 0.83% (< 3%)
+        response_half = self.client.post(
+            "/game/submit",
+            data=json.dumps({"challenge_id": challenge.id, "guess": 60.5}),
+            content_type="application/json",
+        )
+        self.assertEqual(response_half.status_code, 200)
+        data_half = json.loads(response_half.data.decode("utf-8"))
+        self.assertEqual(data_half["rating"], "Metrical Match")
+        self.assertEqual(data_half["score"], 50)
+        self.assertEqual(data_half["streak"], 1)
+
+        # 2. Double-time guess: 238.0 BPM (target: 240.0 BPM). Error relative to 240.0 is 2.0 / 240.0 = 0.83% (< 3%)
+        response_double = self.client.post(
+            "/game/submit",
+            data=json.dumps({"challenge_id": challenge.id, "guess": 238.0}),
+            content_type="application/json",
+        )
+        self.assertEqual(response_double.status_code, 200)
+        data_double = json.loads(response_double.data.decode("utf-8"))
+        self.assertEqual(data_double["rating"], "Metrical Match")
+        self.assertEqual(data_double["score"], 50)
+        self.assertEqual(data_double["streak"], 2) # Streak should continue!
+
+        # Check database records
+        attempts = Attempt.query.order_by(Attempt.created_at.desc()).limit(2).all()
+        # The latest attempt (index 0 in desc order) is double-time
+        self.assertEqual(attempts[0].metrical_multiplier, 2.0)
+        self.assertEqual(attempts[1].metrical_multiplier, 0.5)
+
+    def test_sync_with_metrical_match(self):
+        """Test syncing local attempts that contain Metrical Match guesses."""
+        user = User.query.first()
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user.id
+
+        # Local storage payload
+        payload = {
+            "attempts": [
+                {
+                    "client_uuid": "sync-metrical-1",
+                    "guessed_bpm": 60.5,
+                    "true_bpm": 120.0,
+                    "bpm_error": 0.5,
+                    "percent_error": 0.83,
+                    "score": 50,
+                    "rating": "Metrical Match",
+                    "crate_name": "House Crate",
+                    "metrical_multiplier": 0.5,
+                    "created_at": "2026-06-14T10:00:00Z"
+                },
+                {
+                    "client_uuid": "sync-metrical-2",
+                    "guessed_bpm": 238.0,
+                    "true_bpm": 120.0,
+                    "bpm_error": -2.0,
+                    "percent_error": 0.83,
+                    "score": 50,
+                    "rating": "Metrical Match",
+                    "crate_name": "House Crate",
+                    "metrical_multiplier": 2.0,
+                    "created_at": "2026-06-14T10:05:00Z"
+                }
+            ]
+        }
+
+        response = self.client.post(
+            "/game/api/sync",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data.decode("utf-8"))
+        self.assertEqual(data["synced_count"], 2)
+        self.assertEqual(data["current_streak"], 2) # Streak should be computed correctly
+
+        # Check DB persistence
+        a1 = Attempt.query.filter_by(client_uuid="sync-metrical-1").first()
+        self.assertIsNotNone(a1)
+        self.assertEqual(a1.metrical_multiplier, 0.5)
+        self.assertEqual(a1.rating, "Metrical Match")
+
+        a2 = Attempt.query.filter_by(client_uuid="sync-metrical-2").first()
+        self.assertIsNotNone(a2)
+        self.assertEqual(a2.metrical_multiplier, 2.0)
+
 
 if __name__ == "__main__":
     unittest.main()

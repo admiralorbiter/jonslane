@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 clueBadges.forEach(btn => btn.disabled = false);
 
                 // Play chime
-                const isSuccess = ["Tempo Wizard", "DJ-Ready", "Solid Ear"].includes(data.rating);
+                const isSuccess = ["Tempo Wizard", "DJ-Ready", "Solid Ear", "Metrical Match"].includes(data.rating);
                 window.audioEngine.playChime(isSuccess);
 
                 // Show results
@@ -277,9 +277,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             // GUEST PATH - Saves in browser localStorage
             const trueBpm = recipe.bpm;
-            const bpmError = guessVal - trueBpm;
+            let bpmError = guessVal - trueBpm;
             const absError = Math.abs(bpmError);
-            const percentError = (absError / trueBpm) * 100;
+            let percentError = (absError / trueBpm) * 100;
 
             const multipliers = { 1: 0.5, 2: 0.6, 3: 0.75, 4: 1.0 };
             const multiplier = multipliers[currentClueLevel] || 1.0;
@@ -287,6 +287,11 @@ document.addEventListener("DOMContentLoaded", () => {
             let baseScore = 10;
             let rating = "Needs Practice";
             let isSuccess = false;
+            let metricalMultiplier = 1.0;
+
+            // Symmetric metrical deviations relative to target rates
+            const halfTimeErr = (Math.abs(guessVal - (trueBpm / 2.0)) / (trueBpm / 2.0)) * 100;
+            const doubleTimeErr = (Math.abs(guessVal - (trueBpm * 2.0)) / (trueBpm * 2.0)) * 100;
 
             if (percentError < 1.0) {
                 rating = "Tempo Wizard";
@@ -300,6 +305,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 rating = "Solid Ear";
                 baseScore = 50;
                 isSuccess = true;
+            } else if (halfTimeErr <= 3.0) {
+                rating = "Metrical Match";
+                baseScore = 50;
+                isSuccess = true;
+                percentError = halfTimeErr;
+                bpmError = guessVal - (trueBpm / 2.0);
+                metricalMultiplier = 0.5;
+            } else if (doubleTimeErr <= 3.0) {
+                rating = "Metrical Match";
+                baseScore = 50;
+                isSuccess = true;
+                percentError = doubleTimeErr;
+                bpmError = guessVal - (trueBpm * 2.0);
+                metricalMultiplier = 2.0;
             } else if (percentError <= 8.0) {
                 rating = "Getting There";
                 baseScore = 25;
@@ -334,6 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 score: finalScore,
                 rating: rating,
                 crate_name: crateName,
+                metrical_multiplier: metricalMultiplier,
                 created_at: new Date().toISOString()
             };
 
@@ -383,10 +403,36 @@ document.addEventListener("DOMContentLoaded", () => {
             resultRating.classList.add("rating-ready");
         } else if (attempt.rating === "Solid Ear") {
             resultRating.classList.add("rating-solid");
+        } else if (attempt.rating === "Metrical Match") {
+            resultRating.classList.add("rating-metrical");
         } else if (attempt.rating === "Getting There") {
             resultRating.classList.add("rating-getting");
         } else {
             resultRating.classList.add("rating-needs");
+        }
+
+        // Update research tip in the results modal overlay
+        const tipEl = document.getElementById("result-research-tip");
+        if (tipEl) {
+            let tipHtml = "";
+            if (attempt.rating === "Metrical Match") {
+                tipHtml = "<strong>Metrical Level Ambiguity</strong><br>Psychomusicology research shows that listeners often perceive tempo at different hierarchical levels (half-time or double-time). In trap and hip-hop, this ambiguity is a core rhythmic feature (McKinney & Moelants, 2006).";
+            } else if (attempt.percent_error <= 3.0) {
+                tipHtml = "<strong>DJ-Ready Precision</strong><br>Superb ear! Studies in music perception show that professional DJs and trained listeners have a tempo discrimination threshold (Just Noticeable Difference) of 1% to 3% (Madison & Merker, 2004).";
+            } else if (attempt.percent_error <= 8.0) {
+                tipHtml = "<strong>Absolute Tempo Memory</strong><br>Great job! Cognitive research shows that humans possess stable mental representations of familiar tempos (Absolute Tempo Memory), typically accurate within 8% (Levitin, 1996).";
+            } else {
+                const generalTips = [
+                    "<strong>Periodic Entrainment</strong><br>Humans naturally synchronize movement to audio pulses. Your brain is dynamically predicting beat intervals rather than just reacting to them (London, 2012).",
+                    "<strong>Slowing the Mind</strong><br>Research suggests humans prefer tempos around 120 BPM (2 Hz tactus) because it aligns with normal walking gates and biological rhythms (Moelants, 2002).",
+                    "<strong>Crate-Specific Anchors</strong><br>Training your ear with specific genre crates helps build 'anchor tracks' in your memory, which you can use as reference points (Levitin, 1996).",
+                    "<strong>Micro-timing Deviations</strong><br>In live music, micro-timing variations (expressive deviations) add groove and feel, making BPM estimation slightly different than rigid electronic grids (Keil, 1995)."
+                ];
+                const index = Math.floor(Math.abs(attempt.guessed_bpm) % generalTips.length);
+                tipHtml = generalTips[index];
+            }
+            tipEl.innerHTML = tipHtml;
+            tipEl.style.display = "block";
         }
 
         // Open Overlay Modal

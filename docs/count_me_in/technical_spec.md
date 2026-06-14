@@ -82,3 +82,23 @@ To ensure absolute integrity of user leaderboards and scores, guess submissions 
    ```
 3. The token is cryptographically signed using Flask's `SECRET_KEY` and passes to the template.
 4. The client cannot decrypt or alter this token without breaking the signature, making score spoofing impossible.
+
+---
+
+## 5. Metrical Ambiguity Handling & DB Consistency
+
+When a user guesses a tempo that is exactly half or double the true BPM (e.g. guessing 140 for 70 BPM), the system identifies a **Metrical Match**.
+
+### 5.1 Symmetric Error Calculation
+The error percentage is calculated relative to the **hypothesized metrical target** (tactus rate) rather than the original true BPM ($T$), complying with the Weber-Fechner Law of timing perception:
+* **Half-time target ($T/2$):** $E_{\text{half}} = \frac{|G - T/2|}{T/2} \times 100$
+* **Double-time target ($2T$):** $E_{\text{double}} = \frac{|G - 2T|}{2T} \times 100$
+
+This prevents the asymmetric difficulty bias where double-tempo guesses are mathematically four times harder than half-tempo guesses if calculated relative to the true BPM.
+
+### 5.2 Database Consistency
+To preserve mathematical logic in SQL auditing ($bpm\_error = guessed - true$), the database stores:
+* `metrical_multiplier`: `0.5` (half-time match), `2.0` (double-time match), or `1.0` (normal match).
+* `bpm_error` & `percent_error`: Computed using the **effective true BPM** ($T \times \text{metrical\_multiplier}$).
+This keeps statistics like average percent error clean, preventing metrical matches from skewing user metrics.
+

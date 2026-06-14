@@ -127,6 +127,22 @@
                 </div>
 
                 {% if stats %}
+                    {% set metrical_count = stats.rating_breakdown['Metrical Match'] %}
+                    {% set metrical_pct = ((metrical_count / stats.total_attempts * 100)|round|int) if stats.total_attempts > 0 else 0 %}
+                {% else %}
+                    {% set metrical_count = 0 %}{% set metrical_pct = 0 %}
+                {% endif %}
+                <div class="rating-row">
+                    <div class="rating-row-header">
+                        <span class="rating-row-lbl">Metrical Match</span>
+                        <span id="cnt-metrical" class="rating-row-cnt">{{ metrical_count }} ({{ metrical_pct }}%)</span>
+                    </div>
+                    <div class="rating-bar-bg">
+                        <div id="bar-metrical" class="rating-bar-fill metrical" style="width: {{ metrical_pct }}%;"></div>
+                    </div>
+                </div>
+
+                {% if stats %}
                     {% set getting_count = stats.rating_breakdown['Getting There'] %}
                     {% set getting_pct = ((getting_count / stats.total_attempts * 100)|round|int) if stats.total_attempts > 0 else 0 %}
                 {% else %}
@@ -242,6 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "Tempo Wizard": 0,
         "DJ-Ready": 0,
         "Solid Ear": 0,
+        "Metrical Match": 0,
         "Getting There": 0,
         "Needs Practice": 0
     };
@@ -309,6 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "Tempo Wizard": { cnt: "cnt-wizard", bar: "bar-wizard" },
         "DJ-Ready": { cnt: "cnt-ready", bar: "bar-ready" },
         "Solid Ear": { cnt: "cnt-solid", bar: "bar-solid" },
+        "Metrical Match": { cnt: "cnt-metrical", bar: "bar-metrical" },
         "Getting There": { cnt: "cnt-getting", bar: "bar-getting" },
         "Needs Practice": { cnt: "cnt-needs", bar: "bar-needs" }
     };

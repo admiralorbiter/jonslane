@@ -44,3 +44,15 @@ The game is optimized for keyboard-only play to ensure zero-latency interaction:
 * `[Enter]`: Submit guess when typing in the input field.
 
 *Note: Hotkeys are automatically bypassed if the cursor is active inside the guess input field.*
+
+---
+
+## 📚 Research Grounding
+
+"Count Me In" is built on academic findings in music perception and sensorimotor synchronization:
+* **DJ Accuracy & The 3% Band**: Foster et al. (2021) showed that professional DJs achieve ~3.10% accuracy in the 120–139 BPM club tempo range. This directly supports our **3.0% "DJ-Ready"** threshold.
+* **Tempo Memory & The 8% Band**: Levitin & Cook (1996) demonstrated that absolute tempo memory is preserved in long-term memory, with 72% of trials falling within 8% of the original tempo. This supports our **8.0% "Getting There"** threshold.
+* **Metrical Ambiguity**: Serato, Traktor, and Rekordbox instruction manuals all document that automatic analysis software frequently makes "octave errors" (halving or doubling the BPM). In Music Information Retrieval (MIR) research, this is recognized as metrical level ambiguity (Klapuri, 2006). The **"Metrical Match"** rating handles this by awarding partial credit and preserving active streaks.
+
+For the full list of references, see the [Research Bibliography](file:///c:/Users/admir/Github/jonslane/docs/count_me_in/research_citations.md).
+

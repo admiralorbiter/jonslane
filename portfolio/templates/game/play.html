@@ -101,6 +101,8 @@
             <div class="result-metric">Score Earned: <span id="score-val" style="color: var(--neon-yellow); font-family: monospace;">0</span> pts</div>
             <div class="result-metric" style="margin-top: 15px; font-weight: 700;">Current Streak: <span id="streak-val" style="color: var(--neon-pink); font-family: monospace;">0</span></div>
 
+            <div id="result-research-tip" class="result-research-tip" style="display: none;"></div>
+
             <div class="btn-action-row">
                 <a href="{{ url_for('game.play', crate_id=crate.id) }}" class="btn-action btn-next">Next Challenge &rarr;</a>
                 <a href="{{ url_for('game.dashboard') }}" class="btn-action btn-exit">Lobby</a>

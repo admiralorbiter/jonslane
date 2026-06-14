@@ -45,6 +45,7 @@ def calculate_user_stats(user, attempts):
             "Tempo Wizard": 0,
             "DJ-Ready": 0,
             "Solid Ear": 0,
+            "Metrical Match": 0,
             "Getting There": 0,
             "Needs Practice": 0,
         },
@@ -85,10 +86,19 @@ def calculate_user_stats(user, attempts):
     return stats
 
 
-def calculate_score_and_rating(percent_error, clue_level=4):
-    """Return (score, rating, is_success) for a given percent error, applying clue multipliers."""
+def calculate_score_and_rating(guess, true_bpm, clue_level=4):
+    """Return (score, rating, is_success, percent_error, bpm_error, metrical_multiplier) for a guess."""
     multipliers = {1: 0.5, 2: 0.6, 3: 0.75, 4: 1.0}
     multiplier = multipliers.get(clue_level, 1.0)
+
+    # Standard metrics
+    percent_error = (abs(guess - true_bpm) / true_bpm) * 100
+    bpm_error = guess - true_bpm
+    metrical_multiplier = 1.0
+
+    # Symmetric metrical deviations relative to target rates
+    half_time_err = (abs(guess - (true_bpm / 2.0)) / (true_bpm / 2.0)) * 100
+    double_time_err = (abs(guess - (true_bpm * 2.0)) / (true_bpm * 2.0)) * 100
 
     if percent_error < 1.0:
         base_score, rating, is_success = 100, "Tempo Wizard", True
@@ -96,12 +106,22 @@ def calculate_score_and_rating(percent_error, clue_level=4):
         base_score, rating, is_success = 75, "DJ-Ready", True
     elif percent_error <= 5.0:
         base_score, rating, is_success = 50, "Solid Ear", True
+    elif half_time_err <= 3.0:
+        base_score, rating, is_success = 50, "Metrical Match", True
+        percent_error = half_time_err
+        bpm_error = guess - (true_bpm / 2.0)
+        metrical_multiplier = 0.5
+    elif double_time_err <= 3.0:
+        base_score, rating, is_success = 50, "Metrical Match", True
+        percent_error = double_time_err
+        bpm_error = guess - (true_bpm * 2.0)
+        metrical_multiplier = 2.0
     elif percent_error <= 8.0:
         base_score, rating, is_success = 25, "Getting There", False
     else:
         base_score, rating, is_success = 10, "Needs Practice", False
 
-    return round(base_score * multiplier), rating, is_success
+    return round(base_score * multiplier), rating, is_success, round(percent_error, 2), round(bpm_error, 1), metrical_multiplier
 
 
 def validate_and_parse_attempt_data(att_data):
@@ -118,10 +138,13 @@ def validate_and_parse_attempt_data(att_data):
         score = int(att_data.get("score"))
         rating = str(att_data.get("rating"))
         crate_name = str(att_data.get("crate_name", "Unknown Crate"))
+        metrical_multiplier = float(att_data.get("metrical_multiplier", 1.0))
 
-        if not (1.0 <= guessed <= 300.0) or not (1.0 <= true_bpm <= 300.0):
+        # Support upper bound up to 400.0 BPM (e.g. Drum & Bass double-tempo)
+        if not (1.0 <= guessed <= 400.0) or not (1.0 <= true_bpm <= 400.0):
             return None
-        if not (0 <= percent_error <= 100.0) or not (0 <= score <= 200):
+        # Support percent errors up to 600.0% to prevent discarding syncs on poor guesses
+        if not (0.0 <= percent_error <= 600.0) or not (0 <= score <= 200):
             return None
     except (ValueError, TypeError):
         return None
@@ -140,6 +163,7 @@ def validate_and_parse_attempt_data(att_data):
         "score": score,
         "rating": rating,
         "crate_name": crate_name,
+        "metrical_multiplier": metrical_multiplier,
         "created_at": created_at_dt,
     }
 
@@ -151,7 +175,8 @@ def recalculate_user_streaks(user):
     max_streak = user.max_streak
 
     for a in all_attempts:
-        if a.percent_error <= 5.0:
+        # Check rating to support streak preservation on Metrical Matches
+        if a.percent_error <= 5.0 or a.rating == "Metrical Match":
             current_streak += 1
             if current_streak > max_streak:
                 max_streak = current_streak
@@ -233,12 +258,8 @@ def submit():
 
     true_bpm = challenge.true_bpm
 
-    bpm_error = guess - true_bpm
-    abs_error = abs(bpm_error)
-    percent_error = (abs_error / true_bpm) * 100
-
-    # Score & Rating calculation
-    score, rating, is_success = calculate_score_and_rating(percent_error)
+    # Score & Rating calculation (Legacy path)
+    score, rating, is_success, percent_error, bpm_error, metrical_multiplier = calculate_score_and_rating(guess, true_bpm)
 
     # Get user
     from flask import session
@@ -265,10 +286,11 @@ def submit():
         challenge_id=challenge.id,
         guessed_bpm=round(guess, 1),
         true_bpm=true_bpm,
-        bpm_error=round(bpm_error, 1),
-        percent_error=round(percent_error, 2),
+        bpm_error=bpm_error,
+        percent_error=percent_error,
         score=score,
         rating=rating,
+        metrical_multiplier=metrical_multiplier,
         created_at=datetime.now(timezone.utc),
     )
     db.session.add(attempt)
@@ -313,7 +335,8 @@ def submit_attempt():
     try:
         guess = float(guess_val)
         clue_level = int(clue_level_val)
-        if not (1.0 <= guess <= 300.0) or clue_level not in [1, 2, 3, 4]:
+        # Support bounds up to 400.0 BPM
+        if not (1.0 <= guess <= 400.0) or clue_level not in [1, 2, 3, 4]:
             return jsonify({"error": "Invalid guess or clue level bounds."}), 400
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid data format."}), 400
@@ -332,12 +355,8 @@ def submit_attempt():
         if existing:
             return jsonify({"error": "Attempt already recorded."}), 409
 
-    # Calculate metrics
-    bpm_error = guess - true_bpm
-    abs_error = abs(bpm_error)
-    percent_error = (abs_error / true_bpm) * 100
-
-    score, rating, is_success = calculate_score_and_rating(percent_error, clue_level)
+    # Calculate metrics (API path)
+    score, rating, is_success, percent_error, bpm_error, metrical_multiplier = calculate_score_and_rating(guess, true_bpm, clue_level)
 
     # Update user streak
     if is_success:
@@ -353,12 +372,13 @@ def submit_attempt():
             challenge_id=None,
             guessed_bpm=round(guess, 1),
             true_bpm=true_bpm,
-            bpm_error=round(bpm_error, 1),
-            percent_error=round(percent_error, 2),
+            bpm_error=bpm_error,
+            percent_error=percent_error,
             score=score,
             rating=rating,
             crate_name=crate_name,
             client_uuid=client_uuid,
+            metrical_multiplier=metrical_multiplier,
             created_at=datetime.now(timezone.utc)
         )
         db.session.add(attempt)
@@ -370,8 +390,8 @@ def submit_attempt():
     return jsonify({
         "true_bpm": true_bpm,
         "guessed_bpm": round(guess, 1),
-        "bpm_error": round(bpm_error, 1),
-        "percent_error": round(percent_error, 2),
+        "bpm_error": bpm_error,
+        "percent_error": percent_error,
         "rating": rating,
         "score": score,
         "streak": user.current_streak,
@@ -394,9 +414,14 @@ def sync():
 
     data = request.get_json() or {}
     attempts_data = data.get("attempts", [])
+    if not isinstance(attempts_data, list):
+        return jsonify({"error": "Invalid attempts data format."}), 400
 
     synced_count = 0
     for att_data in attempts_data:
+        if not isinstance(att_data, dict):
+            continue
+
         parsed = validate_and_parse_attempt_data(att_data)
         if not parsed:
             continue
@@ -420,6 +445,7 @@ def sync():
                     rating=parsed["rating"],
                     crate_name=parsed["crate_name"],
                     client_uuid=parsed["client_uuid"],
+                    metrical_multiplier=parsed["metrical_multiplier"],
                     created_at=parsed["created_at"],
                 )
                 db.session.add(attempt)
@@ -440,4 +466,5 @@ def sync():
             "max_streak": user.max_streak,
         }
     )
+
 

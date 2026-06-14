@@ -129,6 +129,7 @@ class Attempt(db.Model):
     response_time_ms = db.Column(db.Integer, nullable=True)
     client_uuid = db.Column(db.String(100), unique=True, nullable=True)
     crate_name = db.Column(db.String(100), nullable=True)
+    metrical_multiplier = db.Column(db.Float, nullable=False, default=1.0)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (

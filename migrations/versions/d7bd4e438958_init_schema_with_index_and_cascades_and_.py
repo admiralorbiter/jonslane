@@ -1,8 +1,8 @@
-"""init schema with index and cascades
+"""init schema with index and cascades and metrical multiplier
 
-Revision ID: d918b9fa6494
+Revision ID: d7bd4e438958
 Revises: 
-Create Date: 2026-06-14 09:18:57.067421
+Create Date: 2026-06-14 10:24:39.192729
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd918b9fa6494'
+revision = 'd7bd4e438958'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -77,6 +77,7 @@ def upgrade():
     sa.Column('response_time_ms', sa.Integer(), nullable=True),
     sa.Column('client_uuid', sa.String(length=100), nullable=True),
     sa.Column('crate_name', sa.String(length=100), nullable=True),
+    sa.Column('metrical_multiplier', sa.Float(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['challenge_id'], ['challenges.id'], name=op.f('fk_attempts_challenge_id_challenges'), ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_attempts_user_id_users'), ondelete='CASCADE'),
