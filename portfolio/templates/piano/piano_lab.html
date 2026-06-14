@@ -119,19 +119,21 @@
             
             // Set live synth callbacks
             midiManager.onNoteOnCallback = (note, velocity) => {
+                const transposed = note + getTranspositionOffset();
                 if (polySynth) {
-                    const freq = Tone.Frequency(note + getTranspositionOffset(), "midi").toFrequency();
+                    const freq = Tone.Frequency(transposed, "midi").toFrequency();
                     polySynth.triggerAttack(freq, Tone.now(), velocity / 127);
                 }
-                highlightKey(note, true);
+                highlightKey(transposed, true);
             };
             
             midiManager.onNoteOffCallback = (note) => {
+                const transposed = note + getTranspositionOffset();
                 if (polySynth) {
-                    const freq = Tone.Frequency(note + getTranspositionOffset(), "midi").toFrequency();
+                    const freq = Tone.Frequency(transposed, "midi").toFrequency();
                     polySynth.triggerRelease(freq);
                 }
-                highlightKey(note, false);
+                highlightKey(transposed, false);
             };
         }
 
@@ -161,9 +163,20 @@
         return select ? parseInt(select.value) : 0;
     }
 
+    let midiBaseNote = null;
+
     function highlightKey(midiNote, isActive) {
-        // Map midiNote to C4-C6 range (MIDI 60 to 84)
+        if (isActive && midiBaseNote === null) {
+            // Find the C below or equal to the played note
+            midiBaseNote = Math.floor(midiNote / 12) * 12;
+        }
+
         let noteInOctave = midiNote;
+        if (midiBaseNote !== null) {
+            noteInOctave = 60 + (midiNote - midiBaseNote);
+        }
+
+        // Fallback wrapping if note is still out of C4-C6 visualizer range
         while (noteInOctave < 60) noteInOctave += 12;
         while (noteInOctave > 84) noteInOctave -= 12;
 
@@ -393,6 +406,9 @@
             document.removeEventListener("keyup", activeKeyupListener);
             activeKeyupListener = null;
         }
+
+        // Reset MIDI base note calibration
+        midiBaseNote = null;
     }
 
     // 1. Subdivision Trainer Panel
