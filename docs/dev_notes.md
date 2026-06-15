@@ -31,6 +31,14 @@ This log is used to brainstorm new features, track project updates, and maintain
   - Real-time HTML5 Canvas oscilloscope frequency visualizer synced directly to active synth outputs.
   - "djon's Crates" interactive vinyl selector letting visitors explore genre commentaries, view select playlists, and load tracks onto the retro player deck.
 
+### 4. Spotify Integration & Live BPM Guessing
+- **Goal**: Integrate user's real-time Spotify playback status with the BPM guessing game.
+- **Features**:
+  - **Spotify OAuth Credentials**: Flow integration to link accounts, store/refresh session tokens, and disconnect settings.
+  - **Double-Pipeline Resolver**: Seeding from reference tracks + fuzzy match (verified) fallbacks to iTunes search preview Web Audio autocorrelation.
+  - **Sticky Bottom bar**: Global track display that polls currently playing status, hides BPM values prior to guess submission, and supports quick inline guesses (input + Enter).
+  - **Instant Score & Persistence**: Dynamically reveals rating badges (e.g. Perfect, Excellent) and true BPM inline, populating detail modals, and synchronizing guess attempts over page loads/refresh checks.
+
 ---
 
 ## 🏗️ Upcoming Ideas & Projects

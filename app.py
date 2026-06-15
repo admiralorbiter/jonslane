@@ -1,5 +1,12 @@
 import os
 
+# Load .env file for local development (must happen before config is read)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed — rely on real environment variables
+
 from portfolio import create_app, db
 
 # Determine the configuration to use

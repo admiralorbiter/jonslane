@@ -58,12 +58,16 @@ def create_app(config_name="development"):
     from portfolio.routes.game import game_bp
     from portfolio.routes.main import main_bp
     from portfolio.routes.piano import piano_bp
+    from portfolio.routes.settings import settings_bp
+    from portfolio.spotify_bridge.routes import spotify_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(game_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(academy_bp)
     app.register_blueprint(piano_bp)
+    app.register_blueprint(settings_bp)
+    app.register_blueprint(spotify_bp)
 
     # Inject current_user dynamically into all templates
     @app.context_processor

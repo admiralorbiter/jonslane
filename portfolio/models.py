@@ -230,6 +230,149 @@ class AnchorSchedule(db.Model):
         return f"<AnchorSchedule user={self.user_id} anchor={self.anchor_bpm}>"
 
 
+class SpotifyToken(db.Model):
+    """OAuth token storage for a user's Spotify connection."""
+
+    __tablename__ = "spotify_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    access_token = db.Column(db.Text, nullable=False)
+    refresh_token = db.Column(db.Text, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)  # UTC
+    scope = db.Column(db.String(500), nullable=True)
+    connected_at = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+
+    def __repr__(self):
+        return f"<SpotifyToken user={self.user_id}>"
+
+
+class TrackIdentity(db.Model):
+    """Cached Spotify track metadata — keyed by Spotify track ID."""
+
+    __tablename__ = "track_identities"
+
+    id = db.Column(db.Integer, primary_key=True)
+    spotify_track_id = db.Column(db.String(50), unique=True, index=True, nullable=False)
+    isrc = db.Column(db.String(20), index=True, nullable=True)
+    title = db.Column(db.String(200), nullable=False)
+    artist = db.Column(db.String(200), nullable=False)
+    album = db.Column(db.String(200), nullable=True)
+    album_art_url = db.Column(db.String(500), nullable=True)
+    duration_ms = db.Column(db.Integer, nullable=True)
+    first_seen_at = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+
+    tempo_annotations = db.relationship(
+        "TrackTempoAnnotation", backref="track", lazy=True, cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<TrackIdentity {self.artist} — {self.title}>"
+
+
+class TrackTempoAnnotation(db.Model):
+    """BPM truth table — curated, machine-estimated, or community-sourced tempo data.
+
+    Confidence tiers:
+      "verified"           – manually confirmed by admin
+      "machine_high"       – estimator confidence > threshold, or multiple sources agree
+      "machine_low"        – single estimator, moderate confidence
+      "metadata_candidate" – from a third-party metadata API, unverified
+      "community"          – aggregated from user tap estimates
+      "unknown"            – no BPM data available
+    """
+
+    __tablename__ = "track_tempo_annotations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    track_id = db.Column(
+        db.Integer,
+        db.ForeignKey("track_identities.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    canonical_bpm = db.Column(db.Float, nullable=False)
+    alternate_bpms = db.Column(db.JSON, nullable=True)  # e.g. [64.0, 128.0, 256.0]
+    time_signature = db.Column(db.String(10), nullable=True)  # "4/4", "3/4"
+    confidence = db.Column(db.String(30), nullable=False, default="unknown")
+    source = db.Column(db.String(50), nullable=True)
+    # "manual_admin", "metadata_api", "essentia", "librosa", "user_consensus"
+    needs_review = db.Column(db.Boolean, nullable=False, default=False)
+    verified_by_user_id = db.Column(db.Integer, nullable=True)
+    verified_at = db.Column(db.DateTime, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+
+    def __repr__(self):
+        return f"<TrackTempoAnnotation bpm={self.canonical_bpm} confidence={self.confidence}>"
+
+
+class SpotifyListeningAttempt(db.Model):
+    """A user's BPM guess or tap estimate made while a Spotify track was playing.
+
+    This is the core "guess while you listen" log. It integrates with the
+    existing Academy and diagnostics pipeline via the user_id relationship.
+    Unlike the main Attempt model (which requires a Challenge), these attempts
+    are unbounded — the user can guess any playing track, graded or ungraded.
+    """
+
+    __tablename__ = "spotify_listening_attempts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    track_id = db.Column(
+        db.Integer, db.ForeignKey("track_identities.id", ondelete="SET NULL"), nullable=True
+    )
+    tempo_annotation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("track_tempo_annotations.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    # User inputs
+    guessed_bpm = db.Column(db.Float, nullable=True)  # manual numeric guess
+    tap_estimated_bpm = db.Column(db.Float, nullable=True)  # from tap-tempo
+    tap_stability_ms = db.Column(db.Float, nullable=True)  # std dev of tap intervals (ms)
+    input_method = db.Column(db.String(20), nullable=True)  # "numeric", "tap", "both"
+    confidence = db.Column(db.String(20), nullable=True)  # "guess", "pretty_sure", "locked_in"
+    metrical_multiplier = db.Column(db.Float, nullable=True, default=1.0)  # 0.5, 1.0, 2.0
+    half_double_flag = db.Column(db.String(10), nullable=True)  # "half", "normal", "double"
+    user_note = db.Column(db.String(200), nullable=True)
+
+    # Grading (populated immediately on submit if BPM annotation is known)
+    was_gradable = db.Column(db.Boolean, nullable=False, default=False)
+    percent_error = db.Column(db.Float, nullable=True)
+    is_anchor_adjacent = db.Column(db.Boolean, nullable=False, default=False)
+    anchor_bpm_near = db.Column(db.Integer, nullable=True)  # 95, 120, 128, or 140
+
+    # Listening context snapshot
+    playback_progress_ms = db.Column(db.Integer, nullable=True)
+    listening_context = db.Column(db.String(50), nullable=True)
+    # "saved_track", "playlist", "recent_play", "radio", "unknown"
+
+    created_at = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+
+    __table_args__ = (
+        db.Index("idx_sla_user_created", "user_id", "created_at"),
+        db.Index("idx_sla_user_track", "user_id", "track_id"),
+    )
+
+    def __repr__(self):
+        return f"<SpotifyListeningAttempt user={self.user_id} bpm={self.guessed_bpm}>"
+
+
 def seed_database():
     """Seed the database with initial Crates, Reference Songs, and a default guest user if needed."""
     from portfolio import db

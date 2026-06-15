@@ -182,5 +182,36 @@ class MidiDeviceManager {
 |---|---|---|
 | `AnchorSchedule` | SM-2 spaced repetition schedule per (user, anchor_bpm) | Academy-only (auth-gated) |
 | `UserSkillProfile` (Computed) | Calculated on-demand by aggregating `Attempt` rows (no dedicated DB table) | Academy-only (auth-gated) |
+| `SpotifyToken` | Spotify OAuth credentials (access_token, refresh_token, expires_at) per user | Spotify module |
+| `TrackIdentity` | Canonical track registry matching Spotify metadata | Spotify module |
+| `TrackTempoAnnotation` | Verified or machine-computed BPM annotations | Spotify module |
+| `SpotifyListeningAttempt` | User guesses, tap metrics, metrical multipliers, notes, and grades | Spotify module |
 
 Both follow the same ORM conventions as existing models. All existing queries are unaffected.
+
+---
+
+### 9. Spotify Integration & BPM Guessing Pipeline
+
+A new Flask Blueprint at `/spotify` connects Spotify playback status with the BPM estimation and listening statistics engine:
+
+```
+/spotify/connect         — Initiates Spotify Authorization Code Flow
+/spotify/callback        — Receives OAuth callback and updates SpotifyToken
+/spotify/disconnect      — Clears Spotify connection tokens
+/spotify/api/now-playing — JSON: active track metadata, last user guess, and annotation
+/spotify/api/guess       — POST: submit guess (creates SpotifyListeningAttempt)
+/spotify/api/submit-bpm  — POST: submit client-side Web Audio autocorrelation result
+```
+
+#### BPM Resolution Logic
+When a track is parsed, it resolves BPM through a two-step fallback system:
+1. **Fuzzy Search Reference Database**: Performs a database query matching artist/title tokens against existing `ReferenceTrack` and `TrackTempoAnnotation` entries to get a verified, high-confidence BPM.
+2. **iTunes + Web Audio Autocorrelation**: If no verified annotation exists, the API returns a query hint. The browser queries the iTunes Search API, downloads a 30-second audio preview, and performs an offline autocorrelation onset envelope analysis (`BpmDetector`) to estimate BPM. It POSTs the result back to `/spotify/api/submit-bpm` as a `machine_high` or `machine_low` estimate.
+
+#### UI Interaction Lifecycle
+- **Global Sticky Bar**: Injects dynamically on all pages for authenticated users. Polls `/spotify/api/now-playing` every 8 seconds.
+- **Cheating Prevention**: Shows `?'s BPM` on load. The target BPM is strictly hidden from the bar.
+- **Quick inline Guessing**: Features a numeric input next to the "Guess" button directly on the bar. Users type their estimate and hit `Enter` to submit.
+- **Details & Modal**: Clicking `Details` or the feedback badge reveals a detailed modal sheet showing metrical multipliers, confidence sliders, custom notes, and anchor zone proximity alerts.
+- **Session State Preservation**: Page navigations and refreshes query `last_guess` from the server, instantly revealing the verified BPM and user grade inline without resetting progress.

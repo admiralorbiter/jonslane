@@ -11,6 +11,11 @@
     <!-- Custom theme stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 
+    <!-- Spotify integration styles (global, no-op when not connected) -->
+    {% if session.get('user_id') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/spotify.css') }}">
+    {% endif %}
+
     <!-- Page-specific styles -->
     {% block extra_css %}{% endblock %}
 </head>
@@ -49,12 +54,22 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
-            <p class="footer-text">&copy; 2026 Jon's Lane. All rights reserved.</p>
+            <p class="footer-text">&copy; 2026 Jon's Lane. All rights reserved.
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('settings.index') }}" class="footer-settings-link">Settings</a>
+                {% endif %}
+            </p>
         </div>
     </footer>
 
     <!-- Page-specific Javascript -->
     {% block extra_js %}{% endblock %}
+
+    <!-- Spotify Now Playing (global, authenticated only) -->
+    {% if session.get('user_id') %}
+    <script src="{{ url_for('static', filename='js/bpm_detector.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/spotify_now_playing.js') }}"></script>
+    {% endif %}
 
     <!-- Secret Keyboard Triggers -->
     <script>
