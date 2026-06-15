@@ -205,9 +205,10 @@ A new Flask Blueprint at `/spotify` connects Spotify playback status with the BP
 ```
 
 #### BPM Resolution Logic
-When a track is parsed, it resolves BPM through a two-step fallback system:
-1. **Fuzzy Search Reference Database**: Performs a database query matching artist/title tokens against existing `ReferenceTrack` and `TrackTempoAnnotation` entries to get a verified, high-confidence BPM.
-2. **iTunes + Web Audio Autocorrelation**: If no verified annotation exists, the API returns a query hint. The browser queries the iTunes Search API, downloads a 30-second audio preview, and performs an offline autocorrelation onset envelope analysis (`BpmDetector`) to estimate BPM. It POSTs the result back to `/spotify/api/submit-bpm` as a `machine_high` or `machine_low` estimate.
+When a track is parsed, it resolves BPM through a three-step fallback system:
+1. **Fuzzy Search Reference Database**: Performs an database query matching artist/title tokens against existing `ReferenceTrack` and `TrackTempoAnnotation` entries to get a verified, high-confidence BPM.
+2. **Background Librosa Analysis (Backend)**: If no verified annotation exists, the server launches a background thread that queries the iTunes Search API, downloads the 30-second audio preview, and runs `librosa` beat tracking. This yields a highly accurate tempo estimation (often avoiding the octave/half-time errors seen in simpler detectors) and saves it as a `machine_high` annotation.
+3. **iTunes + Web Audio Autocorrelation (Frontend Fallback)**: If both of the above steps have not yet produced an annotation (e.g. during the first few seconds of a newly played song), the browser client queries the iTunes Search API, downloads the preview clip, and performs an offline autocorrelation analysis (`BpmDetector`) to estimate and submit the BPM.
 
 #### UI Interaction Lifecycle
 - **Global Sticky Bar**: Injects dynamically on all pages for authenticated users. Polls `/spotify/api/now-playing` every 8 seconds.

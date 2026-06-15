@@ -35,7 +35,7 @@ This log is used to brainstorm new features, track project updates, and maintain
 - **Goal**: Integrate user's real-time Spotify playback status with the BPM guessing game.
 - **Features**:
   - **Spotify OAuth Credentials**: Flow integration to link accounts, store/refresh session tokens, and disconnect settings.
-  - **Double-Pipeline Resolver**: Seeding from reference tracks + fuzzy match (verified) fallbacks to iTunes search preview Web Audio autocorrelation.
+  - **Triple-Pipeline Resolver**: Seeding from reference tracks + fuzzy match (verified) fallback to background backend Librosa analysis on iTunes previews, with client-side Web Audio autocorrelation as a secondary fallback.
   - **Sticky Bottom bar**: Global track display that polls currently playing status, hides BPM values prior to guess submission, and supports quick inline guesses (input + Enter).
   - **Instant Score & Persistence**: Dynamically reveals rating badges (e.g. Perfect, Excellent) and true BPM inline, populating detail modals, and synchronizing guess attempts over page loads/refresh checks.
 

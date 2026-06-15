@@ -28,6 +28,17 @@ from __future__ import annotations
 import re
 import unicodedata
 from datetime import datetime, timezone
+import threading
+import urllib.parse
+import tempfile
+import os
+import requests
+
+try:
+    import librosa
+    HAS_LIBROSA = True
+except ImportError:
+    HAS_LIBROSA = False
 
 from portfolio import db
 from portfolio.models import ReferenceTrack, TrackIdentity, TrackTempoAnnotation
@@ -193,7 +204,16 @@ def get_or_create_track_identity(track_data: dict) -> TrackIdentity:
     # This populates a verified annotation at zero cost for any track
     # that's already in our ReferenceTrack seed data.
     if is_new:
-        _seed_from_reference_tracks(identity)
+        matched = _seed_from_reference_tracks(identity)
+        if not matched and HAS_LIBROSA:
+            from flask import current_app
+            app = current_app._get_current_object()
+            t = threading.Thread(
+                target=analyze_track_in_background,
+                args=(app, identity.id, identity.artist, identity.title)
+            )
+            t.daemon = True
+            t.start()
 
     return identity
 
@@ -413,6 +433,91 @@ def compute_grade(
         "anchor_bpm_near": anchor_bpm_near,
         "effective_bpm": round(effective_bpm, 1),
     }
+
+
+# ---------------------------------------------------------------------------
+# Background Librosa analysis
+# ---------------------------------------------------------------------------
+
+def analyze_track_in_background(app, track_identity_id: int, artist: str, title: str):
+    """Background task to query iTunes, download preview, and analyze with Librosa."""
+    if not HAS_LIBROSA:
+        return
+
+    with app.app_context():
+        # Clean title to improve iTunes search accuracy
+        clean_title = re.sub(r"\(.*?\)|\[.*?\]", "", title).strip()
+        query = f"{artist} {clean_title}"
+        encoded_query = urllib.parse.quote(query)
+        search_url = f"https://itunes.apple.com/search?term={encoded_query}&media=music&limit=1"
+        
+        try:
+            r = requests.get(search_url, timeout=5)
+            if r.status_code != 200:
+                return
+            data = r.json()
+            results = data.get("results")
+            if not results:
+                return
+            
+            result = results[0]
+            preview_url = result.get("previewUrl")
+            itunes_id = str(result.get("trackId"))
+            
+            if not preview_url:
+                return
+                
+            # Download preview
+            preview_resp = requests.get(preview_url, timeout=10)
+            if preview_resp.status_code != 200:
+                return
+                
+            # Write to temp file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp:
+                tmp.write(preview_resp.content)
+                tmp_path = tmp.name
+                
+            try:
+                # Load and analyze
+                y, sr = librosa.load(tmp_path, sr=None)
+                tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+                if hasattr(tempo, "item"):
+                    tempo = tempo.item()
+                
+                estimated_bpm = round(float(tempo), 1)
+                if not (40.0 <= estimated_bpm <= 300.0):
+                    return
+                    
+                # Store annotation
+                identity = db.session.get(TrackIdentity, track_identity_id)
+                if identity:
+                    # Check if there is already an annotation
+                    existing = TrackTempoAnnotation.query.filter_by(track_id=identity.id).first()
+                    if not existing:
+                        half_bpm = round(estimated_bpm / 2.0, 1)
+                        double_bpm = round(estimated_bpm * 2.0, 1)
+                        alternate_bpms = [half_bpm, double_bpm]
+                        
+                        annotation = TrackTempoAnnotation(
+                            track_id=identity.id,
+                            canonical_bpm=estimated_bpm,
+                            alternate_bpms=alternate_bpms,
+                            time_signature="4/4",
+                            confidence="machine_high",
+                            source="librosa_beat_detection",
+                            needs_review=True,
+                            notes=f"Librosa automatic beat detection on iTunes preview: itunes_track_id={itunes_id}",
+                            created_at=datetime.now(timezone.utc)
+                        )
+                        db.session.add(annotation)
+                        db.session.commit()
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+                    
+        except Exception as e:
+            # Safe fail in background thread to prevent thread crash propagation
+            pass
 
 
 # ---------------------------------------------------------------------------
