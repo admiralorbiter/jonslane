@@ -179,10 +179,14 @@ def disconnect():
 
     token_rec = SpotifyToken.query.filter_by(user_id=user_id).first()
     if token_rec:
+        from portfolio.models import PlaylistImport
+        # Deactivate user's playlist imports on Spotify disconnect
+        PlaylistImport.query.filter_by(user_id=user_id).update({PlaylistImport.is_active: False})
         db.session.delete(token_rec)
         db.session.commit()
 
     return redirect(url_for("settings.index") + "?spotify_disconnected=1")
+
 
 
 # ---------------------------------------------------------------------------

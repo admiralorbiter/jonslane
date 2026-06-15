@@ -311,6 +311,12 @@ class TrackTempoAnnotation(db.Model):
         db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
 
+    # Roomba extensions
+    musical_key = db.Column(db.Integer, nullable=True)     # 0–11 (C=0, C#=1, ..., B=11)
+    key_mode    = db.Column(db.Integer, nullable=True)     # 0=minor, 1=major
+    camelot_key = db.Column(db.String(4), nullable=True)   # "8A", "11B" etc.
+    key_confidence = db.Column(db.Float, nullable=True)    # 0.0–1.0
+
     def __repr__(self):
         return f"<TrackTempoAnnotation bpm={self.canonical_bpm} confidence={self.confidence}>"
 
@@ -371,6 +377,118 @@ class SpotifyListeningAttempt(db.Model):
 
     def __repr__(self):
         return f"<SpotifyListeningAttempt user={self.user_id} bpm={self.guessed_bpm}>"
+
+
+class PlaylistImport(db.Model):
+    __tablename__ = "playlist_imports"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"),
+                        nullable=False, index=True)
+    source = db.Column(db.String(20), nullable=False, default="spotify")
+    source_playlist_id = db.Column(db.String(50), nullable=False)
+    playlist_name = db.Column(db.String(200), nullable=True)
+    # NOTE: Do NOT store playlist description (Spotify ToS / privacy)
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    # "pending" | "importing" | "complete" | "failed"
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    imported_at = db.Column(db.DateTime, nullable=False,
+                            default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "source_playlist_id",
+                            name="uq_user_playlist_import"),
+        db.Index("idx_pi_user_imported", "user_id", "imported_at"),
+    )
+
+
+class PlaylistTrack(db.Model):
+    __tablename__ = "playlist_tracks"
+    id = db.Column(db.Integer, primary_key=True)
+    playlist_id = db.Column(db.Integer, db.ForeignKey("playlist_imports.id",
+                            ondelete="CASCADE"), nullable=False)
+    track_id = db.Column(db.Integer, db.ForeignKey("track_identities.id",
+                         ondelete="CASCADE"), nullable=False)
+    position = db.Column(db.Integer, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("playlist_id", "track_id", name="uq_playlist_track"),
+        db.UniqueConstraint("playlist_id", "position", name="uq_playlist_position"),
+        db.Index("idx_pt_playlist_position", "playlist_id", "position"),
+        db.Index("idx_pt_track_id", "track_id"),
+    )
+
+
+class TrackFeatureAnnotation(db.Model):
+    __tablename__ = "track_feature_annotations"
+    id = db.Column(db.Integer, primary_key=True)
+    track_id = db.Column(db.Integer, db.ForeignKey("track_identities.id",
+                         ondelete="CASCADE"), nullable=False)
+    # Flat typed columns — NOT a single value_json blob
+    camelot_key = db.Column(db.String(4), nullable=True)    # "8A", "11B"
+    energy_tag = db.Column(db.String(20), nullable=True)    # "low"|"medium"|"high"|"very_high"
+    energy_score = db.Column(db.Float, nullable=True)       # 0.0–1.0 (from librosa RMS)
+    phrase_hint = db.Column(db.Integer, nullable=True)      # 8 | 16 | 32 bars
+    timbre_vector = db.Column(db.JSON, nullable=True)       # MFCC vector (Phase 2)
+    source = db.Column(db.String(30), nullable=False)       # "manual"|"librosa"|"spotify_metadata"
+    confidence = db.Column(db.Float, nullable=True)         # 0.0–1.0
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           default=lambda: datetime.now(timezone.utc))
+
+    @validates("energy_tag")
+    def validate_energy_tag(self, key, value):
+        allowed = {"low", "medium", "high", "very_high", None}
+        if value not in allowed:
+            raise ValueError(f"energy_tag must be one of {allowed}")
+        return value
+
+    @validates("camelot_key")
+    def validate_camelot_key(self, key, value):
+        import re
+        if value is not None and not re.match(r'^(1[0-2]|[1-9])[AB]$', value):
+            raise ValueError(f"Invalid Camelot key: {value!r}")
+        return value
+
+    __table_args__ = (
+        db.UniqueConstraint("track_id", "source", name="uq_tfa_track_source"),
+        db.Index("idx_tfa_track_id", "track_id"),
+    )
+
+
+class TransitionCandidate(db.Model):
+    __tablename__ = "transition_candidates"
+    id = db.Column(db.Integer, primary_key=True)
+    playlist_id = db.Column(db.Integer, db.ForeignKey("playlist_imports.id",
+                            ondelete="CASCADE"), nullable=False)
+    from_track_id = db.Column(db.Integer, db.ForeignKey("track_identities.id",
+                              ondelete="CASCADE"), nullable=False)
+    to_track_id = db.Column(db.Integer, db.ForeignKey("track_identities.id",
+                            ondelete="CASCADE"), nullable=False)
+    total_score = db.Column(db.Float, nullable=False)
+    tempo_score = db.Column(db.Float, nullable=False)
+    harmonic_score = db.Column(db.Float, nullable=False)
+    energy_score = db.Column(db.Float, nullable=False)
+    # Phase 2: phrase_score, timbre_score, user_history_score
+    status = db.Column(db.String(20), nullable=False, default="computed")
+    # "computed" | "stale" | "failed"
+    stale_reason = db.Column(db.String(100), nullable=True)
+    risk_flags_json = db.Column(db.JSON, nullable=True)
+    # Schema: [{"type": "vocal_intro", "severity": 0.8, "label": "B has vocal entry in first 8 bars"}]
+    explanation_json = db.Column(db.JSON, nullable=True)
+    # Schema: {"why_it_works": str, "watch_out": [str], "suggested_experiment": str}
+    computed_at = db.Column(db.DateTime, nullable=False,
+                            default=lambda: datetime.now(timezone.utc))
+
+    # ORM relationships required for joinedload (prevents N+1)
+    from_track = db.relationship("TrackIdentity", foreign_keys=[from_track_id])
+    to_track = db.relationship("TrackIdentity", foreign_keys=[to_track_id])
+
+    __table_args__ = (
+        db.UniqueConstraint("playlist_id", "from_track_id", "to_track_id",
+                            name="uq_transition_pair"),
+        db.Index("idx_tc_playlist_score", "playlist_id", "total_score"),
+        db.Index("idx_tc_from_track", "playlist_id", "from_track_id"),
+    )
 
 
 def seed_database():

@@ -7,3 +7,4 @@ Werkzeug==3.0.3
 ruff==0.4.9
 pre-commit==3.7.1
 librosa==0.11.0
+Flask-Limiter==3.8.0

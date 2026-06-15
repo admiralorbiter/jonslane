@@ -19,6 +19,11 @@ naming_convention = {
 db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention))
 migrate = Migrate()
 
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
+
+
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -51,6 +56,7 @@ def create_app(config_name="development"):
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
+    limiter.init_app(app)
 
     # Register blueprints
     from portfolio.routes.academy import academy_bp
@@ -60,6 +66,7 @@ def create_app(config_name="development"):
     from portfolio.routes.piano import piano_bp
     from portfolio.routes.settings import settings_bp
     from portfolio.spotify_bridge.routes import spotify_bp
+    from portfolio.routes.roomba import roomba_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(game_bp)
@@ -68,6 +75,7 @@ def create_app(config_name="development"):
     app.register_blueprint(piano_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(spotify_bp)
+    app.register_blueprint(roomba_bp)
 
     # Inject current_user dynamically into all templates
     @app.context_processor

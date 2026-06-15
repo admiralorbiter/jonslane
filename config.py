@@ -1,5 +1,6 @@
 import os
 from typing import ClassVar
+from datetime import timedelta
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -9,6 +10,8 @@ class Config:
 
     # Security
     SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-key-change-this-in-production-198273"
+    MAX_CONTENT_LENGTH = 1 * 1024 * 1024
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
 
     # Database (SQLite)
     SQLALCHEMY_DATABASE_URI = (
@@ -37,8 +40,11 @@ class Config:
     SPOTIFY_SCOPES = (
         "user-read-currently-playing "
         "user-read-playback-state "
-        "user-read-recently-played"
+        "user-read-recently-played "
+        "playlist-read-private "
+        "playlist-read-collaborative"
     )
+
 
 
 class DevelopmentConfig(Config):

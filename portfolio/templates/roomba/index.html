@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}DJ Roomba — Transition Intelligence Scout{% endblock %}
+{% block meta_description %}DJ Roomba analyzes your Spotify playlists, estimates BPM/Key/Energy using Librosa, and ranks transitions for your next DJ gig.{% endblock %}
+
+{% block extra_css %}
+<!-- Google Fonts: Outfit and Fira Code for code/numbers -->
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/roomba.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="roomba-container">
+    <!-- Header Area -->
+    <header class="roomba-header glass-card">
+        <div class="header-logo">
+            <span class="logo-icon">🤖</span>
+            <h1>DJ ROOMBA</h1>
+            <span class="logo-subtitle">Transition Scout</span>
+        </div>
+        
+        <div class="header-controls">
+            <button id="btn-use-currently-playing" class="btn btn-secondary btn-now-playing" style="display: none;">
+                <span class="btn-icon">🎵</span> Use Currently Playing
+            </button>
+            <button id="btn-show-playlists" class="btn btn-primary">
+                <span class="btn-icon">📋</span> My Playlists
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="roomba-workspace">
+        
+        <!-- Welcome / Playlist Selection Screen -->
+        <section id="screen-welcome" class="workspace-screen welcome-screen active">
+            <div class="welcome-card glass-card text-center">
+                <div class="welcome-icon">🎧</div>
+                <h2>Connect & Scout</h2>
+                <p>Select a Spotify playlist to analyze its tracks with Librosa and explore transition options.</p>
+                <button id="btn-start-select" class="btn btn-primary btn-large">Browse Playlists</button>
+            </div>
+        </section>
+
+        <!-- Playlist Grid Modal / Drawer -->
+        <div id="modal-playlists" class="modal-overlay">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h3>Select Spotify Playlist</h3>
+                    <button class="btn-close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="playlists-loading" class="spinner-container">
+                        <div class="neon-spinner"></div>
+                        <p>Loading your Spotify playlists...</p>
+                    </div>
+                    <div id="playlists-grid" class="playlists-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import Progress / Loading Screen -->
+        <section id="screen-importing" class="workspace-screen importing-screen">
+            <div class="import-card glass-card text-center">
+                <div class="import-icon pulse-animation">🤖</div>
+                <h2>Analyzing Playlist...</h2>
+                <p>We are downloading previews, running beat-tracking, and extracting key signatures using Librosa.</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill pulse-glow"></div>
+                </div>
+                <div class="progress-status">Initializing worker...</div>
+                <button id="btn-view-anyway" class="btn btn-secondary mt-2">View Playlist Tracks</button>
+            </div>
+        </section>
+
+        <!-- Console Screen (Single-Page PoC) -->
+        <section id="screen-console" class="workspace-screen console-screen">
+            <div class="console-grid">
+                
+                <!-- LEFT COLUMN: Playlist Tracklist -->
+                <div class="console-panel panel-tracks glass-card">
+                    <div class="panel-header">
+                        <h2 id="current-playlist-title">Playlist Tracks</h2>
+                        <span id="track-count-badge" class="badge">0 Tracks</span>
+                    </div>
+
+                    <div class="tracks-toolbar">
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="track-search" placeholder="Filter tracks by title or artist...">
+                        </div>
+                        <div class="toolbar-dropdowns">
+                            <div class="dropdown-group">
+                                <label for="track-sort">Sort:</label>
+                                <select id="track-sort">
+                                    <option value="position">Position</option>
+                                    <option value="bpm">BPM</option>
+                                    <option value="key">Key</option>
+                                    <option value="title">Title</option>
+                                </select>
+                            </div>
+                            <div class="dropdown-group">
+                                <label for="dj-style">Preset:</label>
+                                <select id="dj-style">
+                                    <option value="Beatmatcher">Beatmatcher</option>
+                                    <option value="Harmonic Mixer">Harmonic Mixer</option>
+                                    <option value="Open Format">Open Format</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tracks-list-container">
+                        <table class="tracks-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;">#</th>
+                                    <th>Track Info</th>
+                                    <th style="width: 80px;">BPM</th>
+                                    <th style="width: 80px;">Key</th>
+                                    <th style="width: 100px;">Energy</th>
+                                    <th style="width: 50px;">Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tracks-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Transition Explorer & Detail -->
+                <div class="console-panel panel-scout glass-card">
+                    <!-- State: No source track selected -->
+                    <div id="scout-empty-state" class="scout-empty-state">
+                        <div class="scout-icon">✨</div>
+                        <h3>Select a Source Track</h3>
+                        <p>Click any song in the playlist on the left to analyze which tracks play well next.</p>
+                    </div>
+
+                    <!-- State: Source track selected -->
+                    <div id="scout-workspace" class="scout-workspace" style="display: none;">
+                        <div class="source-track-banner">
+                            <span class="banner-tag">SOURCE TRACK</span>
+                            <div class="source-track-info">
+                                <img id="source-track-art" src="" alt="Album Art">
+                                <div class="source-metadata">
+                                    <h3 id="source-track-title">Title</h3>
+                                    <p id="source-track-artist">Artist</p>
+                                    <div class="source-badges">
+                                        <span id="source-track-bpm" class="badge badge-bpm">120 BPM</span>
+                                        <span id="source-track-key" class="badge badge-key">8A</span>
+                                        <span id="source-track-energy" class="badge badge-energy">⚡⚡⚡</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transition Candidate Buckets -->
+                        <div class="candidates-section">
+                            <h4>TRANSITION CANDIDATES</h4>
+                            <div id="candidates-loading" class="spinner-container" style="display: none;">
+                                <div class="neon-spinner"></div>
+                                <p>Calculating compatibility scores...</p>
+                            </div>
+                            <div id="candidates-empty" class="scout-empty-state" style="display: none;">
+                                <div class="scout-icon">😬</div>
+                                <h3>No viable transitions found</h3>
+                                <p>Nothing plays well after this track. Consider adding more tracks in the 85-95 BPM range.</p>
+                            </div>
+                            
+                            <div id="candidates-buckets" class="candidates-buckets">
+                                <!-- Bucket: Best Safe Blends -->
+                                <div class="bucket-group" data-bucket="best_safe_blends">
+                                    <div class="bucket-header">
+                                        <span class="bucket-badge icon-best">🟢</span>
+                                        <h5>Best Safe Blends</h5>
+                                        <span class="count-badge">0</span>
+                                        <span class="bucket-toggle">&blacktriangledown;</span>
+                                    </div>
+                                    <div class="bucket-content expanded"></div>
+                                </div>
+
+                                <!-- Bucket: Energy Lifts -->
+                                <div class="bucket-group" data-bucket="energy_lifts">
+                                    <div class="bucket-header">
+                                        <span class="bucket-badge icon-lift">🔺</span>
+                                        <h5>Energy Lifts</h5>
+                                        <span class="count-badge">0</span>
+                                        <span class="bucket-toggle">&blacktriangledown;</span>
+                                    </div>
+                                    <div class="bucket-content expanded"></div>
+                                </div>
+
+                                <!-- Bucket: Energy Resets -->
+                                <div class="bucket-group" data-bucket="energy_resets">
+                                    <div class="bucket-header">
+                                        <span class="bucket-badge icon-reset">🔵</span>
+                                        <h5>Energy Resets</h5>
+                                        <span class="count-badge">0</span>
+                                        <span class="bucket-toggle">&blacktriangledown;</span>
+                                    </div>
+                                    <div class="bucket-content expanded"></div>
+                                </div>
+
+                                <!-- Bucket: Harmonic Tension -->
+                                <div class="bucket-group" data-bucket="harmonic_tension">
+                                    <div class="bucket-header">
+                                        <span class="bucket-badge icon-tension">🎵</span>
+                                        <h5>Harmonic Tension Moves</h5>
+                                        <span class="count-badge">0</span>
+                                        <span class="bucket-toggle">&blacktriangledown;</span>
+                                    </div>
+                                    <div class="bucket-content expanded"></div>
+                                </div>
+
+                                <!-- Bucket: Metrical Match -->
+                                <div class="bucket-group" data-bucket="metrical_match">
+                                    <div class="bucket-header">
+                                        <span class="bucket-badge icon-metrical">⏱️</span>
+                                        <h5>Half-time / Double-time</h5>
+                                        <span class="count-badge">0</span>
+                                        <span class="bucket-toggle">&blacktriangledown;</span>
+                                    </div>
+                                    <div class="bucket-content expanded"></div>
+                                </div>
+
+                                <!-- Bucket: Probably Reject -->
+                                <div class="bucket-group collapsed" data-bucket="probably_reject">
+                                    <div class="bucket-header">
+                                        <span class="bucket-badge icon-reject">⚠️</span>
+                                        <h5>Probably Reject</h5>
+                                        <span class="count-badge">0</span>
+                                        <span class="bucket-toggle">&blacktriangleup;</span>
+                                    </div>
+                                    <div class="bucket-content collapsed"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transition Detail Panel -->
+                        <div id="transition-detail-panel" class="transition-detail-panel" style="display: none;">
+                            <div class="detail-header">
+                                <h4>Transition Details</h4>
+                                <button id="btn-close-detail" class="btn-close">&times;</button>
+                            </div>
+                            
+                            <div class="score-breakdown-row">
+                                <div class="score-card main-score">
+                                    <div class="score-value" id="detail-total-score">88</div>
+                                    <div class="score-label">MATCH SCORE</div>
+                                </div>
+                                <div class="sub-scores-grid">
+                                    <div class="sub-score-item">
+                                        <span class="lbl">Tempo Match</span>
+                                        <div class="progress-bar-container mini">
+                                            <div id="detail-bar-tempo" class="progress-bar-fill neon-cyan" style="width: 80%;"></div>
+                                        </div>
+                                        <span class="val" id="detail-val-tempo">85%</span>
+                                    </div>
+                                    <div class="sub-score-item">
+                                        <span class="lbl">Harmonic Compatibility</span>
+                                        <div class="progress-bar-container mini">
+                                            <div id="detail-bar-harmonic" class="progress-bar-fill neon-magenta" style="width: 75%;"></div>
+                                        </div>
+                                        <span class="val" id="detail-val-harmonic">75%</span>
+                                    </div>
+                                    <div class="sub-score-item">
+                                        <span class="lbl">Energy Compatibility</span>
+                                        <div class="progress-bar-container mini">
+                                            <div id="detail-bar-energy" class="progress-bar-fill neon-green" style="width: 90%;"></div>
+                                        </div>
+                                        <span class="val" id="detail-val-energy">90%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="explanation-sections">
+                                <div class="explanation-box info-box">
+                                    <div class="box-title">💡 Why It Works</div>
+                                    <p id="detail-why">Both tracks are in compatible keys (8B &rarr; 7B, circle of 5ths). BPM matches at 1.3%. Energy rises gently.</p>
+                                </div>
+                                <div class="explanation-box warning-box">
+                                    <div class="box-title">⚠️ Watch Out</div>
+                                    <ul id="detail-watch-out"></ul>
+                                </div>
+                                <div class="explanation-box try-box">
+                                    <div class="box-title">⚡ Try This</div>
+                                    <p id="detail-try">Bring B in 32 beats before A's chorus ends.</p>
+                                </div>
+                            </div>
+
+                            <!-- Audio Preview Crossfader Interface -->
+                            <div class="audio-crossfader-section">
+                                <div class="crossfader-tracks">
+                                    <!-- Player A (Source) -->
+                                    <div class="player-column" id="player-a">
+                                        <div class="track-short">
+                                            <span class="track-letter">A</span>
+                                            <div class="track-meta">
+                                                <h5 id="player-title-a">Track A Title</h5>
+                                                <span id="player-meta-a" class="sub">128 BPM · 8A</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Player A controls -->
+                                        <div class="player-controls">
+                                            <button class="btn btn-icon btn-skip" id="btn-skip-a">⏮ 10s</button>
+                                            <div class="vol-control">
+                                                <span>🔊</span>
+                                                <input type="range" class="vol-slider" id="vol-a" min="0" max="1" step="0.05" value="0.8">
+                                            </div>
+                                        </div>
+                                        <canvas class="visualizer-canvas" id="canvas-a"></canvas>
+                                    </div>
+
+                                    <!-- Crossfader Controller -->
+                                    <div class="crossfader-fader">
+                                        <button class="btn btn-play-master" id="btn-play-master">▶ Play Transition Previews</button>
+                                        <span class="fader-lbl">CROSSFADE</span>
+                                        <input type="range" id="crossfade-slider" min="0" max="1" step="0.01" value="0.5">
+                                        <div class="fader-scale">
+                                            <span>A</span>
+                                            <span>◈</span>
+                                            <span>B</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Player B (Candidate) -->
+                                    <div class="player-column" id="player-b">
+                                        <div class="track-short">
+                                            <span class="track-letter">B</span>
+                                            <div class="track-meta">
+                                                <h5 id="player-title-b">Track B Title</h5>
+                                                <span id="player-meta-b" class="sub">130 BPM · 8B</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Player B controls -->
+                                        <div class="player-controls">
+                                            <button class="btn btn-icon btn-skip" id="btn-skip-b">⏮ 10s</button>
+                                            <div class="vol-control">
+                                                <span>🔊</span>
+                                                <input type="range" class="vol-slider" id="vol-b" min="0" max="1" step="0.05" value="0.8">
+                                            </div>
+                                        </div>
+                                        <canvas class="visualizer-canvas" id="canvas-b"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<!-- Manual Edit Modals -->
+
+<!-- Camelot Wheel Key Picker Modal -->
+<div id="modal-key-picker" class="modal-overlay">
+    <div class="modal-content glass-card key-picker-modal">
+        <div class="modal-header">
+            <h3>Manual Key Annotation</h3>
+            <button class="btn-close-modal">&times;</button>
+        </div>
+        <div class="modal-body text-center">
+            <p>Select a new Camelot key signature for <strong id="modal-key-track-title">this track</strong>.</p>
+            <p class="sub">Currently: <span id="modal-key-current-label" class="badge">8A (A minor)</span></p>
+            
+            <!-- SVG Camelot Wheel -->
+            <div class="camelot-wheel-container">
+                <svg id="camelot-wheel-svg" viewBox="0 0 400 400" width="340" height="340">
+                    <circle cx="200" cy="200" r="195" fill="none" stroke="#222" stroke-width="2"/>
+                    <circle cx="200" cy="200" r="135" fill="none" stroke="#222" stroke-width="2"/>
+                    <circle cx="200" cy="200" r="75" fill="none" stroke="#222" stroke-width="2"/>
+                    <g id="wheel-segments"></g>
+                    <g id="wheel-center">
+                        <circle cx="200" cy="200" r="74" fill="#0c0e15"/>
+                        <text x="200" y="195" text-anchor="middle" fill="#888" font-size="12">SELECTED</text>
+                        <text x="200" y="218" text-anchor="middle" fill="#00d4ff" font-size="20" font-weight="bold" id="wheel-selected-label">8B</text>
+                    </g>
+                </svg>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-secondary btn-close-modal">Cancel</button>
+                <button id="btn-save-key" class="btn btn-primary">Save Key Override</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Autosave Toast Indicator -->
+<div id="autosave-toast" class="autosave-toast">
+    <span class="toast-spinner"></span>
+    <span class="toast-text">Saving...</span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/roomba.js') }}"></script>
+{% endblock %}

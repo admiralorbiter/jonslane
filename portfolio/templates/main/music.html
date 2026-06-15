@@ -9,6 +9,20 @@
 .navbar {
     background: rgba(14, 16, 23, 0.9) !important;
 }
+.roomba-friend-pic {
+    background: linear-gradient(135deg, #1a0a2e, #0a0a1a) !important;
+    border: 1px solid #9b4f96 !important;
+    animation: roomba-pulse 3s ease infinite;
+}
+@keyframes roomba-pulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(155,79,150,0.4); }
+    50% { box-shadow: 0 0 18px rgba(155,79,150,0.9); }
+}
+.roomba-friend-cell:hover .friend-pic {
+    filter: brightness(1.2) contrast(1.1);
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.8) !important;
+    border-color: #00d4ff !important;
+}
 </style>
 {% endblock %}
 
@@ -118,10 +132,10 @@
                                 <div class="friend-pic" style="background-color: #ffd2ff; font-size: 16px;">🎛️</div>
                                 <span class="friend-name">Technics</span>
                             </a>
-                            <!-- Friend 6: Vinyl -->
-                            <a href="#" class="friend-cell" onclick="return false;">
-                                <div class="friend-pic" style="background-color: #ffffd2; font-size: 16px;">💿</div>
-                                <span class="friend-name">Vinyl</span>
+                            <!-- Friend 6: DJ Roomba -->
+                            <a href="{{ url_for('roomba.index') }}" class="friend-cell roomba-friend-cell">
+                                <div class="friend-pic roomba-friend-pic" style="font-size: 16px;">🤖</div>
+                                <span class="friend-name" style="color: #00d4ff;">DJ Roomba</span>
                             </a>
                             <!-- Friend 7: Piano Lab -->
                             <a href="{{ url_for('piano.index') }}" class="friend-cell">

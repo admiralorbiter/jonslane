@@ -216,3 +216,26 @@ When a track is parsed, it resolves BPM through a three-step fallback system:
 - **Quick inline Guessing**: Features a numeric input next to the "Guess" button directly on the bar. Users type their estimate and hit `Enter` to submit.
 - **Details & Modal**: Clicking `Details` or the feedback badge reveals a detailed modal sheet showing metrical multipliers, confidence sliders, custom notes, and anchor zone proximity alerts.
 - **Session State Preservation**: Page navigations and refreshes query `last_guess` from the server, instantly revealing the verified BPM and user grade inline without resetting progress.
+
+---
+
+## 🤖 Section 10: DJ Roomba Blueprint and Scoring Engine
+
+DJ Roomba acts as a transition intelligence scout, helping DJs analyze and rank transitions between tracks in an imported Spotify playlist.
+
+### 1. Flask Blueprint (`routes/roomba.py`)
+Registered at `/music/roomba`, it requires a logged-in user with Spotify connected (`playlist-read-private` and `playlist-read-collaborative` scopes).
+
+### 2. Scoring Engine (`routes/roomba_scoring.py`)
+Computes transition compatibility from track A to track B across three weighted dimensions:
+- **Tempo Compatibility (45%)**: Computes percentage difference. Supports half-time/double-time transitions.
+- **Harmonic Compatibility (35%)**: Employs Camelot Wheel logic. Computes 9 relationship types (Same Key, Relative, Mediant, Circle of Fifths, Parallel, Whole Tone, Tension Jump/Energy Boost, Tritone, Semitone Clash).
+- **Energy Compatibility (20%)**: Evaluates energy difference based on librosa RMS values normalized to 0-100 or manual tags (low, medium, high, very_high).
+
+### 3. Risk Penalties & DJ Style Presets
+Applies penalties for combined risks (e.g., unknown BPM, double bad dimensions, harmonic+tempo conflict). Offers 3 presets: Beatmatcher, Harmonic Mixer, Open Format.
+
+### 4. N+1 Query Prevention & Compute-On-Demand
+- Details and transitions endpoints batch-load all TrackTempoAnnotations and TrackFeatureAnnotations.
+- Transition Candidates are computed ON DEMAND when a user selects a source track, rather than at playlist import, avoiding quadratic row explosion.
+

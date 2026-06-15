@@ -466,15 +466,35 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
             
             if not preview_url:
                 return
+
+            # Apple CDN domain check
+            parsed_url = urllib.parse.urlparse(preview_url)
+            if not parsed_url.netloc.endswith(".apple.com"):
+                app.logger.warning("Rejected iTunes preview URL with non-Apple domain: %s", preview_url)
+                return
                 
-            # Download preview
-            preview_resp = requests.get(preview_url, timeout=10)
+            # Download preview with 10MB limit
+            preview_resp = requests.get(preview_url, stream=True, timeout=10)
             if preview_resp.status_code != 200:
                 return
                 
+            # Check Content-Length header first
+            cl = preview_resp.headers.get("content-length")
+            if cl and int(cl) > 10 * 1024 * 1024:
+                app.logger.warning("Rejected iTunes preview due to content-length exceeding 10MB: %s", cl)
+                return
+                
+            # Download chunks with size limit
+            content = b""
+            for chunk in preview_resp.iter_content(chunk_size=65536):
+                content += chunk
+                if len(content) > 10 * 1024 * 1024:
+                    app.logger.warning("Aborted download: iTunes preview exceeds 10MB limit.")
+                    return
+                
             # Write to temp file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp:
-                tmp.write(preview_resp.content)
+                tmp.write(content)
                 tmp_path = tmp.name
                 
             try:
@@ -488,6 +508,61 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
                 if not (40.0 <= estimated_bpm <= 300.0):
                     return
                     
+                # Chroma key detection using KS pitch-class profile matching
+                import numpy as np
+                y_harmonic = librosa.effects.harmonic(y)
+                chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr)
+                chroma_mean = chroma.mean(axis=1)
+
+                major_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
+                minor_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+
+                # Normalize profiles
+                major_profile = (major_profile - np.mean(major_profile)) / np.std(major_profile)
+                minor_profile = (minor_profile - np.mean(minor_profile)) / np.std(minor_profile)
+
+                # Normalize chroma_mean
+                chroma_mean = np.array(chroma_mean)
+                if np.std(chroma_mean) > 0:
+                    chroma_mean = (chroma_mean - np.mean(chroma_mean)) / np.std(chroma_mean)
+
+                best_corr = -2.0
+                best_key = 0
+                best_mode = 1
+
+                for key_candidate in range(12):
+                    major_rotated = np.roll(major_profile, key_candidate)
+                    corr_major = np.corrcoef(chroma_mean, major_rotated)[0, 1]
+                    
+                    minor_rotated = np.roll(minor_profile, key_candidate)
+                    corr_minor = np.corrcoef(chroma_mean, minor_rotated)[0, 1]
+                    
+                    if corr_major > best_corr:
+                        best_corr = corr_major
+                        best_key = key_candidate
+                        best_mode = 1
+                    if corr_minor > best_corr:
+                        best_corr = corr_minor
+                        best_key = key_candidate
+                        best_mode = 0
+
+                estimated_key = best_key
+                estimated_mode = best_mode
+                
+                def _to_camelot(k: int, m: int) -> str:
+                    if m == 1:
+                        num = (k * 7 + 8) % 12
+                        letter = "B"
+                    else:
+                        num = (k * 7 + 5) % 12
+                        letter = "A"
+                    if num == 0:
+                        num = 12
+                    return f"{num}{letter}"
+
+                camelot_key = _to_camelot(estimated_key, estimated_mode)
+                key_confidence = max(0.0, float(best_corr))
+
                 # Store annotation
                 identity = db.session.get(TrackIdentity, track_identity_id)
                 if identity:
@@ -503,21 +578,40 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
                             canonical_bpm=estimated_bpm,
                             alternate_bpms=alternate_bpms,
                             time_signature="4/4",
-                            confidence="machine_high",
+                            confidence="machine_low",  # Changed from machine_high per plan
                             source="librosa_beat_detection",
                             needs_review=True,
                             notes=f"Librosa automatic beat detection on iTunes preview: itunes_track_id={itunes_id}",
-                            created_at=datetime.now(timezone.utc)
+                            created_at=datetime.now(timezone.utc),
+                            musical_key=estimated_key,
+                            key_mode=estimated_mode,
+                            camelot_key=camelot_key,
+                            key_confidence=key_confidence
                         )
                         db.session.add(annotation)
                         db.session.commit()
+                    else:
+                        # Update key if missing
+                        if existing.camelot_key is None:
+                            existing.musical_key = estimated_key
+                            existing.key_mode = estimated_mode
+                            existing.camelot_key = camelot_key
+                            existing.key_confidence = key_confidence
+                            db.session.commit()
             finally:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
                     
         except Exception as e:
             # Safe fail in background thread to prevent thread crash propagation
-            pass
+            app.logger.error("Error analyzing track in background: %s", str(e), exc_info=True)
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+        finally:
+            db.session.remove()
+
 
 
 # ---------------------------------------------------------------------------
