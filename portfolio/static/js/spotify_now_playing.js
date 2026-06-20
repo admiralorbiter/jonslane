@@ -1,14 +1,14 @@
 /**
  * spotify_now_playing.js
- * 
+ *
  * Manages the global Now Playing bar and BPM Guess modal.
- * 
+ *
  * Architecture:
  *   - Polls /spotify/api/now-playing every 8 seconds
  *   - On track change, animates the bar in/out
  *   - Guess modal handles: numeric input, tap-tempo, metrical toggle, confidence, submit
  *   - Immediate result reveal after submit
- * 
+ *
  * Policy note: We use Spotify only for track identity/context.
  * BPM is determined by the server's BPM resolver, not Spotify API.
  */
@@ -99,7 +99,7 @@
             <div class="modal-backdrop" id="modal-backdrop"></div>
             <div class="modal-sheet" role="document">
                 <div class="modal-drag-handle" aria-hidden="true"></div>
-                
+
                 <!-- Track header -->
                 <div class="modal-track-header">
                     <img class="modal-art" id="modal-art" src="" alt="Album art" style="display:none">
@@ -339,7 +339,7 @@
         if (lastGuessSubmitted && gradeData) {
             let badgeClass = 'ungraded';
             let badgeText = 'Logged ✓';
-            
+
             if (gradeData.was_gradable && gradeData.grade) {
                 const g = gradeData.grade;
                 badgeClass = g.rating; // e.g., Perfect, Excellent, Good, Fair, Miss
@@ -348,7 +348,7 @@
                     badgeText += ` (${g.percent_error.toFixed(1)}%)`;
                 }
             }
-            
+
             wrap.innerHTML = `
                 <span class="now-playing-feedback ${badgeClass}">${badgeText}</span>
                 <button class="now-playing-details-btn" id="np-details-btn">
@@ -424,7 +424,7 @@
                 if (data.bpm_annotation) {
                     currentAnnotation = data.bpm_annotation;
                 }
-                
+
                 showResult(data, guessedBpm, 1.0);
                 updateBpmDisplay(currentAnnotation);
                 updateGuessControls(lastGradeData);

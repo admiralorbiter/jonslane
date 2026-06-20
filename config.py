@@ -1,6 +1,6 @@
 import os
-from typing import ClassVar
 from datetime import timedelta
+from typing import ClassVar
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -44,7 +44,6 @@ class Config:
         "playlist-read-private "
         "playlist-read-collaborative"
     )
-
 
 
 class DevelopmentConfig(Config):

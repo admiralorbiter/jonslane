@@ -4,8 +4,6 @@ Provides functions to compute tempo compatibility, harmonic compatibility,
 energy compatibility, risk penalties, style presets, and bucket candidates.
 """
 
-import math
-
 PRESETS = {
     "Beatmatcher": {"tempo": 0.45, "harmonic": 0.35, "energy": 0.20},
     "Harmonic Mixer": {"tempo": 0.25, "harmonic": 0.55, "energy": 0.20},
@@ -13,9 +11,9 @@ PRESETS = {
 }
 
 
-def score_tempo(bpm_a: float, bpm_b: float) -> tuple[float, str]:
+def score_tempo(bpm_a: float, bpm_b: float) -> tuple[float, str]:  # noqa: C901
     """Score tempo compatibility between track A and track B.
-    
+
     Returns a tuple (score, label).
     """
     if not bpm_a or not bpm_b:
@@ -72,9 +70,9 @@ def score_tempo(bpm_a: float, bpm_b: float) -> tuple[float, str]:
         return best_score, label_double
 
 
-def score_harmonic(camelot_a: str, camelot_b: str) -> tuple[float, str]:
+def score_harmonic(camelot_a: str, camelot_b: str) -> tuple[float, str]:  # noqa: C901
     """Score harmonic compatibility between track A and track B.
-    
+
     Returns a tuple (score, label/relationship).
     """
     if not camelot_a or not camelot_b:
@@ -89,7 +87,7 @@ def score_harmonic(camelot_a: str, camelot_b: str) -> tuple[float, str]:
         return 50.0, "Unknown (neutral)"
 
     diff_num = (num_b - num_a) % 12
-    same_mode = (mode_a == mode_b)
+    same_mode = mode_a == mode_b
 
     if diff_num == 0 and same_mode:
         return 100.0, "Same Key"
@@ -117,7 +115,7 @@ def score_harmonic(camelot_a: str, camelot_b: str) -> tuple[float, str]:
 
 def score_energy(energy_a: float | None, energy_b: float | None) -> tuple[float, str, str]:
     """Score energy compatibility.
-    
+
     Returns a tuple (score, direction_label, intent_label)
     """
     if energy_a is None or energy_b is None:
@@ -144,7 +142,7 @@ def apply_risk_penalties(
     track_b_info: dict,
 ) -> tuple[float, list[dict]]:
     """Apply risk penalties based on combinations of compatibility scores.
-    
+
     Returns a tuple (penalty_deduction, list_of_risk_flags).
     """
     penalty = 0.0
@@ -153,29 +151,35 @@ def apply_risk_penalties(
     # Penalty 1: Two bad dimensions simultaneously
     if tempo_s < 40.0 and energy_s < 40.0:
         penalty += 10.0
-        flags.append({
-            "type": "two_bad_dimensions",
-            "severity": 1.0,
-            "label": "Tempo and energy dimensions both have poor compatibility."
-        })
+        flags.append(
+            {
+                "type": "two_bad_dimensions",
+                "severity": 1.0,
+                "label": "Tempo and energy dimensions both have poor compatibility.",
+            }
+        )
 
     # Penalty 2: Harmonic + tempo conflict
     if harmonic_s > 80.0 and tempo_s < 50.0:
         penalty += 8.0
-        flags.append({
-            "type": "harmonic_tempo_conflict",
-            "severity": 0.8,
-            "label": "Harmonically compatible but tempo difference is too wide; the clash will be highly audible."
-        })
+        flags.append(
+            {
+                "type": "harmonic_tempo_conflict",
+                "severity": 0.8,
+                "label": "Harmonically compatible but tempo difference is too wide; the clash will be highly audible.",
+            }
+        )
 
     # Penalty 3: Both tracks have unknown key
     if track_a_info.get("camelot_key") is None and track_b_info.get("camelot_key") is None:
         penalty += 5.0
-        flags.append({
-            "type": "both_keys_unknown",
-            "severity": 0.5,
-            "label": "Both tracks are missing key analysis."
-        })
+        flags.append(
+            {
+                "type": "both_keys_unknown",
+                "severity": 0.5,
+                "label": "Both tracks are missing key analysis.",
+            }
+        )
 
     # Penalty 4: BPM unknown on either track
     if (
@@ -183,39 +187,39 @@ def apply_risk_penalties(
         or track_b_info.get("bpm_confidence") == "unknown"
     ):
         penalty += 15.0
-        flags.append({
-            "type": "bpm_unknown",
-            "severity": 0.9,
-            "label": "BPM value is unknown for at least one track."
-        })
+        flags.append(
+            {
+                "type": "bpm_unknown",
+                "severity": 0.9,
+                "label": "BPM value is unknown for at least one track.",
+            }
+        )
 
     return penalty, flags
 
 
-def score_transition(
-    track_a: dict, track_b: dict, preset_name: str = "Beatmatcher"
-) -> dict:
+def score_transition(track_a: dict, track_b: dict, preset_name: str = "Beatmatcher") -> dict:
     """Score transition compatibility from track A to track B.
-    
+
     Returns a dict with overall and component scores, flags, and explanation.
     """
     preset = PRESETS.get(preset_name, PRESETS["Beatmatcher"])
-    
+
     tempo_s, tempo_lbl = score_tempo(track_a.get("bpm"), track_b.get("bpm"))
-    harmonic_s, harmonic_lbl = score_harmonic(track_a.get("camelot_key"), track_b.get("camelot_key"))
+    harmonic_s, harmonic_lbl = score_harmonic(
+        track_a.get("camelot_key"), track_b.get("camelot_key")
+    )
     energy_s, energy_dir, energy_intent = score_energy(track_a.get("energy"), track_b.get("energy"))
-    
+
     # Calculate base weighted score
     weighted_score = (
-        preset["tempo"] * tempo_s +
-        preset["harmonic"] * harmonic_s +
-        preset["energy"] * energy_s
+        preset["tempo"] * tempo_s + preset["harmonic"] * harmonic_s + preset["energy"] * energy_s
     )
-    
+
     # Apply risk penalties
     penalty, flags = apply_risk_penalties(tempo_s, harmonic_s, energy_s, track_a, track_b)
     total_score = max(0.0, min(100.0, weighted_score - penalty))
-    
+
     # Generate human explanations
     explanation = generate_explanation(
         {
@@ -229,9 +233,9 @@ def score_transition(
             "energy_intent": energy_intent,
         },
         track_a,
-        track_b
+        track_b,
     )
-    
+
     return {
         "total_score": round(total_score, 1),
         "tempo_score": round(tempo_s, 1),
@@ -242,23 +246,25 @@ def score_transition(
         "energy_direction": energy_dir,
         "energy_intent": energy_intent,
         "risk_flags": flags,
-        "explanation": explanation
+        "explanation": explanation,
     }
 
 
-def generate_explanation(scores: dict, track_a: dict, track_b: dict) -> dict:
+def generate_explanation(scores: dict, track_a: dict, track_b: dict) -> dict:  # noqa: C901
     """Generate rule-based plain-English explanation for the transition."""
     why = ""
     watch_out = []
     try_this = ""
-    
+
     # Harmonic explanation
     key_a = track_a.get("camelot_key") or "unknown"
     key_b = track_b.get("camelot_key") or "unknown"
     harmonic_lbl = scores["harmonic_label"]
-    
+
     if harmonic_lbl == "Same Key":
-        why += f"Both tracks are in the exact same key ({key_a}), creating a seamless harmonic blend."
+        why += (
+            f"Both tracks are in the exact same key ({key_a}), creating a seamless harmonic blend."
+        )
     elif harmonic_lbl == "Relative":
         why += f"Key relationship is relative major/minor ({key_a} → {key_b}), which blends seamlessly."
     elif harmonic_lbl == "Circle of 5ths":
@@ -266,7 +272,9 @@ def generate_explanation(scores: dict, track_a: dict, track_b: dict) -> dict:
     elif harmonic_lbl == "Mediant":
         why += f"A diagonal mediant shift ({key_a} → {key_b}) adds subtle color to the blend."
     elif harmonic_lbl == "Parallel Mode":
-        why += f"A parallel major/minor mode shift ({key_a} → {key_b}) offers a dramatic mood shift."
+        why += (
+            f"A parallel major/minor mode shift ({key_a} → {key_b}) offers a dramatic mood shift."
+        )
     elif harmonic_lbl == "Whole Tone":
         why += f"A whole tone shift ({key_a} → {key_b}) lifts the energy and sounds highly musical."
     elif harmonic_lbl == "Tension Jump":
@@ -282,7 +290,7 @@ def generate_explanation(scores: dict, track_a: dict, track_b: dict) -> dict:
     bpm_a = track_a.get("bpm") or 0.0
     bpm_b = track_b.get("bpm") or 0.0
     tempo_lbl = scores["tempo_label"]
-    
+
     if tempo_lbl == "Locked":
         why += f" Tempos are practically matched ({bpm_a:.1f} vs {bpm_b:.1f} BPM)."
     elif tempo_lbl == "DJ-Ready":
@@ -309,9 +317,13 @@ def generate_explanation(scores: dict, track_a: dict, track_b: dict) -> dict:
 
     # Watch outs
     if scores["tempo_score"] < 40:
-        watch_out.append(f"Large tempo gap ({abs(bpm_b - bpm_a):.1f} BPM). Avoid long beatmixes unless using sync/master-tempo.")
+        watch_out.append(
+            f"Large tempo gap ({abs(bpm_b - bpm_a):.1f} BPM). Avoid long beatmixes unless using sync/master-tempo."
+        )
     if scores["harmonic_score"] <= 25 and scores["harmonic_label"] != "Unknown (neutral)":
-        watch_out.append("Harmonic clash. Avoid overlapping melodic sections, vocals, or basslines.")
+        watch_out.append(
+            "Harmonic clash. Avoid overlapping melodic sections, vocals, or basslines."
+        )
     if scores["energy_direction"] == "crash":
         watch_out.append("Severe energy drop. Best used after a peak song to reset the floor.")
     if not track_a.get("camelot_key") or not track_b.get("camelot_key"):
@@ -321,24 +333,30 @@ def generate_explanation(scores: dict, track_a: dict, track_b: dict) -> dict:
     if "Metrical" in tempo_lbl:
         try_this = "Perform a half-time or double-time drop mix. Bring B in directly at a transition point (e.g. chorus)."
     elif scores["tempo_score"] >= 85 and scores["harmonic_score"] >= 75:
-        try_this = "Execute a long, smooth blend. Layer B's intro over A's outro, overlapping the beats."
+        try_this = (
+            "Execute a long, smooth blend. Layer B's intro over A's outro, overlapping the beats."
+        )
     elif scores["harmonic_label"] == "Tension Jump":
         try_this = "Wait for a clean breakdown or chorus entry, then quickly drop B to maximize the tension jump."
     elif scores["harmonic_score"] <= 25:
-        try_this = "Use a quick cut or drop mix on the one beat. Avoid blending overlapping melodies."
+        try_this = (
+            "Use a quick cut or drop mix on the one beat. Avoid blending overlapping melodies."
+        )
     else:
-        try_this = "Start mixing B during the outro of A, using EQ/filtering to manage overlapping sounds."
+        try_this = (
+            "Start mixing B during the outro of A, using EQ/filtering to manage overlapping sounds."
+        )
 
     return {
         "why_it_works": why.strip(),
         "watch_out": watch_out if watch_out else ["No major risks detected. Mix with confidence!"],
-        "suggested_experiment": try_this
+        "suggested_experiment": try_this,
     }
 
 
 def bucket_candidates(candidates: list[dict]) -> dict:
     """Bucket a list of evaluated candidate tracks.
-    
+
     Expected format of candidates elements:
     {
         "track": dict,
@@ -351,7 +369,7 @@ def bucket_candidates(candidates: list[dict]) -> dict:
         "energy_resets": [],
         "harmonic_tension": [],
         "metrical_match": [],
-        "probably_reject": []
+        "probably_reject": [],
     }
 
     for c in candidates:

@@ -687,8 +687,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 clueBadges.forEach(btn => btn.disabled = false);
 
                 console.error("Submission failed:", err);
-                alert(err.message === "Unauthorized" 
-                    ? "Your session has expired. Please log in again to save your score." 
+                alert(err.message === "Unauthorized"
+                    ? "Your session has expired. Please log in again to save your score."
                     : `Submission failed: ${err.message}`);
             });
 
@@ -1038,4 +1038,3 @@ document.addEventListener("DOMContentLoaded", () => {
     // Trigger sync on page load if authenticated
     syncLocalAttempts();
 });
-

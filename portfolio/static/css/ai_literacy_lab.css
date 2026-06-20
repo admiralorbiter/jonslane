@@ -964,3 +964,183 @@
 .mode-reader .xp-desktop-shortcuts {
     display: none !important;
 }
+
+/* ==========================================================================
+   Draft / Locked Folder Cards
+   ========================================================================== */
+
+.folder-card.draft {
+    opacity: 0.52;
+    cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(60%);
+    position: relative;
+}
+
+.folder-card.draft .folder-title::after {
+    content: " 🔒";
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+/* ==========================================================================
+   Notepad Page Wrapper Styles (shared across all sub-pages)
+   ========================================================================== */
+
+.notepad-window {
+    max-width: 850px;
+    margin: 40px auto;
+    background: var(--xp-window-bg);
+    border: 1px solid var(--xp-blue-border);
+    border-radius: 8px 8px 0 0;
+    box-shadow: var(--xp-shadow-window);
+    display: flex;
+    flex-direction: column;
+}
+
+.notepad-menu-bar {
+    display: flex;
+    background: var(--xp-window-bg);
+    border-bottom: 1px solid #a0a0a0;
+    padding: 2px 10px;
+    gap: 15px;
+    font-size: 0.85rem;
+    position: relative;
+    user-select: none;
+}
+
+.notepad-menu-item {
+    cursor: pointer;
+    padding: 2px 6px;
+    color: #000;
+    position: relative;
+}
+
+.notepad-menu-item:hover {
+    background: #316ac5;
+    color: #fff;
+}
+
+.notepad-dropdown {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    background: var(--xp-window-bg);
+    border: 1px solid #7a7a7a;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    width: 120px;
+}
+
+.notepad-dropdown-item {
+    padding: 4px 12px;
+    text-decoration: none;
+    color: #000;
+    font-size: 0.85rem;
+    display: block;
+}
+
+.notepad-dropdown-item:hover {
+    background: #316ac5;
+    color: #fff;
+}
+
+.notepad-content {
+    background: #fff;
+    padding: 40px 60px;
+    font-family: var(--font-xp);
+    font-size: 1.15rem;
+    line-height: 1.75;
+    color: #000;
+    border: 2px solid var(--xp-window-border);
+    margin: 4px;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.15);
+}
+
+.notepad-content .essay-body {
+    max-height: none !important;
+    overflow-y: visible !important;
+    border-bottom: none !important;
+    padding-right: 0 !important;
+}
+
+.notepad-content .essay-title {
+    font-family: var(--font-xp);
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: var(--xp-blue-dark);
+    margin: 0;
+    border-bottom: 2px solid var(--xp-blue-dark);
+    padding-bottom: 8px;
+}
+
+.notepad-content .essay-meta {
+    font-family: var(--font-xp);
+    font-size: 1.1rem;
+    color: var(--xp-text-muted);
+    margin-top: 6px;
+    font-style: italic;
+    margin-bottom: 25px;
+}
+
+.notepad-content h3 {
+    font-family: var(--font-xp);
+    color: var(--xp-blue-dark);
+    font-weight: bold;
+    margin-top: 35px;
+    margin-bottom: 12px;
+    font-size: 1.35rem;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 4px;
+}
+
+.notepad-content blockquote {
+    border-left: 4px solid var(--xp-blue-light);
+    margin: 25px 0;
+    padding: 15px 25px;
+    background: #f7f9fd;
+    font-style: italic;
+    font-size: 1.15rem;
+    color: #333;
+}
+
+.notepad-footer {
+    background: var(--xp-window-bg);
+    border-top: 1px solid #a0a0a0;
+    padding: 4px 15px;
+    font-size: 0.8rem;
+    color: #555;
+    text-align: right;
+    user-select: none;
+}
+
+.btn-xp-back {
+    font-family: var(--font-xp);
+    background: #f0f0f0;
+    border: 1px solid #7a7a7a;
+    border-radius: 3px;
+    padding: 4px 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--xp-bevel-out);
+    text-decoration: none;
+    color: #000;
+    display: inline-flex;
+    align-items: center;
+    margin: 20px auto 0;
+}
+
+.btn-xp-back:active {
+    box-shadow: var(--xp-bevel-in);
+}
+
+@media (max-width: 600px) {
+    .notepad-window {
+        margin: 10px;
+    }
+    .notepad-content {
+        padding: 20px;
+    }
+}

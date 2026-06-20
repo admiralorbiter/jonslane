@@ -180,13 +180,13 @@ def disconnect():
     token_rec = SpotifyToken.query.filter_by(user_id=user_id).first()
     if token_rec:
         from portfolio.models import PlaylistImport
+
         # Deactivate user's playlist imports on Spotify disconnect
         PlaylistImport.query.filter_by(user_id=user_id).update({PlaylistImport.is_active: False})
         db.session.delete(token_rec)
         db.session.commit()
 
     return redirect(url_for("settings.index") + "?spotify_disconnected=1")
-
 
 
 # ---------------------------------------------------------------------------
@@ -245,18 +245,23 @@ def api_now_playing():
     is_playing = data.get("is_playing", False)
 
     # Fetch last guess for this track by this user
-    last_attempt = SpotifyListeningAttempt.query.filter_by(
-        user_id=user_id,
-        track_id=identity.id
-    ).order_by(SpotifyListeningAttempt.created_at.desc()).first()
+    last_attempt = (
+        SpotifyListeningAttempt.query.filter_by(user_id=user_id, track_id=identity.id)
+        .order_by(SpotifyListeningAttempt.created_at.desc())
+        .first()
+    )
 
     last_guess = None
     if last_attempt:
         grade = None
         if last_attempt.was_gradable and annotation and annotation.confidence != "unknown":
-            primary_bpm = last_attempt.guessed_bpm if last_attempt.guessed_bpm is not None else last_attempt.tap_estimated_bpm
+            primary_bpm = (
+                last_attempt.guessed_bpm
+                if last_attempt.guessed_bpm is not None
+                else last_attempt.tap_estimated_bpm
+            )
             grade = compute_grade(primary_bpm, annotation, last_attempt.metrical_multiplier)
-        
+
         last_guess = {
             "guessed_bpm": last_attempt.guessed_bpm,
             "was_gradable": last_attempt.was_gradable,
@@ -280,8 +285,7 @@ def api_now_playing():
             # When BPM is unknown, give the client a search hint so it can
             # trigger the iTunes + Web Audio beat detector.
             "itunes_query": (
-                f"{track_data['artist']} {track_data['title']}"
-                if annotation is None else None
+                f"{track_data['artist']} {track_data['title']}" if annotation is None else None
             ),
         }
     )
@@ -420,7 +424,7 @@ def api_submit_bpm():
       {
         "track_identity_id": int,
         "estimated_bpm": float,
-        "confidence_score": float,   // 0.0–1.0 autocorrelation peak ratio
+        "confidence_score": float,   // 0.0-1.0 autocorrelation peak ratio
         "itunes_track_id": str | null,
         "itunes_preview_url": str | null
       }
@@ -452,7 +456,7 @@ def api_submit_bpm():
 
     # Sanity check: reject obviously wrong BPM values
     if not (40.0 <= estimated_bpm <= 300.0):
-        return jsonify({"error": f"BPM {estimated_bpm} out of range 40–300"}), 400
+        return jsonify({"error": f"BPM {estimated_bpm} out of range 40-300"}), 400
 
     confidence_score = max(0.0, min(1.0, confidence_score))
 

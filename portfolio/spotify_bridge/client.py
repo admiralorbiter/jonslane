@@ -11,6 +11,8 @@ Policy note: We only read metadata and playback state. We do NOT:
 - Request Audio Features or Audio Analysis endpoints
 """
 
+import re
+
 import requests
 from flask import current_app
 
@@ -83,7 +85,7 @@ def get_recently_played(access_token: str, limit: int = 10) -> dict | None:
     Scopes: user-read-recently-played
 
     Args:
-        limit: Number of tracks to return (1–50).
+        limit: Number of tracks to return (1-50).
     """
     resp = requests.get(
         f"{_API_BASE}/me/player/recently-played",
@@ -137,7 +139,6 @@ def parse_track_identity(track_obj: dict) -> dict:
     }
 
 
-import re
 _SPOTIFY_ID_RE = re.compile(r"^[A-Za-z0-9]{22}$")
 
 
@@ -208,4 +209,3 @@ def get_playlist_tracks_all(
 
     was_truncated = total > len(tracks)
     return tracks[:max_tracks], was_truncated
-

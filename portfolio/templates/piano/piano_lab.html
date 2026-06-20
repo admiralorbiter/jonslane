@@ -30,7 +30,7 @@
             </div>
             <button class="btn-brass" id="calibrate-latency-btn" style="padding: 6px 12px; font-size: 0.9rem;" onclick="startLatencyCalibration()">Calibrate Latency</button>
         </div>
-        
+
         <!-- MIDI Split Point Transposition widget -->
         <div id="midi-split-settings" style="margin-top: 15px; display: none; gap: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
             <div>
@@ -105,10 +105,10 @@
     let audioSync = null;
     let currentDrill = "subdivision";
     let latencyOffsetMs = 0;
-    
+
     // Polyphonic MIDI Synthesizer
     let polySynth = null;
-    
+
     // Metronome Synth
     let clickSynth = null;
 
@@ -136,7 +136,7 @@
         if (!midiManager) {
             midiManager = new window.MidiDeviceManager();
             midiManager.onStateChangeCallback = updateMIDIWidgets;
-            
+
             // Set live synth callbacks
             midiManager.onNoteOnCallback = (note, velocity) => {
                 const transposed = note + getTranspositionOffset();
@@ -146,7 +146,7 @@
                 }
                 highlightKey(transposed, true);
             };
-            
+
             midiManager.onNoteOffCallback = (note) => {
                 const transposed = note + getTranspositionOffset();
                 if (polySynth) {
@@ -233,13 +233,13 @@
         // Use absolute Transport seconds for glitch-free scheduling
         const beatInterval = 60 / bpm;
         const startTransportTime = Tone.Transport.seconds + 0.1;
-        
+
         Tone.Transport.bpm.value = bpm;
         Tone.Transport.start();
 
         for (let i = 0; i < 4; i++) {
             const clickTime = startTransportTime + i * beatInterval;
-            
+
             // Schedule high metronome clicks
             Tone.Transport.schedule(time => {
                 if (clickSynth) {
@@ -354,14 +354,14 @@
         if (!audioContext) {
             audioContext = Tone.context;
             audioSync = new window.PrecisionAudioSync(audioContext);
-            
+
             // Create low-latency polyphonic synth for user feedback
             polySynth = new Tone.PolySynth(Tone.Synth, {
                 oscillator: { type: "triangle" },
                 envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 0.4 }
             }).toDestination();
             polySynth.volume.value = -6; // slightly quieter
-            
+
             // Create click synth
             clickSynth = new Tone.Synth({
                 oscillator: { type: "square" },
@@ -374,7 +374,7 @@
     async function startLatencyCalibration() {
         await ensureAudioStarted();
         if (isCalibrating) return;
-        
+
         isCalibrating = true;
         calibrationTaps = [];
         document.getElementById("calibrate-latency-btn").innerText = "Tapping along...";
@@ -432,7 +432,7 @@
                 setTimeout(() => {
                     document.removeEventListener("keydown", tapListener);
                     if (midiManager) midiManager.onStrokeCallback = null;
-                    
+
                     evaluateCalibration(scheduledTimes, targetInterval);
                 }, 1000);
             }
@@ -517,7 +517,7 @@
 
         currentDrill = drillName;
         document.querySelectorAll("#lab-menu button").forEach(btn => btn.classList.remove("active"));
-        
+
         // Find matching menu button
         const menuButtons = document.querySelectorAll("#lab-menu button");
         menuButtons.forEach(btn => {
@@ -545,12 +545,12 @@
             activeDrillTimeout = null;
         }
         isCountingIn = false;
-        
+
         const countInContainer = document.getElementById("count-in-container");
         if (countInContainer) {
             countInContainer.style.display = "none";
         }
-        
+
         stopProgressTracker();
 
         if (loopPart) {
@@ -560,7 +560,7 @@
         }
         Tone.Transport.stop();
         Tone.Transport.cancel(0);
-        
+
         // Reset any MIDI callbacks
         if (midiManager) {
             midiManager.onStrokeCallback = null;
@@ -583,14 +583,14 @@
     // 1. Subdivision Trainer Panel
     let subdivisionAttempts = [];
     let isSubdivisionPlaying = false;
-    
+
     function loadSubdivisionTrainer(target) {
         target.innerHTML = `
             <h2>LH & RH Subdivision Trainer</h2>
             <p style="margin-bottom: 20px; color: #a48c82;">
                 LH plays quarter notes, RH plays eighth notes. The backing track will play for 4 bars and then fade, forcing you to maintain subdivisions independently.
             </p>
-            
+
             <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                 <h4 style="margin: 0 0 8px; color: #e6c594; font-size: 1rem;">How to Practice:</h4>
                 <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #bca08d; line-height: 1.45;">
@@ -599,7 +599,7 @@
                     <li><strong>Fading Challenge:</strong> Play along with the guide track. After 4 bars, the chords and bass fade out—maintain the rhythm on your own in silence!</li>
                 </ul>
             </div>
-            
+
             <div style="display: flex; justify-content: center; gap: 20px; margin: 25px 0;">
                 <div style="text-align: center;">
                     <div class="subdivision-pulse-indicator" id="pulse-lh"></div>
@@ -679,7 +679,7 @@
         document.getElementById("subdivision-results").style.display = "none";
 
         const bpm = 100;
-        
+
         // Wrap execution in 1-bar Count-In
         await runCountIn(bpm, (drillStartTime) => {
             const beatInterval = 60 / bpm; // 600ms
@@ -699,7 +699,7 @@
             } else {
                 startPerfTime = (drillStartTime * 1000) + (performance.now() - (audioContext.currentTime * 1000));
             }
-            
+
             // Generate grid targets for 16 bars
             for (let beat = 0; beat < 64; beat++) {
                 lhTargetIntervals.push(startPerfTime + (beat * quarterMs));
@@ -725,12 +725,12 @@
             backingChords.volume.value = -12;
 
             let barCount = 0;
-            
+
             // Loop structure
             loopPart = new Tone.Loop(time => {
                 // Play quarters on LH
                 bassSynth.triggerAttackRelease("F2", "8n", time);
-                
+
                 // Visual pulse LH
                 Tone.Draw.schedule(() => {
                     const ind = document.getElementById("pulse-lh");
@@ -751,7 +751,7 @@
                 }, time + (eighthMs / 1000));
 
                 barCount++;
-                
+
                 // Fading backing track: drop volume after 4 bars (4 beats/bar = 16 beats)
                 if (barCount >= 16) {
                     bassSynth.volume.rampTo(-60, eighthMs / 1000);
@@ -762,10 +762,10 @@
             // Inputs handler
             const handleSubdivisionTap = (domTimestamp, isLeft) => {
                 if (isCountingIn) return; // Block scoring during count-in
-                
+
                 const compTimestamp = domTimestamp - latencyOffsetMs;
                 const grid = isLeft ? lhTargetIntervals : rhTargetIntervals;
-                
+
                 if (isLeft) {
                     lhUserTaps.push(compTimestamp);
                 } else {
@@ -839,7 +839,7 @@
             }
 
             loopPart.start(drillStartTime);
-            
+
             // Start progress tracking
             const totalDurationMs = 16 * 4 * quarterMs;
             startProgressTracker(totalDurationMs, 16, 4, bpm);
@@ -848,10 +848,10 @@
             activeDrillTimeout = setTimeout(() => {
                 stopActiveDrills();
                 isSubdivisionPlaying = false;
-                
+
                 const btn = document.getElementById("start-subdivision-btn");
                 if (btn) btn.innerText = "Start Trainer";
-                
+
                 evaluateSubdivision(lhUserTaps, lhTargetIntervals, rhUserTaps, rhTargetIntervals);
             }, totalDurationMs + 1000);
         });
@@ -898,7 +898,7 @@
 
         const lhSD = computeSD(lhErrors);
         const rhSD = computeSD(rhErrors);
-        
+
         const avgSD = (lhSD + rhSD) / 2;
 
         let rating = "Needs Practice";
@@ -934,7 +934,7 @@
 
     // 2. Invisible Metronome Panel
     let isMetronomePlaying = false;
-    
+
     function loadInvisibleMetronome(target) {
         target.innerHTML = `
             <h2>Invisible Metronome (Rhythmic Entrainment)</h2>
@@ -990,7 +990,7 @@
         document.getElementById("metro-results").style.display = "none";
 
         const bpm = 100;
-        
+
         await runCountIn(bpm, (drillStartTime) => {
             const beatIntervalMs = (60 / bpm) * 1000;
 
@@ -1089,11 +1089,11 @@
             activeDrillTimeout = setTimeout(() => {
                 stopActiveDrills();
                 isMetronomePlaying = false;
-                
+
                 const btn = document.getElementById("start-metro-btn");
                 if (btn) btn.innerText = "Start Metronome";
                 if (sweep) sweep.style.display = "none";
-                
+
                 evaluateInvisibleMetronome(userTaps, targetTimes);
             }, totalDurationMs + 500);
         });
@@ -1127,7 +1127,7 @@
         const mean = errors.reduce((a, b) => a + b, 0) / errors.length;
         const variance = errors.reduce((sum, err) => sum + Math.pow(err - mean, 2), 0) / errors.length;
         const stdDev = Math.sqrt(variance);
-        
+
         const absoluteErrors = errors.map(Math.abs);
         const meanAbsoluteError = absoluteErrors.reduce((a, b) => a + b, 0) / errors.length;
 
@@ -1159,7 +1159,7 @@
 
     // 3. Phrase Boundary Counter Panel
     let isPhrasePlaying = false;
-    
+
     function loadPhraseCounter(target) {
         target.innerHTML = `
             <h2>Phrase Boundary Counter</h2>
@@ -1212,7 +1212,7 @@
         document.getElementById("phrase-results").style.display = "none";
 
         const bpm = 120;
-        
+
         await runCountIn(bpm, (drillStartTime) => {
             const barMs = (240 / bpm) * 1000; // 2 seconds
 
@@ -1316,7 +1316,7 @@
             }
 
             loopPart.start(drillStartTime);
-            
+
             // Start progress tracking
             const totalDurationMs = 24 * barMs;
             startProgressTracker(totalDurationMs, 24, 4, bpm);
@@ -1325,10 +1325,10 @@
             activeDrillTimeout = setTimeout(() => {
                 stopActiveDrills();
                 isPhrasePlaying = false;
-                
+
                 const btn = document.getElementById("start-phrase-btn");
                 if (btn) btn.innerText = "Start Drill";
-                
+
                 evaluatePhraseCounter(userTaps, phraseTargets);
             }, totalDurationMs + 500);
         });
@@ -1390,7 +1390,7 @@
 
     // 4. Limb Independence Panel
     let isLimbPlaying = false;
-    
+
     function loadLimbIndependence(target) {
         target.innerHTML = `
             <h2>Limb Independence Trainer</h2>
@@ -1449,7 +1449,7 @@
         document.getElementById("limb-results").style.display = "none";
 
         const bpm = 100;
-        
+
         await runCountIn(bpm, (drillStartTime) => {
             const beatMs = (60 / bpm) * 1000;
 
@@ -1488,7 +1488,7 @@
                 Tone.Draw.schedule(() => {
                     const footInd = document.getElementById("limb-foot");
                     const handInd = document.getElementById("limb-hand");
-                    
+
                     if (count % 4 === 0 || count % 4 === 2) {
                         if (footInd) {
                             footInd.classList.add("active-lh");
@@ -1581,7 +1581,7 @@
             }
 
             loopPart.start(drillStartTime);
-            
+
             // Start progress tracking
             const totalDurationMs = 32 * beatMs;
             startProgressTracker(totalDurationMs, 8, 4, bpm);
@@ -1590,10 +1590,10 @@
             activeDrillTimeout = setTimeout(() => {
                 stopActiveDrills();
                 isLimbPlaying = false;
-                
+
                 const btn = document.getElementById("start-limb-btn");
                 if (btn) btn.innerText = "Start Drill";
-                
+
                 evaluateLimbIndependence(footTaps, footTargets, handTaps, handTargets);
             }, totalDurationMs + 500);
         });

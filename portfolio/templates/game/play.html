@@ -24,10 +24,10 @@
 </script>
 <div id="challenge-meta" data-id="0" style="display: none;"></div>
 <div id="recipe-meta" data-recipe="{{ recipe_json }}" style="display: none;"></div>
-<div id="user-meta" 
-     data-authenticated="{% if current_user %}true{% else %}false{% endif %}" 
-     data-challenge-token="{{ challenge_token }}" 
-     data-crate-name="{{ crate.name }}" 
+<div id="user-meta"
+     data-authenticated="{% if current_user %}true{% else %}false{% endif %}"
+     data-challenge-token="{{ challenge_token }}"
+     data-crate-name="{{ crate.name }}"
      style="display: none;">
 </div>
 
@@ -56,7 +56,7 @@
                     <div class="vinyl-record" id="vinyl-record"></div>
                 </div>
             </div>
-            
+
             <div class="visualizer-container" style="margin: 25px 0;">
                 <canvas id="freq-visualizer"></canvas>
             </div>
@@ -112,7 +112,7 @@
                         <span class="tap-pad-lbl">Tap Space or Click Here</span>
                         <span class="tap-pad-sub">Tapping Space registers tempo. Use mouse or ESC to stop audio.</span>
                     </div>
-                    
+
                     <div class="tap-metrics-row">
                         <div class="tap-metric-col">
                             <span class="tap-metric-lbl">Taps</span>
@@ -127,7 +127,7 @@
                             <span class="tap-metric-val" id="tap-stability-val">--</span>
                         </div>
                     </div>
-                    
+
                     <div class="tap-action-row">
                         <button type="button" class="btn-action btn-reset-taps" id="reset-taps-btn" style="padding: 5px 12px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--text-secondary); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--neon-pink)'; this.style.color='var(--neon-pink)';" onmouseout="this.style.borderColor='var(--text-secondary)'; this.style.color='var(--text-secondary)';">Reset Taps</button>
                     </div>

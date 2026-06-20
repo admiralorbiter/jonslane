@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{% block page_title %}{% endblock %} - Notepad | Jon's Lane{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai_literacy_lab.css') }}?v=1.1.0">
+{% endblock %}
+
+{% block content %}
+<div class="notepad-window" role="document">
+    <!-- Window Title Bar -->
+    <div class="xp-window-titlebar">
+        <div class="xp-window-title">
+            <span>🗎 {% block page_filename %}{% endblock %} - Notepad</span>
+        </div>
+        <div class="xp-window-controls">
+            <a href="{{ url_for('ai_literacy_lab.index') }}" class="xp-win-btn close" style="text-decoration: none;" aria-label="Close Notepad and return to desktop">✕</a>
+        </div>
+    </div>
+
+    <!-- Menu Bar -->
+    <nav class="notepad-menu-bar" aria-label="Notepad File Menu">
+        <div class="notepad-menu-item" id="file-menu-trigger">
+            File
+            <div id="file-menu-dropdown" class="notepad-dropdown hidden">
+                <a href="{{ url_for('ai_literacy_lab.index') }}" class="notepad-dropdown-item">Exit</a>
+            </div>
+        </div>
+        <div class="notepad-menu-item" onclick="alert('This is a read-only simulated file viewer!');">Edit</div>
+        <div class="notepad-menu-item" onclick="alert('This is a read-only simulated file viewer!');">Format</div>
+        <div class="notepad-menu-item" onclick="alert('This is a read-only simulated file viewer!');">View</div>
+        <div class="notepad-menu-item" onclick="alert('Simulated Help file does not exist.');">Help</div>
+    </nav>
+
+    <!-- Main Text Area (Notepad content) -->
+    <div class="notepad-content">
+        <h1 class="essay-title">{% block page_heading %}{% endblock %}</h1>
+        <div class="essay-meta">{% block page_meta %}{% endblock %}</div>
+
+        <div class="essay-body">
+            {% block page_content %}{% endblock %}
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{{ url_for('ai_literacy_lab.index') }}" class="btn-xp-back">
+                &larr; Back to Desktop
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="notepad-footer">
+        <span>Ln 1, Col 1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span>Windows (CRLF)</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.body.classList.add('ai-lab-body');
+
+        // Setup dropdown toggle for File menu
+        const fileTrigger = document.getElementById("file-menu-trigger");
+        const fileDropdown = document.getElementById("file-menu-dropdown");
+
+        if (fileTrigger && fileDropdown) {
+            fileTrigger.addEventListener("click", function(e) {
+                e.stopPropagation();
+                fileDropdown.classList.toggle("hidden");
+            });
+
+            document.addEventListener("click", function() {
+                fileDropdown.classList.add("hidden");
+            });
+        }
+    });
+</script>
+{% endblock %}

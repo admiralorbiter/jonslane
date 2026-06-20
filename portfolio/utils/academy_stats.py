@@ -70,7 +70,7 @@ def get_skill_stats(user_id, skill_tag):
     }
 
 
-def calculate_skills_mastery(user_id):
+def calculate_skills_mastery(user_id):  # noqa: C901
     """
     Calculate 5 core skill mastery scores (0-100) on-demand using rolling-window queries.
     """
@@ -194,7 +194,7 @@ def check_level_mastery(
     return has_enough_qualifying and has_enough_sessions
 
 
-def get_user_level_progression(user_id):
+def get_user_level_progression(user_id):  # noqa: C901
     """
     Evaluate lock status for all 8 levels.
     Returns a dict mapping level number to status: 'locked', 'unlocked', 'mastered'

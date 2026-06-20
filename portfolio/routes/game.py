@@ -49,7 +49,7 @@ def get_range_key(bpm):
     return "Fast (140+ BPM)"
 
 
-def get_unlocked_level(user_id, anchor_bpm, preloaded_attempts=None):
+def get_unlocked_level(user_id, anchor_bpm, preloaded_attempts=None):  # noqa: C901
     """Determine the highest unlocked progression level (1-4) for a given user and anchor tempo."""
     if preloaded_attempts is not None:
         attempts = preloaded_attempts
@@ -115,7 +115,7 @@ def get_unlocked_level(user_id, anchor_bpm, preloaded_attempts=None):
     return 1
 
 
-def calculate_user_stats(user, attempts):
+def calculate_user_stats(user, attempts):  # noqa: C901
     """Calculate and format statistical performance for a user's attempts."""
     # Filter out None values and anchor attempts for general stats
     non_anchor_attempts = [
@@ -266,7 +266,7 @@ def calculate_score_and_rating(guess, true_bpm, clue_level=4):
     )
 
 
-def calculate_piano_score_and_rating(skill_tag, tap_stability=None, phase_error_ms=None):
+def calculate_piano_score_and_rating(skill_tag, tap_stability=None, phase_error_ms=None):  # noqa: C901
     """Return (score, rating, is_success, percent_error, bpm_error, metrical_multiplier) for a piano attempt."""
     if skill_tag == "subdivision":
         if tap_stability is None:
@@ -302,7 +302,7 @@ def calculate_piano_score_and_rating(skill_tag, tap_stability=None, phase_error_
     return 10, "Needs Practice", False, 0.0, 0.0, 1.0
 
 
-def validate_and_parse_attempt_data(att_data):
+def validate_and_parse_attempt_data(att_data):  # noqa: C901
     """Validate and parse a single raw attempt data dict, returning parsed fields or None."""
     client_uuid = att_data.get("client_uuid")
     if not client_uuid:
@@ -436,7 +436,7 @@ def recalculate_user_streaks(user):
 
 
 @game_bp.route("/play/anchor/<int:anchor_bpm>")
-def play_anchor(anchor_bpm):
+def play_anchor(anchor_bpm):  # noqa: C901
     if anchor_bpm not in VALID_ANCHOR_BPMS:
         from flask import abort
 
@@ -692,7 +692,7 @@ def submit():
 
 
 @game_bp.route("/api/attempt", methods=["POST"])
-def submit_attempt():
+def submit_attempt():  # noqa: C901
     """Submit a gameplay attempt directly to SQLite database for signed-in users."""
     from flask import session
 
@@ -847,7 +847,7 @@ def submit_attempt():
 
 
 @game_bp.route("/api/sync", methods=["POST"])
-def sync():
+def sync():  # noqa: C901
     """Sync client-side local storage attempts to database."""
     from flask import session
 

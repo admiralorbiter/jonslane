@@ -16,7 +16,7 @@ def index():
 
 
 @piano_bp.route("/api/attempts", methods=["POST"])
-def submit_attempt():
+def submit_attempt():  # noqa: C901
     """Submit a Piano Lab attempt to the database for authenticated users."""
     user_id = session.get("user_id")
     if not user_id:

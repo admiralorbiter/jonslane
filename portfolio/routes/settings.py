@@ -4,10 +4,10 @@ Provides account settings for authenticated users, including
 Spotify connection management and privacy preferences.
 """
 
-from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, redirect, render_template, request, session, url_for
 
 from portfolio import db
-from portfolio.models import SpotifyToken, SpotifyListeningAttempt, User
+from portfolio.models import SpotifyListeningAttempt, SpotifyToken, User
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 

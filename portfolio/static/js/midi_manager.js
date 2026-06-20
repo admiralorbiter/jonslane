@@ -50,7 +50,7 @@ class MidiDeviceManager {
         // Custom note-on and note-off callbacks for synthesizing live audio
         this.onNoteOnCallback = null;
         this.onNoteOffCallback = null;
-        
+
         // Custom change callback for UI updates
         this.onStateChangeCallback = null;
     }

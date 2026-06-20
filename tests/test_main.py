@@ -48,8 +48,44 @@ def test_ai_lab_redirect(client):
 
 
 def test_same_song_essay_page(client):
-    """Verify that the flagship essay standalone notepad reader renders successfully."""
+    """Verify the flagship essay is served by the catch-all route (no dedicated route needed)."""
     response = client.get("/ai-literacy-lab/same-song-louder-dance")
     assert response.status_code == 200
     assert b"Same_Song_Louder_Dance.txt - Notepad" in response.data
     assert b"Artificial intelligence has always been molded" in response.data
+
+
+def test_ai_lab_tools_page(client):
+    """Verify that the tools section page renders with all content merged inline."""
+    response = client.get("/ai-literacy-lab/tools")
+    assert response.status_code == 200
+    assert b"Tools" in response.data
+    # All three formerly-separate sub-sections must appear on this one page
+    assert b"Chatbots" in response.data
+    assert b"gun ownership" in response.data  # gun metaphor from blockquote
+    assert b"NotebookLM" in response.data
+
+
+def test_ai_lab_dynamic_subpage_404(client):
+    """Verify that visiting an invalid subpage path returns a 404."""
+    response = client.get("/ai-literacy-lab/tools/invalid-filename")
+    assert response.status_code == 404
+
+
+def test_ai_lab_old_subpages_now_404(client):
+    """Verify the retired sub-page URLs 404 — their content is now inline in tools.html."""
+    for old_path in ["tools/chatbots", "tools/editor-vs-coder", "tools/deep-research"]:
+        response = client.get(f"/ai-literacy-lab/{old_path}")
+        assert response.status_code == 404, f"Expected 404 for retired path: {old_path}"
+
+
+def test_ai_lab_security_traversal(client):
+    """Verify that directory traversal attempts are blocked and return 404."""
+    response = client.get("/ai-literacy-lab/tools/../../config")
+    assert response.status_code == 404
+
+
+def test_ai_lab_security_allowlist(client):
+    """Verify that path segments with disallowed characters are blocked by allowlist guard."""
+    response = client.get("/ai-literacy-lab/tools/bad%00path")
+    assert response.status_code == 404

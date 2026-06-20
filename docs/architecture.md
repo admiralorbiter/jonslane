@@ -236,6 +236,97 @@ Computes transition compatibility from track A to track B across three weighted 
 Applies penalties for combined risks (e.g., unknown BPM, double bad dimensions, harmonic+tempo conflict). Offers 3 presets: Beatmatcher, Harmonic Mixer, Open Format.
 
 ### 4. N+1 Query Prevention & Compute-On-Demand
-- Details and transitions endpoints batch-load all TrackTempoAnnotations and TrackFeatureAnnotations.
-- Transition Candidates are computed ON DEMAND when a user selects a source track, rather than at playlist import, avoiding quadratic row explosion.
+    - Details and transitions endpoints batch-load all TrackTempoAnnotations and TrackFeatureAnnotations.
+    - Transition Candidates are computed ON DEMAND when a user selects a source track, rather than at playlist import, avoiding quadratic row explosion.
 
+---
+
+## 📚 Section 11: AI Literacy Lab Blueprint
+
+A Windows XP-styled resource hub at `/ai-literacy-lab` for essays, tools notes,
+source grounding guides, and classroom activities about using AI without
+outsourcing human judgment.
+
+Full documentation: [`docs/ai_literacy_lab/README.md`](ai_literacy_lab/README.md)
+
+### Blueprint Structure (`routes/ai_literacy_lab.py`)
+
+Two blueprints are registered:
+
+- `ai_literacy_lab_bp` at `/ai-literacy-lab` — all lab routes
+- `ai_lab_redirect_bp` (no prefix) — `/ai-lab` shorthand redirect
+
+### Catch-All Routing Pattern
+
+All sub-page requests are handled by a single `/<path:page_path>` route:
+
+```python
+@ai_literacy_lab_bp.route("/<path:page_path>")
+def render_page(page_path):
+    # 1. Validate: allowlist regex [a-zA-Z0-9_-] per segment
+    # 2. Convert: dashes → underscores in template filenames
+    # 3. Resolve: pages/{path}.html or pages/{path}/index.html
+    # 4. Render
+```
+
+This means adding content = adding a `.html` file in `pages/`. No route
+changes required. The dash→underscore convention (`editor-vs-coder` →
+`editor_vs_coder.html`) must be followed consistently.
+
+**Security**: An allowlist regex (`[a-zA-Z0-9_-]+` per segment) blocks
+directory traversal and enforces the slug naming contract — stricter and
+more correct than a simple dot-check.
+
+### LAB_METADATA
+
+A Python dict in the routes file. Each key is a `folder_id` (URL slug).
+
+```python
+LAB_METADATA = {
+    "tools": {
+        "title": "Tools & Workflows",
+        "icon": "📁",
+        "description": "Short card description",
+        "summary": "Paragraph shown in the preview popup",
+        "status": "active",   # "active" | "draft"
+    },
+    ...
+}
+```
+
+This dict is passed to `index.html` as `folders=LAB_METADATA` and embedded
+directly as an inline JS object — there is **no AJAX endpoint** for metadata.
+The removed `/api/preview/<folder_id>` endpoint (previously present) was
+eliminated because the data was already in the page.
+
+### Content Scaling Rules
+
+| Content size | Where it lives |
+|---|---|
+| < ~500 words | Inline H3 section in the parent section page |
+| 700–2,000 words | Sub-page at `pages/<folder>/<sub>.html` |
+| Major topic (3+ articles) | New top-level folder in `LAB_METADATA` |
+| Flagship essay | Dedicated page extending `page_wrapper.html` |
+
+### Draft Folder Gating
+
+Folders with `status: "draft"` in `LAB_METADATA` render as locked `<div>`
+elements in the desktop grid (greyed, 🔒 icon, `pointer-events: none`).
+They become active when: (a) `status` is changed to `"active"` AND (b) the
+corresponding content page has real content. This prevents dead-end user journeys
+from empty stub pages.
+
+### Template Hierarchy
+
+```
+base.html
+└── ai_literacy_lab/index.html          (desktop homepage)
+└── ai_literacy_lab/page_wrapper.html   (notepad chrome)
+    └── pages/tools.html                (section page — all content inline)
+    └── pages/same_song_louder_dance.html (flagship essay)
+    └── pages/research.html             (draft stub)
+    └── ...
+```
+
+All notepad styling lives in `ai_literacy_lab.css` — not in inline `<style>`
+blocks in templates.

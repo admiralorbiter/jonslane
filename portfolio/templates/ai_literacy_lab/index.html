@@ -4,7 +4,7 @@
 {% block meta_description %}A Windows XP / computer lab inspired resource hub about AI literacy, source grounding, and using AI without outsourcing human judgment.{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/ai_literacy_lab.css') }}?v=1.0.0">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai_literacy_lab.css') }}?v=1.1.0">
 {% endblock %}
 
 {% block content %}
@@ -29,29 +29,27 @@
     <aside class="reader-sidebar hidden" id="reader-toc-sidebar">
         <div class="reader-sidebar-title">Lab Directory</div>
         <ul class="reader-toc">
-            <li><a href="#hero-window" class="reader-toc-link">Intro & Philosophy</a></li>
+            <li><a href="#hero-window" class="reader-toc-link">Intro &amp; Philosophy</a></li>
             <li><a href="#essay-window" class="reader-toc-link">Essay: Same Song, Louder Dance</a></li>
-            <li><a href="#tools" class="reader-toc-link">Tools & Workflows</a></li>
-            <li><a href="#research" class="reader-toc-link">Research & Source Grounding</a></li>
-            <li><a href="#risks" class="reader-toc-link">Risks & Hidden Costs</a></li>
-            <li><a href="#education" class="reader-toc-link">Education & AI Literacy</a></li>
-            <li><a href="#writing" class="reader-toc-link">Writing & Creativity</a></li>
-            <li><a href="#sources" class="reader-toc-link">Source Bank</a></li>
-            <li><a href="#experience" class="reader-toc-link">Personal Experience Bank</a></li>
-            <li><a href="#backlog" class="reader-toc-link">Lab Backlog</a></li>
+            <li><a href="#folder-tools" class="reader-toc-link">Tools &amp; Workflows</a></li>
+            <li><a href="#folder-research" class="reader-toc-link">Research &amp; Source Grounding</a></li>
+            <li><a href="#folder-risks" class="reader-toc-link">Risks &amp; Elephants</a></li>
+            <li><a href="#folder-education" class="reader-toc-link">Education &amp; AI</a></li>
+            <li><a href="#folder-writing" class="reader-toc-link">Writing &amp; Feedback</a></li>
+            <li><a href="#folder-sources" class="reader-toc-link">Source Bank</a></li>
+            <li><a href="#folder-experience" class="reader-toc-link">Experience Bank</a></li>
+            <li><a href="#folder-backlog" class="reader-toc-link">Lab Backlog</a></li>
         </ul>
 
-        <div class="reader-sidebar-title" style="margin-top: 15px;">System Properties</div>
+        <div class="reader-sidebar-title" style="margin-top: 15px;">Lab Notes</div>
         <ul class="reader-toc" style="padding: 10px; font-size: 0.8rem; line-height: 1.4; color: #555;">
-            <li><strong>Lab Mode:</strong> Active</li>
-            <li><strong>Status:</strong> Messy but useful</li>
+            <li><strong>Status:</strong> Living document — rough and unverified</li>
             <li><strong>Constraint:</strong> Human voice required</li>
         </ul>
     </aside>
 
     <!-- MAIN DESKTOP CONTENT AREA -->
     <main class="xp-desktop-main" id="main-content">
-
 
         <!-- 1. Hero Intro Window -->
         <section class="xp-window hero-window" id="hero-window" tabindex="0">
@@ -69,7 +67,7 @@
                     <h2>AI Literacy Lab</h2>
                     <p class="subtitle">Essays, resources, source notes, classroom activities, and unfinished thoughts about using AI without outsourcing your judgment.</p>
                     <p class="copy">
-                        "AI literacy is not just knowing which tool to use or which prompt template to memorize. It is learning when to use AI, when not to use it, how to verify it, and how to preserve human judgment, taste, learning, and voice."
+                        AI literacy is not just knowing which tool to use or which prompt template to memorize. It is learning when to use AI, when not to use it, how to verify it, and how to preserve human judgment, taste, learning, and voice.
                     </p>
                 </div>
             </div>
@@ -91,8 +89,8 @@
                 {% include "ai_literacy_lab/essays/same_song.html" %}
 
                 <div style="margin-top: 15px;">
-                    <a href="{{ url_for('ai_literacy_lab.same_song_essay') }}" class="btn-open-essay">
-                        Open essay draft &rarr;
+                    <a href="{{ url_for('ai_literacy_lab.render_page', page_path='same-song-louder-dance') }}" class="btn-open-essay">
+                        Open essay &rarr;
                     </a>
                 </div>
             </div>
@@ -102,7 +100,7 @@
         <div class="xp-desktop-sticky" id="desktop-sticky">
             <div class="xp-sticky-header">Sticky Note</div>
             <div class="xp-sticky-content">
-                “I am a big believer in not letting robots dream for us. Robots cannot reflect the human condition for us. That is a dead end”- Nicolas Cage
+                "I am a big believer in not letting robots dream for us. Robots cannot reflect the human condition for us. That is a dead end"- Nicolas Cage
             </div>
         </div>
 
@@ -111,101 +109,44 @@
             📁 Folder grid in C:\AI_Literacy_Lab
         </h3>
 
-        <!-- Folder Grid -->
+        <!-- Folder Grid — active folders are clickable, draft folders are locked -->
         <div class="folders-grid">
-
-            <!-- Folder 1: Tools & Workflows -->
-            <a href="#tools" class="folder-card" id="tools" onclick="showFolderPreview('tools'); return false;">
+            {% for folder_id, folder in folders.items() %}
+            {% if folder.status == "active" %}
+            <a href="{{ url_for('ai_literacy_lab.render_page', page_path=folder_id) }}"
+               class="folder-card"
+               id="folder-{{ folder_id }}"
+               data-folder="{{ folder_id }}"
+               onclick="showFolderPreview('{{ folder_id }}'); return false;"
+               aria-haspopup="dialog"
+               aria-controls="preview-window">
                 <div class="folder-card-inner">
                     <div class="folder-header">
-                        <span class="folder-icon" aria-hidden="true">📁</span>
-                        <h4 class="folder-title">Tools & Workflows</h4>
+                        <span class="folder-icon" aria-hidden="true">{{ folder.icon }}</span>
+                        <h4 class="folder-title">{{ folder.title }}</h4>
                     </div>
-                    <p class="folder-desc">How I use chatbots, coding agents, research tools, and presentation tools without letting the tool become the thinker.</p>
+                    <p class="folder-desc">{{ folder.description }}</p>
                 </div>
             </a>
-
-            <!-- Folder 2: Research & Source Grounding -->
-            <a href="#research" class="folder-card" id="research" onclick="showFolderPreview('research'); return false;">
+            {% else %}
+            <div class="folder-card draft"
+                 id="folder-{{ folder_id }}"
+                 title="In progress — content coming soon"
+                 aria-label="{{ folder.title }} — in progress"
+                 aria-disabled="true">
                 <div class="folder-card-inner">
                     <div class="folder-header">
-                        <span class="folder-icon" aria-hidden="true">📁</span>
-                        <h4 class="folder-title">Research & Source Grounding</h4>
+                        <span class="folder-icon" aria-hidden="true">{{ folder.icon }}</span>
+                        <h4 class="folder-title">{{ folder.title }}</h4>
                     </div>
-                    <p class="folder-desc">Deep research, source-grounded AI, verification habits, and the difference between using AI to understand a source vs. instead of reading it.</p>
+                    <p class="folder-desc">{{ folder.description }}</p>
                 </div>
-            </a>
-
-            <!-- Folder 3: Risks & Elephants in the Room -->
-            <a href="#risks" class="folder-card" id="risks" onclick="showFolderPreview('risks'); return false;">
-                <div class="folder-card-inner">
-                    <div class="folder-header">
-                        <span class="folder-icon" aria-hidden="true">📁</span>
-                        <h4 class="folder-title">Risks & Elephants</h4>
-                    </div>
-                    <p class="folder-desc">Hallucinations, bias, sycophancy, AI slop, ed-tech wrappers, IP, labor, data centers, and the hidden costs of scale.</p>
-                </div>
-            </a>
-
-            <!-- Folder 4: Education, Cheating & AI Literacy -->
-            <a href="#education" class="folder-card" id="education" onclick="showFolderPreview('education'); return false;">
-                <div class="folder-card-inner">
-                    <div class="folder-header">
-                        <span class="folder-icon" aria-hidden="true">📁</span>
-                        <h4 class="folder-title">Education & AI</h4>
-                    </div>
-                    <p class="folder-desc">Process, motivation, detection, assignment design, and helping students learn with tools instead of outsourcing thought.</p>
-                </div>
-            </a>
-
-            <!-- Folder 5: Writing, Feedback & Creativity -->
-            <a href="#writing" class="folder-card" id="writing" onclick="showFolderPreview('writing'); return false;">
-                <div class="folder-card-inner">
-                    <div class="folder-header">
-                        <span class="folder-icon" aria-hidden="true">📁</span>
-                        <h4 class="folder-title">Writing & Feedback</h4>
-                    </div>
-                    <p class="folder-desc">Writing as thinking, AI feedback, voice, taste, slop, brainstorming, and why preserving the human part still matters.</p>
-                </div>
-            </a>
-
-            <!-- Folder 6: Source Bank -->
-            <a href="#sources" class="folder-card" id="sources" onclick="showFolderPreview('sources'); return false;">
-                <div class="folder-card-inner">
-                    <div class="folder-header">
-                        <span class="folder-icon" aria-hidden="true">📁</span>
-                        <h4 class="folder-title">Source Bank</h4>
-                    </div>
-                    <p class="folder-desc">Books, papers, articles, quotes, citation placeholders, and claims that need to be verified before publication.</p>
-                </div>
-            </a>
-
-            <!-- Folder 7: Personal Experience Bank -->
-            <a href="#experience" class="folder-card" id="experience" onclick="showFolderPreview('experience'); return false;">
-                <div class="folder-card-inner">
-                    <div class="folder-header">
-                        <span class="folder-icon" aria-hidden="true">📁</span>
-                        <h4 class="folder-title">Experience Bank</h4>
-                    </div>
-                    <p class="folder-desc">Stories from coding, teaching, early AI experiments, student conversations, and learning the hard way.</p>
-                </div>
-            </a>
-
-            <!-- Folder 8: Backlog -->
-            <a href="#backlog" class="folder-card" id="backlog" onclick="showFolderPreview('backlog'); return false;">
-                <div class="folder-card-inner">
-                    <div class="folder-header">
-                        <span class="folder-icon" aria-hidden="true">📁</span>
-                        <h4 class="folder-title">Lab Backlog</h4>
-                    </div>
-                    <p class="folder-desc">Future pages, research gaps, citation cleanup, tool reviews, and ideas that are not ready yet but should not be lost.</p>
-                </div>
-            </a>
-
+            </div>
+            {% endif %}
+            {% endfor %}
         </div>
 
-
-        <!-- Dynamic Folder Preview Window (Created in JS when folders are clicked) -->
+        <!-- Dynamic Folder Preview Window -->
         <section class="xp-window hidden" id="preview-window" tabindex="0" style="margin-top: 15px;">
             <div class="xp-window-titlebar">
                 <div class="xp-window-title" id="preview-window-title">
@@ -218,13 +159,9 @@
             </div>
             <div class="xp-window-body">
                 <h3 id="preview-title" style="color: var(--xp-blue-dark); margin-bottom: 8px;">Folder Title</h3>
-                <div id="preview-body" style="margin-bottom: 15px;">Folder Content</div>
-                <div style="font-size: 0.8rem; background: #fdfbe7; border: 1px solid #e0dfc3; padding: 10px; border-radius: 3px; margin-top: 15px; color: #333; font-family: var(--font-xp);">
-                    📌 <strong>Working Notes:</strong> Showing live notes, citations, and reflections synced from the AI Literacy Lab's organized workspace database.
-                </div>
+                <div id="preview-body">Folder Content</div>
             </div>
         </section>
-
 
     </main>
 
@@ -244,7 +181,6 @@
         <button class="xp-task-tab active" id="tab-essay-window" data-target="essay-window">
             <span>🗎</span> Same_Song_Louder...
         </button>
-
         <button class="xp-task-tab hidden" id="tab-preview-window" data-target="preview-window">
             <span>📁</span> Folder Preview
         </button>
@@ -342,7 +278,9 @@
 
 {% block extra_js %}
 <script>
-    // Initialize body class and view mode on load
+    // Lab folder metadata — embedded from server, no AJAX needed
+    const LAB_METADATA = {{ folders | tojson }};
+
     document.addEventListener("DOMContentLoaded", function() {
         document.body.classList.add('ai-lab-body');
         document.body.classList.add('mode-notebook');
@@ -389,10 +327,12 @@
 
                 if (isClose) {
                     targetWin.classList.add("hidden");
-                    document.getElementById(`tab-${targetId}`).classList.add("hidden");
+                    const tab = document.getElementById(`tab-${targetId}`);
+                    if (tab) tab.classList.add("hidden");
                 } else if (isMin) {
                     targetWin.classList.add("hidden");
-                    document.getElementById(`tab-${targetId}`).classList.remove("active");
+                    const tab = document.getElementById(`tab-${targetId}`);
+                    if (tab) tab.classList.remove("active");
                 }
             });
         });
@@ -402,7 +342,6 @@
             tab.addEventListener("click", function() {
                 const targetId = this.getAttribute("data-target");
                 const targetWin = document.getElementById(targetId);
-                const tabId = this.id;
 
                 if (targetWin.classList.contains("hidden")) {
                     targetWin.classList.remove("hidden");
@@ -413,7 +352,6 @@
                         targetWin.classList.add("hidden");
                         this.classList.remove("active");
                     } else {
-                        // Bring to front (focus)
                         this.classList.add("active");
                         targetWin.focus();
                     }
@@ -429,15 +367,11 @@
         btnNotebook.addEventListener("click", function() {
             document.body.classList.remove('mode-reader');
             document.body.classList.add('mode-notebook');
-
             btnNotebook.classList.add('active');
             btnNotebook.setAttribute('aria-pressed', 'true');
             btnReader.classList.remove('active');
             btnReader.setAttribute('aria-pressed', 'false');
-
             sidebar.classList.add("hidden");
-
-            // Show sticky note & grid header
             document.getElementById("desktop-sticky").classList.remove("hidden");
             document.getElementById("folders-header").classList.remove("hidden");
         });
@@ -445,15 +379,12 @@
         btnReader.addEventListener("click", function() {
             document.body.classList.remove('mode-notebook');
             document.body.classList.add('mode-reader');
-
             btnReader.classList.add('active');
             btnReader.setAttribute('aria-pressed', 'true');
             btnNotebook.classList.remove('active');
             btnNotebook.setAttribute('aria-pressed', 'false');
-
             sidebar.classList.remove("hidden");
-
-            // Restore all windows for readable view (in case they were closed/minimized)
+            // Restore all windows for readable linearized view
             document.querySelectorAll(".xp-window").forEach(win => {
                 win.classList.remove("hidden");
             });
@@ -473,206 +404,54 @@
         let minutes = now.getMinutes();
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours ? hours : 12;
         minutes = minutes < 10 ? '0' + minutes : minutes;
         clockEl.textContent = `${hours}:${minutes} ${ampm}`;
     }
 
-    // Simulated Folder Notes database from Organized Workspace Notes
-    const folderNotes = {
-        tools: {
-            title: "Tools & Workflows",
-            htmlContent: `
-                <div style="font-size: 0.95rem; line-height: 1.6; color: #000; font-family: var(--font-xp);">
-                    <p style="margin-bottom: 12px; font-weight: bold; color: #555; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-                        "AI as re-engagement, not first contact. Chatbots, coding tools, and research synthesis work best when you write the first draft and read the primary source first."
-                    </p>
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">💻 Chatbots: ChatGPT, Gemini & Claude</h4>
-                    <p style="margin-bottom: 12px;">I use chatbots for editing, feedback, voice alignment, and quick questions. However, I adhere to a strict rule: <strong>always write the first draft of an email or text yourself</strong>, and read the PDF before generating a summary. Careless use of AI tools is like handling a loaded gun—you risk major fallout beyond your own foot.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🚀 Coding Tools & Agentic Development</h4>
-                    <p style="margin-bottom: 12px;"><strong>The IDE became a conversation.</strong> I was an early adopter of Cursor. Recently, I switched to Google's <em>Antigravity</em> harness—its ability to run the application, test execution, and feed frontend errors back into the model autonomously is surreal. For daily work, Gemini 3.5 Flash is great for tasks up to an epic or three.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🔍 Research & Learning Tools</h4>
-                    <p style="margin-bottom: 12px;"><strong>Deep Research:</strong> OpenAI's Deep Research feature is powerful for synthesis, but it works best when the world already has data (e.g., Kansas City tech landscape vs obscure Yahtzee history).<br>
-                    <strong>GoogleLM Audio:</strong> Dynamic podcast generation is a killer feature to <em>re-engage</em> with dry or old material. However, I avoid using it as a first contact with a text. Slides are fine for quick coworker updates, but not for big presentations.</p>
-
-                    <div style="background: #f0f4f8; border-left: 4px solid var(--xp-blue-light); padding: 10px; margin-top: 15px; font-size: 0.85rem;">
-                        <strong>📖 Recommended Reading:</strong> <em>Co-Intelligence</em> by Ethan Mollick; <em>Teaching with AI</em> by José Antonio Bowen.
-                    </div>
-                </div>
-            `
-        },
-        research: {
-            title: "Research & Source Grounding",
-            htmlContent: `
-                <div style="font-size: 0.95rem; line-height: 1.6; color: #000; font-family: var(--font-xp);">
-                    <p style="margin-bottom: 12px; font-weight: bold; color: #555; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-                        "AI research tools are powerful when interrogating sources and synthesizing across documents, but dangerous when replacing domain judgment."
-                    </p>
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">⚠️ Factual Limits & Bullshit Management</h4>
-                    <p style="margin-bottom: 12px;">On narrow, well-known facts, strong models perform well. But on compound, long-tail, or dynamic factual questions, literature reports failure and hallucination rates in the <strong>tens of percent</strong>. The more important the task, the more I verify. I've lived my whole life navigating a world where useful information came from people who also occasionally spewed bullshit; critical thinking is always required.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">📂 Source-Grounded AI & RAG</h4>
-                    <p style="margin-bottom: 12px;">Hallucinations are rarely a problem if you provide direct source data, such as a journal article, chapter, or Excel sheet. Retrieval-Augmented Generation (RAG) is an under-focused aspect of this technology that is rapidly improving, effectively turning PDFs into a <em>"smart textbook"</em> (Olson et al., 2025).</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🛡️ The SIFT Method for Verification</h4>
-                    <p style="margin-bottom: 12px;">Caulfield's SIFT method is a mainstay of digital literacy that should be applied to AI-generated claims:
-                        <ul style="margin-left: 20px; margin-bottom: 10px;">
-                            <li><strong>S</strong>top.</li>
-                            <li><strong>I</strong>nvestigate the source.</li>
-                            <li><strong>F</strong>ind better coverage.</li>
-                            <li><strong>T</strong>race claims back to the original context.</li>
-                        </ul>
-                    </p>
-                </div>
-            `
-        },
-        risks: {
-            title: "Risks & Elephants in the Room",
-            htmlContent: `
-                <div style="font-size: 0.95rem; line-height: 1.6; color: #000; font-family: var(--font-xp);">
-                    <p style="margin-bottom: 12px; font-weight: bold; color: #555; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-                        "Hallucinations, bias, and sycophancy are interaction problems, not just technical bugs. AI slop threatens human trust, while ed-tech wrappers increase API dependency."
-                    </p>
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🏗️ Ed-Tech Wrappers & API Economics</h4>
-                    <p style="margin-bottom: 12px;">The number of specialized educational AI tools is exploding. Many of them are just simple wrappers sending API queries with background system prompts. This creates a dangerous dependency: as API costs shift or increase, wrapper tool costs will spike, impacting school budgets.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">📜 IP Law & Wealth Monopolies</h4>
-                    <p style="margin-bottom: 12px;">I find the argument that intellectual property rights shouldn't exist convincing; knowledge should be open and unbound. The fact that tech companies scraped public data to train these models doesn't bother me. What worries me is the risk of wealth monopolies—where only a few massive corporations own the infrastructure to run these models.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🌊 Environmental Costs & Slop</h4>
-                    <p style="margin-bottom: 12px;"><strong>Environmental Impact:</strong> The hidden cost of scaling: data centers, energy grid strain, and massive water cooling needs.<br>
-                    <strong>AI Slop & Trust:</strong> Public trust is degraded by low-effort AI slop. Studies show our perception changes when we know an email is AI-generated: we trust it less (Liu et al., 2022).</p>
-                </div>
-            `
-        },
-        education: {
-            title: "Education, Cheating & AI Literacy",
-            htmlContent: `
-                <div style="font-size: 0.95rem; line-height: 1.6; color: #000; font-family: var(--font-xp);">
-                    <p style="margin-bottom: 12px; font-weight: bold; color: #555; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-                        "Cheating is the obvious problem, but not the deepest one. AI exposes structural issues: busywork, product-only assessment, and fragile motivation."
-                    </p>
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🎓 Cheating & Motivation</h4>
-                    <p style="margin-bottom: 12px;">AI has collapsed the friction of cutting corners. Newton & Essex (2023) show that the top reason for cheating is simply the <em>opportunity</em> to do so. However, AI detection is an unsafe trap; it is just as easy for faculty to build false accusations against students, disproportionately flagging less affluent students using free, basic paraphrasers.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🎯 Personal Story: calc_1_failing.log</h4>
-                    <p style="margin-bottom: 12px; background: #fdfbe7; border: 1px solid #e0dfc3; padding: 10px;">
-                        <em>"During college, health issues interfered with my ability to make classes, and I turned to Chegg and Wolfram Alpha. At first, I used them as shortcuts, and I failed Calc 1 repeatedly. Eventually, I changed my mindset: I did the work first, checked the answer after, and asked the tool about divergences. The tools helped me learn, but the temptation to cut the corner is always there." (Reflecting Glass & Kang, 2020)</em>
-                    </p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🛠️ Classroom AI Literacy Activities</h4>
-                    <ul style="margin-left: 20px; margin-bottom: 10px;">
-                        <li><strong>Practice Volley:</strong> Students compare divergent prompts for effectiveness.</li>
-                        <li><strong>Fact Check Relay:</strong> Students verify AI claims across multiple primary sources.</li>
-                        <li><strong>Slow Motion:</strong> Students document their prompting process, not just final output.</li>
-                        <li><strong>Make the Call:</strong> Analyze text samples to defend if they were written by human or AI.</li>
-                    </ul>
-                </div>
-            `
-        },
-        writing: {
-            title: "Writing, Feedback & Creativity",
-            htmlContent: `
-                <div style="font-size: 0.95rem; line-height: 1.6; color: #000; font-family: var(--font-xp);">
-                    <p style="margin-bottom: 12px; font-weight: bold; color: #555; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-                        "AI is useful for generating options and feedback, but creativity requires taste and point of view. Writing should not be reduced to output because writing is also thinking."
-                    </p>
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🎨 Creativity vs. Brainstorming</h4>
-                    <p style="margin-bottom: 12px;">Creativity is not just a high volume of ideas. AI can generate infinite taglines, but it lacks <strong>taste</strong>—the unique vision that comes from merging life experiences and having opinions. Because of its statistical architecture, AI defaults to average outputs. It won't think outside the box without deep, structured prompting.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">✍️ Writing is Thinking</h4>
-                    <p style="margin-bottom: 12px;">Writing is a craft, and it is a cognitive strategy that promotes processing. One value of writing is being alone with your thoughts. If we only assess outcomes, students will delegate writing to AI. The fully AI-resistant assignment is a fiction, so we must teach students to edit AI drafts without losing their voice.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">💬 Feedback Frameworks</h4>
-                    <p style="margin-bottom: 12px;">AI feedback on writing is quite similar to human feedback (Steiss et al., 2024), but students must learn when to reject it. I recommend the <strong>PAIRR Project</strong> (Sperber et al., 2024):
-                        <br><em>Peer feedback (P) + AI feedback (AI) &rarr; Reflect (R) &rarr; Review (R) &rarr; Revise.</em>
-                    </p>
-                </div>
-            `
-        },
-        sources: {
-            title: "Source Bank",
-            htmlContent: `
-                <div style="font-size: 0.95rem; line-height: 1.6; color: #000; font-family: var(--font-xp);">
-                    <p style="margin-bottom: 12px; font-weight: bold; color: #555; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-                        "A collection of research, papers, and claims tracked during the creation of this lab."
-                    </p>
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">📚 Key Citations & Book Notes</h4>
-                    <ul style="margin-left: 20px; margin-bottom: 12px;">
-                        <li><strong>Bonawitz et al. (2010):</strong> <em>"Teaching a child how to use a toy limits how they use it."</em> Direct pedagogy can restrict exploratory learning.</li>
-                        <li><strong>Newton & Essex (2023):</strong> Academic misconduct opportunities and empirical cheating data.</li>
-                        <li><strong>Sperber et al. (2024):</strong> The PAIRR Project feedback framework.</li>
-                        <li><strong>Steiss et al. (2024):</strong> Efficacy and similarities of AI feedback vs. human instructor feedback.</li>
-                        <li><strong>Darvish et al. (2024):</strong> Students using AI as shortcuts avoid the unpleasantness of cognitive effort.</li>
-                    </ul>
-                    <p style="font-size: 0.8rem; font-style: italic; color: var(--xp-text-muted);">Note: All studies are currently in the verification pipeline. Do not cite publicly until page numbers and publication details are cross-referenced.</p>
-                </div>
-            `
-        },
-        experience: {
-            title: "Personal Experience Bank",
-            htmlContent: `
-                <div style="font-size: 0.95rem; line-height: 1.6; color: #000; font-family: var(--font-xp);">
-                    <p style="margin-bottom: 12px; font-weight: bold; color: #555; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-                        "Lived examples that ground these reflections in reality."
-                    </p>
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🎮 Early Board Game AI (Undergrad Project)</h4>
-                    <p style="margin-bottom: 12px;">My undergraduate research project was building a feed-forward neural network from scratch to play <em>Mū Tōrere</em>, an ancient New Zealand board game. I learned by coding backpropagation by hand, which cemented my stance in the "it is math, but math is powerful" camp.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🏫 Classroom Turing Tests (2018-2019)</h4>
-                    <p style="margin-bottom: 12px;">In my first years teaching, I ran Turing tests with high schoolers, feeding half of 20 questions to a basic chatbot and half to friends/family. Even with rough 2018 bots, only a handful of students could guess which was which with any statistical confidence.</p>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🤖 The CS Teaching Assistant Trial</h4>
-                    <p style="margin-bottom: 12px;">In a 2018 college class of 400 computer science students, they were told 2 of the 15 TAs were bots. Only 10% guessed the actual bot, but 50% flagged a very friendly, personable human TA as "too bot-like to be real."</p>
-                </div>
-            `
-        },
-        backlog: {
-            title: "Lab Backlog",
-            htmlContent: `
-                <div style="font-size: 0.95rem; line-height: 1.6; color: #000; font-family: var(--font-xp);">
-                    <p style="margin-bottom: 12px; font-weight: bold; color: #555; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-                        "Tasks, verification logs, and future pages to maintain quality and avoid slop."
-                    </p>
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">📝 Content Roadmap</h4>
-                    <ul style="margin-left: 20px; margin-bottom: 12px;">
-                        <li><strong>IDE Article:</strong> <em>"Coding With Agents: Context, Harnesses, and Tests"</em>.</li>
-                        <li><strong>a11y/Equity Paper:</strong> <em>"API wrappers, detector traps, and the cost of paraphrasing software for poor schools"</em>.</li>
-                        <li><strong>Ethics Post:</strong> <em>"Data Centers, cooling water, and the electrical grid strain"</em>.</li>
-                    </ul>
-
-                    <h4 style="color: var(--xp-blue-dark); margin-top: 15px; margin-bottom: 5px;">🔍 Verification & Fact-Checking Logs</h4>
-                    <ul style="margin-left: 20px; margin-bottom: 12px;">
-                        <li>Verify page numbers for Steiss et al. (2024).</li>
-                        <li>Double-check Cursor's status post-Spacex acquisition.</li>
-                        <li>Find specific model constraints for Gemini 3.5 Flash context scaling.</li>
-                    </ul>
-                </div>
-            `
-        }
-    };
-
-    // Open dynamic preview of a folder section
+    // Show folder preview — reads from embedded metadata, no network call needed
     function showFolderPreview(folderId) {
-        const data = folderNotes[folderId];
-        if (!data) return;
+        const folder = LAB_METADATA[folderId];
+        if (!folder) {
+            // Fallback: navigate directly if metadata is missing
+            window.location.href = `/ai-literacy-lab/${folderId}`;
+            return;
+        }
 
-        // Toggle/unhide the preview window
         const previewWin = document.getElementById("preview-window");
         const previewTab = document.getElementById("tab-preview-window");
+        const previewTitle = document.getElementById("preview-title");
+        const previewBody = document.getElementById("preview-body");
+        const previewWinTitleSpan = document.getElementById("preview-window-title").querySelector("span");
 
-        document.getElementById("preview-title").textContent = data.title;
-        document.getElementById("preview-body").innerHTML = data.htmlContent;
-        document.getElementById("preview-window-title").querySelector("span").textContent = `📁 Folder: ${data.title}`;
+        // Populate the preview window
+        previewTitle.textContent = folder.title;
+        previewWinTitleSpan.textContent = `📁 ${folder.title}`;
 
+        previewBody.innerHTML = `
+            <p style="font-style: italic; color: #333; border-left: 3px solid var(--xp-blue-dark);
+                       padding: 10px 12px; background: #f7f9fd; border-radius: 3px;
+                       font-family: var(--font-xp); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+                ${folder.summary}
+            </p>
+            <div style="display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px dotted #ccc;">
+                <a href="/ai-literacy-lab/${folderId}" class="btn-open-essay" style="font-size: 0.9rem;">
+                    📂 Open full page &rarr;
+                </a>
+            </div>
+            <p style="font-size: 0.78rem; color: #777; margin-top: 14px; font-family: var(--font-xp);
+                       font-style: italic; border-top: 1px solid #eee; padding-top: 10px;">
+                ⚠ Living document — notes are rough drafts, not finished articles.
+            </p>
+        `;
+
+        // Show the preview window and taskbar tab
         previewWin.classList.remove("hidden");
         previewTab.classList.remove("hidden");
         previewTab.classList.add("active");
 
-        // Scroll to it
-        previewWin.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Scroll to and focus
+        previewWin.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         previewWin.focus();
     }
 

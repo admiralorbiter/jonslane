@@ -25,17 +25,19 @@ Third-party API stub:
 
 from __future__ import annotations
 
-import re
-import unicodedata
-from datetime import datetime, timezone
-import threading
-import urllib.parse
-import tempfile
 import os
+import re
+import tempfile
+import threading
+import unicodedata
+import urllib.parse
+from datetime import datetime, timezone
+
 import requests
 
 try:
     import librosa
+
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
@@ -59,6 +61,7 @@ _CONFIDENCE_PRIORITY = [
 # ---------------------------------------------------------------------------
 # Text normalization for fuzzy title/artist matching
 # ---------------------------------------------------------------------------
+
 
 def _normalize_for_matching(text: str) -> str:
     """Normalize a title or artist string for fuzzy comparison.
@@ -127,6 +130,7 @@ def _artists_match(a: str, b: str) -> bool:
 # Core resolver
 # ---------------------------------------------------------------------------
 
+
 def resolve_bpm_for_track(track_identity: TrackIdentity) -> TrackTempoAnnotation | None:
     """Return the highest-confidence BPM annotation for a given TrackIdentity.
 
@@ -157,6 +161,7 @@ def resolve_bpm_for_track(track_identity: TrackIdentity) -> TrackTempoAnnotation
 # ---------------------------------------------------------------------------
 # Track identity upsert with auto reference-track lookup
 # ---------------------------------------------------------------------------
+
 
 def get_or_create_track_identity(track_data: dict) -> TrackIdentity:
     """Upsert a TrackIdentity from parsed Spotify track data.
@@ -207,10 +212,11 @@ def get_or_create_track_identity(track_data: dict) -> TrackIdentity:
         matched = _seed_from_reference_tracks(identity)
         if not matched and HAS_LIBROSA:
             from flask import current_app
+
             app = current_app._get_current_object()
             t = threading.Thread(
                 target=analyze_track_in_background,
-                args=(app, identity.id, identity.artist, identity.title)
+                args=(app, identity.id, identity.artist, identity.title),
             )
             t.daemon = True
             t.start()
@@ -248,9 +254,7 @@ def _seed_from_reference_tracks(identity: TrackIdentity) -> TrackTempoAnnotation
 
     best_match = None
     for ref in all_refs:
-        if _titles_match(identity.title, ref.title) and _artists_match(
-            identity.artist, ref.artist
-        ):
+        if _titles_match(identity.title, ref.title) and _artists_match(identity.artist, ref.artist):
             best_match = ref
             break
 
@@ -266,7 +270,7 @@ def _seed_from_reference_tracks(identity: TrackIdentity) -> TrackTempoAnnotation
         source="reference_track_db",
         needs_review=False,
         notes=f"Auto-matched from ReferenceTrack id={best_match.id}: "
-              f"'{best_match.title}' by '{best_match.artist}'",
+        f"'{best_match.title}' by '{best_match.artist}'",
         created_at=datetime.now(timezone.utc),
     )
     db.session.add(annotation)
@@ -278,6 +282,7 @@ def _seed_from_reference_tracks(identity: TrackIdentity) -> TrackTempoAnnotation
 # ---------------------------------------------------------------------------
 # Machine estimate ingestion (from client-side iTunes beat detector)
 # ---------------------------------------------------------------------------
+
 
 def create_machine_estimate(
     track_identity: TrackIdentity,
@@ -302,7 +307,7 @@ def create_machine_estimate(
     Args:
         track_identity: The TrackIdentity this estimate belongs to.
         estimated_bpm: Raw BPM value from the detector (float).
-        confidence_score: 0.0–1.0 score from the autocorrelation peak ratio.
+        confidence_score: 0.0-1.0 score from the autocorrelation peak ratio.
         itunes_track_id: iTunes trackId for auditing (optional).
         itunes_preview_url: Source preview URL used for analysis (optional).
 
@@ -343,10 +348,14 @@ def create_machine_estimate(
 
     if existing_machine:
         # Only update if new confidence is higher
-        old_priority = _CONFIDENCE_PRIORITY.index(existing_machine.confidence) \
-            if existing_machine.confidence in _CONFIDENCE_PRIORITY else 99
-        new_priority = _CONFIDENCE_PRIORITY.index(confidence) \
-            if confidence in _CONFIDENCE_PRIORITY else 99
+        old_priority = (
+            _CONFIDENCE_PRIORITY.index(existing_machine.confidence)
+            if existing_machine.confidence in _CONFIDENCE_PRIORITY
+            else 99
+        )
+        new_priority = (
+            _CONFIDENCE_PRIORITY.index(confidence) if confidence in _CONFIDENCE_PRIORITY else 99
+        )
         if new_priority <= old_priority:
             existing_machine.canonical_bpm = estimated_bpm
             existing_machine.alternate_bpms = alternate_bpms
@@ -374,6 +383,7 @@ def create_machine_estimate(
 # ---------------------------------------------------------------------------
 # Grading
 # ---------------------------------------------------------------------------
+
 
 def compute_grade(
     guessed_bpm: float,
@@ -439,7 +449,8 @@ def compute_grade(
 # Background Librosa analysis
 # ---------------------------------------------------------------------------
 
-def analyze_track_in_background(app, track_identity_id: int, artist: str, title: str):
+
+def analyze_track_in_background(app, track_identity_id: int, artist: str, title: str):  # noqa: C901
     """Background task to query iTunes, download preview, and analyze with Librosa."""
     if not HAS_LIBROSA:
         return
@@ -450,7 +461,7 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
         query = f"{artist} {clean_title}"
         encoded_query = urllib.parse.quote(query)
         search_url = f"https://itunes.apple.com/search?term={encoded_query}&media=music&limit=1"
-        
+
         try:
             r = requests.get(search_url, timeout=5)
             if r.status_code != 200:
@@ -459,31 +470,35 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
             results = data.get("results")
             if not results:
                 return
-            
+
             result = results[0]
             preview_url = result.get("previewUrl")
             itunes_id = str(result.get("trackId"))
-            
+
             if not preview_url:
                 return
 
             # Apple CDN domain check
             parsed_url = urllib.parse.urlparse(preview_url)
             if not parsed_url.netloc.endswith(".apple.com"):
-                app.logger.warning("Rejected iTunes preview URL with non-Apple domain: %s", preview_url)
+                app.logger.warning(
+                    "Rejected iTunes preview URL with non-Apple domain: %s", preview_url
+                )
                 return
-                
+
             # Download preview with 10MB limit
             preview_resp = requests.get(preview_url, stream=True, timeout=10)
             if preview_resp.status_code != 200:
                 return
-                
+
             # Check Content-Length header first
             cl = preview_resp.headers.get("content-length")
             if cl and int(cl) > 10 * 1024 * 1024:
-                app.logger.warning("Rejected iTunes preview due to content-length exceeding 10MB: %s", cl)
+                app.logger.warning(
+                    "Rejected iTunes preview due to content-length exceeding 10MB: %s", cl
+                )
                 return
-                
+
             # Download chunks with size limit
             content = b""
             for chunk in preview_resp.iter_content(chunk_size=65536):
@@ -491,31 +506,36 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
                 if len(content) > 10 * 1024 * 1024:
                     app.logger.warning("Aborted download: iTunes preview exceeds 10MB limit.")
                     return
-                
+
             # Write to temp file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp:
                 tmp.write(content)
                 tmp_path = tmp.name
-                
+
             try:
                 # Load and analyze
                 y, sr = librosa.load(tmp_path, sr=None)
                 tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
                 if hasattr(tempo, "item"):
                     tempo = tempo.item()
-                
+
                 estimated_bpm = round(float(tempo), 1)
                 if not (40.0 <= estimated_bpm <= 300.0):
                     return
-                    
+
                 # Chroma key detection using KS pitch-class profile matching
                 import numpy as np
+
                 y_harmonic = librosa.effects.harmonic(y)
                 chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr)
                 chroma_mean = chroma.mean(axis=1)
 
-                major_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-                minor_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+                major_profile = np.array(
+                    [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
+                )
+                minor_profile = np.array(
+                    [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
+                )
 
                 # Normalize profiles
                 major_profile = (major_profile - np.mean(major_profile)) / np.std(major_profile)
@@ -533,10 +553,10 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
                 for key_candidate in range(12):
                     major_rotated = np.roll(major_profile, key_candidate)
                     corr_major = np.corrcoef(chroma_mean, major_rotated)[0, 1]
-                    
+
                     minor_rotated = np.roll(minor_profile, key_candidate)
                     corr_minor = np.corrcoef(chroma_mean, minor_rotated)[0, 1]
-                    
+
                     if corr_major > best_corr:
                         best_corr = corr_major
                         best_key = key_candidate
@@ -548,7 +568,7 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
 
                 estimated_key = best_key
                 estimated_mode = best_mode
-                
+
                 def _to_camelot(k: int, m: int) -> str:
                     if m == 1:
                         num = (k * 7 + 8) % 12
@@ -572,7 +592,7 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
                         half_bpm = round(estimated_bpm / 2.0, 1)
                         double_bpm = round(estimated_bpm * 2.0, 1)
                         alternate_bpms = [half_bpm, double_bpm]
-                        
+
                         annotation = TrackTempoAnnotation(
                             track_id=identity.id,
                             canonical_bpm=estimated_bpm,
@@ -586,7 +606,7 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
                             musical_key=estimated_key,
                             key_mode=estimated_mode,
                             camelot_key=camelot_key,
-                            key_confidence=key_confidence
+                            key_confidence=key_confidence,
                         )
                         db.session.add(annotation)
                         db.session.commit()
@@ -601,7 +621,7 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
             finally:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
-                    
+
         except Exception as e:
             # Safe fail in background thread to prevent thread crash propagation
             app.logger.error("Error analyzing track in background: %s", str(e), exc_info=True)
@@ -613,10 +633,10 @@ def analyze_track_in_background(app, track_identity_id: int, artist: str, title:
             db.session.remove()
 
 
-
 # ---------------------------------------------------------------------------
 # Third-party API stub
 # ---------------------------------------------------------------------------
+
 
 def _fetch_from_metadata_api(track_identity: TrackIdentity) -> TrackTempoAnnotation | None:
     """Stub: query a third-party BPM metadata service (e.g. GetSongBPM).

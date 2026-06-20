@@ -1,0 +1,73 @@
+{% extends "ai_literacy_lab/page_wrapper.html" %}
+
+{% block page_title %}Tools & Workflows{% endblock %}
+{% block page_filename %}tools_overview.txt{% endblock %}
+{% block page_heading %}Tools & Workflows: Cautious & Thoughtful Usage{% endblock %}
+{% block page_meta %}Updated: June 2026 | Folder: C:\AI_Literacy_Lab\Tools{% endblock %}
+
+{% block page_content %}
+<p>
+    This directory contains notes on how I use chatbots, coding agents, deep research tools, and other AI utilities without letting the machine replace human agency. The guiding principle runs through all of it:
+</p>
+
+<blockquote>
+    "Assume that I'm being cautious and thoughtful about usage, such as always reading the PDF before generating a summary or always writing the first draft of an email. Assume the worst about your laziest colleague. Like gun ownership, there will be good and bad usage. And like a gun, in the right situation you aren't just risking your own foot, but bigger fallout with inappropriate or thoughtless use."
+</blockquote>
+
+<h3>Chatbots: ChatGPT / Gemini / Claude</h3>
+<p>
+    Chatbots like ChatGPT, Gemini, and Claude are powerful assistants, but they must be used as partners rather than thought-replacements. I divide my usage into two patterns:
+</p>
+<ul>
+    <li>
+        <strong>Direct Editing (High Risk):</strong> Asking the model to "rewrite this email to sound more professional" or "polish this section." This is risky because the model often strips away your authentic voice, replacing it with corporate boilerplate — AI slop.
+    </li>
+    <li>
+        <strong>Indirect Editing (Low Risk / High Value):</strong> Asking the model for specific, actionable feedback rather than letting it rewrite your text. For example: <em>"Review this essay. Point out three areas where the argument feels weak, and suggest how I can make the transition between paragraphs smoother."</em>
+    </li>
+</ul>
+<p>
+    I also use chatbots for <strong>feedback cycles</strong> (feeding a draft to Claude to play peer reviewer), <strong>voice alignment</strong> (providing writing samples and style notes before any AI-assisted drafting), and <strong>quick factual queries</strong> — though key facts, imports, and citations always get manually verified.
+</p>
+<p>
+    Summaries deserve a hard rule of their own: <strong>always read the primary document or PDF first.</strong> Using AI summaries as a substitute for first contact with a text creates fragile knowledge and leaves you vulnerable to hallucinated claims presented with total confidence.
+</p>
+
+<h3>Coding: Antigravity vs. Cursor vs. Claude Code</h3>
+<p>
+    Coding with large language models has evolved from simple copy-paste autocomplete into full agentic development. The key distinction is between two mindsets:
+</p>
+<ul>
+    <li>
+        <strong>The Coder (AI Assistant):</strong> The AI does the heavy lifting — writing code, scanning directories, running commands, finding test failures. It is incredibly fast but lacks contextual understanding, architectural foresight, and critical taste.
+    </li>
+    <li>
+        <strong>The Editor (Human Driver):</strong> The human acts as the orchestrator. Your job is not to type every character, but to read every line, review the design, run the test suites, and enforce architectural hygiene.
+    </li>
+</ul>
+<p>
+    Blindly running AI-generated scripts is exactly the "gun aimed at your own foot" scenario — except the fallout hits your codebase, your users, and your colleagues. A lazy coder who acts as a passive conduit for AI output will introduce security vulnerabilities, performance bottlenecks, and unmaintainable technical debt.
+</p>
+<p>
+    Three tools I use regularly, compared:
+</p>
+<ul>
+    <li><strong>Cursor:</strong> Excellent for autocomplete, in-line edits, and multi-file code generation. Relies heavily on the user manually reviewing, accepting, and running code before anything lands in the project.</li>
+    <li><strong>Antigravity (Google):</strong> A massive leap forward. Its ability to run development servers, execute tests, capture traceback logs, and recursively feed frontend errors back into the model autonomously is surreal. It acts as an autonomous pair programmer rather than just an autocompleter — which makes the Editor mindset even more critical.</li>
+    <li><strong>Claude Code:</strong> Terminal-based, highly efficient for targeted refactors, shell commands, and quick git commits. Very direct — no UI, just results.</li>
+</ul>
+
+<h3>Research: Deep Research &amp; NotebookLM</h3>
+<p>
+    AI research tools represent a major shift in how we discover, synthesize, and verify complex information. My notes focus on two primary workflows:
+</p>
+<p>
+    <strong>OpenAI Deep Research</strong> performs agentic multi-step web searches, reading dozens of articles, tracing claims, and producing comprehensive reports. It is highly effective for synthesizing information when the web already contains rich data — assessing regional tech ecosystems, finding legal precedents, gathering market reports. It struggles with obscure, hyper-local, or rapidly changing details and can propagate false claims found in low-quality sources. It is a synthesis tool, not an oracle.
+</p>
+<p>
+    <strong>Google NotebookLM</strong> is source-grounded: it queries collections of documents (PDFs, docs, notes) that you upload. Its dynamic audio generation feature produces remarkably engaging simulated podcast conversations from your materials — an incredible tool for re-engaging with dry, complex, or older material in a conversational format. But the "First Contact" rule applies hard here: never use NotebookLM audio as your first contact with a text. Listening to a summary podcast without reading the source first results in shallow comprehension and passes the cognitive effort of learning to the model.
+</p>
+<p>
+    No matter how polished the synthesis, trust is not verified truth. I apply digital literacy methods (like Mike Caulfield's SIFT method) to trace AI-generated claims back to primary research papers, ensuring no hallucinations creep into academic or classroom resources.
+</p>
+{% endblock %}

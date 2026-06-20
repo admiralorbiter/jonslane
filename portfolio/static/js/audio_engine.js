@@ -331,17 +331,17 @@ class BpmAudioEngine {
 
     playTransitionSFX(callback) {
         const now = Tone.now();
-        
+
         // Start white noise generator
         this.noiseGenerator.start(now);
         this.noiseGenerator.volume.setValueAtTime(-60, now);
         this.noiseGenerator.volume.exponentialRampToValueAtTime(-15, now + 0.15);
         this.transitionFilter.frequency.setValueAtTime(100, now);
         this.transitionFilter.frequency.exponentialRampToValueAtTime(8000, now + 0.3);
-        
+
         // Decay noise to absolute silence
         this.noiseGenerator.volume.linearRampToValueAtTime(-80, now + 0.4);
-        
+
         setTimeout(() => {
             this.noiseGenerator.stop();
             // Trigger callback after 400ms of absolute silence (acoustic palate cleanser)
@@ -438,7 +438,7 @@ class BpmAudioEngine {
                     this.rampRequestId = requestAnimationFrame(animateSpin);
                 } else {
                     Tone.Transport.bpm.value = 40; // start low
-                    
+
                     if (this.genre === "house" || this.genre === "dance-pop") this.scheduleHouse();
                     else if (this.genre === "trap") this.scheduleTrap();
                     else if (this.genre === "pop-punk") this.schedulePopPunk();
@@ -452,7 +452,7 @@ class BpmAudioEngine {
                     Tone.Transport.start();
                     Tone.Transport.bpm.rampTo(targetBpm, 0.45);
                 }
-                
+
                 if (callback) callback();
             });
         }, 300);
@@ -691,23 +691,23 @@ class InvisibleMetronomeController {
     getPhaseError(tapTimestamp) {
         const perfNow = performance.now();
         const audioNow = this.audioContext.currentTime;
-        
+
         // 1. Clock translation offset
         const clockOffset = perfNow - (audioNow * 1000);
-        
+
         // 2. Hardware output latency compensation
         const outputLatencyMs = (this.audioContext.rawContext.outputLatency || 0) * 1000;
-        
+
         // 3. Translate metronome start time to performance.now() domain
         const startPerfTime = (this.startAudioTime * 1000) + clockOffset + outputLatencyMs;
-        
+
         // 4. Calculate time elapsed since metronome start
         const elapsed = tapTimestamp - startPerfTime;
-        
+
         // 5. Determine closest target beat
         const closestBeatIndex = Math.round(elapsed / this.beatIntervalMs);
         const targetBeatPerfTime = startPerfTime + (closestBeatIndex * this.beatIntervalMs);
-        
+
         // 6. Return signed error in milliseconds
         return tapTimestamp - targetBeatPerfTime;
     }
@@ -813,4 +813,3 @@ class MidiDeviceManager {
 }
 
 window.MidiDeviceManager = MidiDeviceManager;
-

@@ -18,7 +18,7 @@
             <h1>DJ ROOMBA</h1>
             <span class="logo-subtitle">Transition Scout</span>
         </div>
-        
+
         <div class="header-controls">
             <button id="btn-use-currently-playing" class="btn btn-secondary btn-now-playing" style="display: none;">
                 <span class="btn-icon">🎵</span> Use Currently Playing
@@ -31,7 +31,7 @@
 
     <!-- Main Workspace -->
     <div class="roomba-workspace">
-        
+
         <!-- Welcome / Playlist Selection Screen -->
         <section id="screen-welcome" class="workspace-screen welcome-screen active">
             <div class="welcome-card glass-card text-center">
@@ -76,7 +76,7 @@
         <!-- Console Screen (Single-Page PoC) -->
         <section id="screen-console" class="workspace-screen console-screen">
             <div class="console-grid">
-                
+
                 <!-- LEFT COLUMN: Playlist Tracklist -->
                 <div class="console-panel panel-tracks glass-card">
                     <div class="panel-header">
@@ -166,7 +166,7 @@
                                 <h3>No viable transitions found</h3>
                                 <p>Nothing plays well after this track. Consider adding more tracks in the 85-95 BPM range.</p>
                             </div>
-                            
+
                             <div id="candidates-buckets" class="candidates-buckets">
                                 <!-- Bucket: Best Safe Blends -->
                                 <div class="bucket-group" data-bucket="best_safe_blends">
@@ -242,7 +242,7 @@
                                 <h4>Transition Details</h4>
                                 <button id="btn-close-detail" class="btn-close">&times;</button>
                             </div>
-                            
+
                             <div class="score-breakdown-row">
                                 <div class="score-card main-score">
                                     <div class="score-value" id="detail-total-score">88</div>
@@ -300,7 +300,7 @@
                                                 <span id="player-meta-a" class="sub">128 BPM · 8A</span>
                                             </div>
                                         </div>
-                                        
+
                                         <!-- Player A controls -->
                                         <div class="player-controls">
                                             <button class="btn btn-icon btn-skip" id="btn-skip-a">⏮ 10s</button>
@@ -333,7 +333,7 @@
                                                 <span id="player-meta-b" class="sub">130 BPM · 8B</span>
                                             </div>
                                         </div>
-                                        
+
                                         <!-- Player B controls -->
                                         <div class="player-controls">
                                             <button class="btn btn-icon btn-skip" id="btn-skip-b">⏮ 10s</button>
@@ -369,7 +369,7 @@
         <div class="modal-body text-center">
             <p>Select a new Camelot key signature for <strong id="modal-key-track-title">this track</strong>.</p>
             <p class="sub">Currently: <span id="modal-key-current-label" class="badge">8A (A minor)</span></p>
-            
+
             <!-- SVG Camelot Wheel -->
             <div class="camelot-wheel-container">
                 <svg id="camelot-wheel-svg" viewBox="0 0 400 400" width="340" height="340">
@@ -384,7 +384,7 @@
                     </g>
                 </svg>
             </div>
-            
+
             <div class="modal-actions">
                 <button class="btn btn-secondary btn-close-modal">Cancel</button>
                 <button id="btn-save-key" class="btn btn-primary">Save Key Override</button>

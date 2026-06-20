@@ -35,7 +35,7 @@
         tracksTableBody: document.getElementById('tracks-table-body'),
         trackCountBadge: document.getElementById('track-count-badge'),
         currentPlaylistTitle: document.getElementById('current-playlist-title'),
-        
+
         // Scout Panel
         scoutEmptyState: document.getElementById('scout-empty-state'),
         scoutWorkspace: document.getElementById('scout-workspace'),
@@ -45,11 +45,11 @@
         sourceTrackBpm: document.getElementById('source-track-bpm'),
         sourceTrackKey: document.getElementById('source-track-key'),
         sourceTrackEnergy: document.getElementById('source-track-energy'),
-        
+
         candidatesLoading: document.getElementById('candidates-loading'),
         candidatesEmpty: document.getElementById('candidates-empty'),
         candidatesBuckets: document.getElementById('candidates-buckets'),
-        
+
         // Detail Panel
         detailPanel: document.getElementById('transition-detail-panel'),
         detailTotalScore: document.getElementById('detail-total-score'),
@@ -63,7 +63,7 @@
         detailWatchOut: document.getElementById('detail-watch-out'),
         detailTry: document.getElementById('detail-try'),
         btnCloseDetail: document.getElementById('btn-close-detail'),
-        
+
         // Players
         playerTitleA: document.getElementById('player-title-a'),
         playerMetaA: document.getElementById('player-meta-a'),
@@ -71,15 +71,15 @@
         btnSkipA: document.getElementById('btn-skip-a'),
         volA: document.getElementById('vol-a'),
         canvasA: document.getElementById('canvas-a'),
-        
+
         playerTitleB: document.getElementById('player-title-b'),
         playerMetaB: document.getElementById('player-meta-b'),
         btnSkipB: document.getElementById('btn-skip-b'),
         volB: document.getElementById('vol-b'),
         canvasB: document.getElementById('canvas-b'),
-        
+
         crossfadeSlider: document.getElementById('crossfade-slider'),
-        
+
         // Modals
         modalKeyPicker: document.getElementById('modal-key-picker'),
         modalKeyTrackTitle: document.getElementById('modal-key-track-title'),
@@ -105,7 +105,7 @@
         setupEventListeners();
         setupAudioEngine();
         drawCamelotWheel();
-        
+
         // Check if there is an active playlist in url hash or session
         const hashId = window.location.hash.substring(1);
         if (hashId && !isNaN(hashId)) {
@@ -118,7 +118,7 @@
         // Playlists trigger
         el.btnShowPlaylists.addEventListener('click', openPlaylistsModal);
         el.btnStartSelect.addEventListener('click', openPlaylistsModal);
-        
+
         document.querySelectorAll('.btn-close-modal').forEach(btn => {
             btn.addEventListener('click', closeModals);
         });
@@ -147,7 +147,7 @@
 
         // Use currently playing Spotify track shortcut
         el.btnUseNowPlaying.addEventListener('click', useCurrentlyPlayingTrack);
-        
+
         // Keyboard accessibility for modals
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -165,14 +165,14 @@
         state.audioB.loop = true;
 
         el.btnPlayMaster.addEventListener('click', togglePlayMaster);
-        
+
         el.btnSkipA.addEventListener('click', () => { state.audioA.currentTime = Math.max(0, state.audioA.currentTime - 10); });
         el.btnSkipB.addEventListener('click', () => { state.audioB.currentTime = Math.max(0, state.audioB.currentTime - 10); });
 
         el.volA.addEventListener('input', (e) => { updateVolumes(); });
         el.volB.addEventListener('input', (e) => { updateVolumes(); });
         el.crossfadeSlider.addEventListener('input', (e) => { updateVolumes(); });
-        
+
         // Auto-detect currently playing on Spotify status
         fetch('/spotify/api/now-playing')
             .then(r => {
@@ -247,23 +247,23 @@
     function startWaveform(player, canvas) {
         const ctx = canvas.getContext('2d');
         let offset = 0;
-        
+
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.beginPath();
             ctx.strokeStyle = player === 'A' ? '#00f3ff' : '#ff00a0';
             ctx.lineWidth = 2;
-            
+
             const amplitude = 8;
             const frequency = 0.08;
-            
+
             for (let i = 0; i < canvas.width; i++) {
                 const y = canvas.height / 2 + Math.sin(i * frequency + offset) * amplitude * (Math.random() * 0.4 + 0.8);
                 if (i === 0) ctx.moveTo(i, y);
                 else ctx.lineTo(i, y);
             }
             ctx.stroke();
-            
+
             offset += 0.15;
             if (player === 'A') {
                 state.animationA = requestAnimationFrame(draw);
@@ -271,7 +271,7 @@
                 state.animationB = requestAnimationFrame(draw);
             }
         }
-        
+
         stopWaveform(player);
         draw();
     }
@@ -304,7 +304,7 @@
         el.modalPlaylists.classList.add('active');
         el.playlistsLoading.style.display = 'flex';
         el.playlistsGrid.innerHTML = '';
-        
+
         fetch('/music/roomba/api/roomba/playlists')
             .then(res => {
                 if (res.status === 403) {
@@ -323,20 +323,20 @@
             .then(data => {
                 if (!data) return;
                 el.playlistsLoading.style.display = 'none';
-                
+
                 const items = data.items || [];
                 if (items.length === 0) {
                     el.playlistsGrid.innerHTML = '<p class="text-secondary text-center">No playlists found in your Spotify account.</p>';
                     return;
                 }
-                
+
                 items.forEach(item => {
                     if (!item) return;
                     const card = document.createElement('div');
                     card.className = 'playlist-card';
-                    
+
                     const imgUrl = item.images && item.images.length > 0 ? item.images[0].url : '/static/img/default_playlist.png';
-                    
+
                     card.innerHTML = `
                         <img class="playlist-img" src="${imgUrl}" alt="${item.name}">
                         <div class="playlist-info">
@@ -344,12 +344,12 @@
                             <p>${item.tracks.total} tracks</p>
                         </div>
                     `;
-                    
+
                     card.addEventListener('click', () => {
                         closeModals();
                         importPlaylist(item.id, item.name);
                     });
-                    
+
                     el.playlistsGrid.appendChild(card);
                 });
             })
@@ -369,10 +369,10 @@
         el.screenWelcome.classList.remove('active');
         el.screenConsole.classList.remove('active');
         el.screenImporting.classList.add('active');
-        
+
         // Progress text simulation
         updateImportStatus("Submitting import job to background queue...");
-        
+
         fetch('/music/roomba/api/roomba/import', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -425,7 +425,7 @@
 
     function startPolling(importId) {
         if (state.pollInterval) clearInterval(state.pollInterval);
-        
+
         // Setup direct button on importing screen to skip and view tracks
         el.screenImporting.querySelector('#btn-view-anyway').onclick = () => {
             clearInterval(state.pollInterval);
@@ -445,10 +445,10 @@
                         const total = tracks.length;
                         const analyzed = tracks.filter(t => t.features && t.features.bpm).length;
                         const pct = total > 0 ? Math.round((analyzed / total) * 100) : 0;
-                        
+
                         // Enforce a minimum display of 5% so the bar starts visibly
                         const displayPct = Math.max(5, pct);
-                        
+
                         document.querySelector('#screen-importing .progress-bar-fill').style.width = `${displayPct}%`;
                         updateImportStatus(`Analyzing tracks... (${analyzed}/${total} resolved — ${pct}% complete)`);
                     }
@@ -473,10 +473,10 @@
                 state.currentPlaylistData = data;
                 el.currentPlaylistTitle.textContent = data.playlist_name;
                 el.trackCountBadge.textContent = `${data.tracks.length} Tracks`;
-                
+
                 el.screenConsole.classList.add('active');
                 renderTracklist();
-                
+
                 // If console was active, check if we need to select source track
                 if (state.sourceTrack) {
                     const match = data.tracks.find(t => t.id === state.sourceTrack.id);
@@ -490,19 +490,19 @@
     // Render tracklist table
     function renderTracklist() {
         if (!state.currentPlaylistData) return;
-        
+
         const filterText = el.trackSearch.value.toLowerCase();
         const sortBy = el.trackSort.value;
         let tracks = [...state.currentPlaylistData.tracks];
-        
+
         // Filtering
         if (filterText) {
-            tracks = tracks.filter(t => 
-                t.title.toLowerCase().includes(filterText) || 
+            tracks = tracks.filter(t =>
+                t.title.toLowerCase().includes(filterText) ||
                 t.artist.toLowerCase().includes(filterText)
             );
         }
-        
+
         // Sorting
         tracks.sort((a, b) => {
             if (sortBy === 'position') {
@@ -520,16 +520,16 @@
             }
             return 0;
         });
-        
+
         el.tracksTableBody.innerHTML = '';
-        
+
         tracks.forEach(t => {
             const tr = document.createElement('tr');
             tr.dataset.id = t.id;
             if (state.sourceTrack && state.sourceTrack.id === t.id) {
                 tr.className = 'active';
             }
-            
+
             // BPM Confidence formatting
             let confClass = 'conf-unknown';
             let bpmLabel = '—';
@@ -542,14 +542,14 @@
 
             // Key label
             const keyLabel = t.features.camelot_key || '—';
-            
+
             // Energy badge
             let energyText = '—';
             if (t.features.energy_tag) {
                 const numDots = { 'low': 1, 'medium': 2, 'high': 3, 'very_high': 4 }[t.features.energy_tag] || 2;
                 energyText = '⚡'.repeat(numDots);
             }
-            
+
             tr.innerHTML = `
                 <td class="text-muted" style="font-family: var(--font-mono);">${t.position + 1}</td>
                 <td>
@@ -563,7 +563,7 @@
                 <td class="energy-cell">${energyText}</td>
                 <td><a href="https://open.spotify.com/track/${t.spotify_track_id}" target="_blank" onclick="event.stopPropagation();">↗</a></td>
             `;
-            
+
             // Select row
             tr.addEventListener('click', (e) => {
                 // If they clicked the key column, open key modal override
@@ -573,7 +573,7 @@
                     selectSourceTrack(t);
                 }
             });
-            
+
             el.tracksTableBody.appendChild(tr);
         });
     }
@@ -581,7 +581,7 @@
     // Select Source Track
     function selectSourceTrack(track) {
         state.sourceTrack = track;
-        
+
         // Highlight in table
         document.querySelectorAll('#tracks-table-body tr').forEach(row => {
             row.classList.remove('active');
@@ -589,20 +589,20 @@
                 row.classList.add('active');
             }
         });
-        
+
         // Update Workspace Banner
         el.scoutEmptyState.style.display = 'none';
         el.scoutWorkspace.style.display = 'flex';
-        
+
         el.sourceTrackArt.src = track.album_art_url || '/static/img/default_art.png';
         el.sourceTrackTitle.textContent = track.title;
         el.sourceTrackArtist.textContent = track.artist;
         el.sourceTrackBpm.textContent = track.features.bpm ? `${Math.round(track.features.bpm)} BPM` : '— BPM';
         el.sourceTrackKey.textContent = track.features.camelot_key || '— Key';
-        
+
         const dots = { 'low': 1, 'medium': 2, 'high': 3, 'very_high': 4 }[track.features.energy_tag] || 2;
         el.sourceTrackEnergy.textContent = '⚡'.repeat(dots) + ` (${track.features.energy_tag || 'medium'})`;
-        
+
         fetchTransitions(track.id);
     }
 
@@ -611,15 +611,15 @@
         el.candidatesLoading.style.display = 'flex';
         el.candidatesEmpty.style.display = 'none';
         el.candidatesBuckets.style.display = 'none';
-        
+
         const preset = el.djStyle.value;
-        
+
         fetch(`/music/roomba/api/roomba/transitions/${state.currentPlaylistId}/${trackId}?preset=${preset}`)
             .then(r => r.json())
             .then(data => {
                 el.candidatesLoading.style.display = 'none';
                 el.candidatesBuckets.style.display = 'flex';
-                
+
                 renderBuckets(data);
             })
             .catch(() => {
@@ -631,33 +631,33 @@
     // Render candidate buckets
     function renderBuckets(data) {
         let totalCandidates = 0;
-        
+
         const bucketKeys = ['best_safe_blends', 'energy_lifts', 'energy_resets', 'harmonic_tension', 'metrical_match', 'probably_reject'];
-        
+
         bucketKeys.forEach(key => {
             const bucketData = data[key] || [];
             totalCandidates += bucketData.length;
-            
+
             const group = document.querySelector(`.bucket-group[data-bucket="${key}"]`);
             const badge = group.querySelector('.count-badge');
             const content = group.querySelector('.bucket-content');
-            
+
             badge.textContent = bucketData.length;
             content.innerHTML = '';
-            
+
             if (bucketData.length === 0) {
                 content.innerHTML = '<p class="text-muted text-center p-2" style="font-size:0.85rem;">No matches in this category</p>';
                 return;
             }
-            
+
             bucketData.forEach(c => {
                 const item = document.createElement('div');
                 item.className = 'candidate-item';
                 item.dataset.id = c.track.id;
-                
+
                 const bpmLabel = c.track.features.bpm ? Math.round(c.track.features.bpm) : '—';
                 const keyLabel = c.track.features.camelot_key || '—';
-                
+
                 item.innerHTML = `
                     <div class="cand-meta">
                         <span class="cand-title">${escapeHtml(c.track.title)}</span>
@@ -669,14 +669,14 @@
                         <span class="cand-score">${Math.round(c.score_data.total_score)}</span>
                     </div>
                 `;
-                
+
                 // Clicking transition candidate opens detail panel
                 item.addEventListener('click', () => {
                     document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('active'));
                     item.classList.add('active');
                     openTransitionDetail(c);
                 });
-                
+
                 content.appendChild(item);
             });
         });
@@ -687,7 +687,7 @@
                 const grp = hdr.closest('.bucket-group');
                 const content = grp.querySelector('.bucket-content');
                 const toggle = grp.querySelector('.bucket-toggle');
-                
+
                 if (grp.classList.contains('collapsed')) {
                     grp.classList.remove('collapsed');
                     content.classList.add('expanded');
@@ -706,26 +706,26 @@
     // Open detailed transition window
     function openTransitionDetail(candidate) {
         state.selectedCandidate = candidate;
-        
+
         el.detailPanel.style.display = 'flex';
-        
+
         // Scores
         el.detailTotalScore.textContent = Math.round(candidate.score_data.total_score);
-        
+
         el.detailBarTempo.style.width = `${candidate.score_data.tempo_score}%`;
         el.detailValTempo.textContent = `${Math.round(candidate.score_data.tempo_score)}%`;
-        
+
         el.detailBarHarmonic.style.width = `${candidate.score_data.harmonic_score}%`;
         el.detailValHarmonic.textContent = `${Math.round(candidate.score_data.harmonic_score)}%`;
-        
+
         el.detailBarEnergy.style.width = `${candidate.score_data.energy_score}%`;
         el.detailValEnergy.textContent = `${Math.round(candidate.score_data.energy_score)}%`;
-        
+
         // Explanations
         const exp = candidate.score_data.explanation;
         el.detailWhy.textContent = exp.why_it_works;
         el.detailTry.textContent = exp.suggested_experiment || "Start mixing B during the outro of A.";
-        
+
         el.detailWatchOut.innerHTML = '';
         const watchOuts = exp.watch_out || [];
         watchOuts.forEach(w => {
@@ -733,16 +733,16 @@
             li.textContent = w;
             el.detailWatchOut.appendChild(li);
         });
-        
+
         // Setup crossfade previews
         el.playerTitleA.textContent = state.sourceTrack.title;
         el.playerMetaA.textContent = `${Math.round(state.sourceTrack.features.bpm || 0)} BPM · ${state.sourceTrack.features.camelot_key || '—'}`;
-        
+
         el.playerTitleB.textContent = candidate.track.title;
         el.playerMetaB.textContent = `${Math.round(candidate.track.features.bpm || 0)} BPM · ${candidate.track.features.camelot_key || '—'}`;
 
         stopAllPlayers();
-        
+
         // Resolve preview URLs dynamically from iTunes Search API client-side
         // for both tracks simultaneously
         resolvePreviewUrl(state.sourceTrack, (urlA) => {
@@ -756,7 +756,7 @@
         });
 
         updateVolumes();
-        
+
         // Smooth scroll to detail
         el.detailPanel.scrollIntoView({ behavior: 'smooth' });
     }
@@ -791,7 +791,7 @@
             .then(data => {
                 if (!data || !data.track) return;
                 const spotifyTrackId = data.track.spotify_track_id;
-                
+
                 // Check if current playlist contains this track
                 if (state.currentPlaylistData) {
                     const match = state.currentPlaylistData.tracks.find(t => t.spotify_track_id === spotifyTrackId);
@@ -809,7 +809,7 @@
     function openKeyOverrideModal(track) {
         state.editingTrackId = track.id;
         el.modalKeyTrackTitle.textContent = track.title;
-        
+
         const curKey = track.features.camelot_key || '—';
         el.modalKeyCurrentLabel.textContent = curKey;
         el.modalKeyCurrentLabel.className = 'badge';
@@ -817,7 +817,7 @@
             el.modalKeyCurrentLabel.style.backgroundColor = camelotColors[curKey] || '#222';
             el.modalKeyCurrentLabel.style.color = '#000';
         }
-        
+
         state.tempOverrideKey = track.features.camelot_key;
         el.modalKeyPicker.classList.add('active');
         highlightCompatibleKeys(state.tempOverrideKey);
@@ -827,19 +827,19 @@
     function drawCamelotWheel() {
         const svg = el.modalKeyPicker.querySelector('#wheel-segments');
         svg.innerHTML = '';
-        
+
         const cx = 200;
         const cy = 200;
-        
+
         // Slices labels arrangement: standard Camelot wheel layout
         // Slices start from top (12) clockwise
         const order = ['12', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'];
         const sliceAngle = 360 / 12;
-        
+
         // Outer ring (Minor - A)
         const rOuterStart = 135;
         const rOuterEnd = 195;
-        
+
         // Inner ring (Major - B)
         const rInnerStart = 75;
         const rInnerEnd = 135;
@@ -848,9 +848,9 @@
         for (let i = 0; i < 12; i++) {
             const startAngle = i * sliceAngle - 90 - (sliceAngle / 2);
             const endAngle = startAngle + sliceAngle;
-            
+
             const num = order[i];
-            
+
             // Draw Minor (A)
             const pathA = drawSlicePath(cx, cy, rOuterStart, rOuterEnd, startAngle, endAngle);
             const elA = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -878,7 +878,7 @@
             // Labels
             const labelAngle = startAngle + (sliceAngle / 2);
             const rad = (labelAngle * Math.PI) / 180;
-            
+
             // Outer label
             const xA = cx + (rOuterStart + 30) * Math.cos(rad);
             const yA = cy + (rOuterStart + 30) * Math.sin(rad);
@@ -910,17 +910,17 @@
     function drawSlicePath(cx, cy, rIn, rOut, startAngle, endAngle) {
         const rad1 = (startAngle * Math.PI) / 180;
         const rad2 = (endAngle * Math.PI) / 180;
-        
+
         const x1_in = cx + rIn * Math.cos(rad1);
         const y1_in = cy + rIn * Math.sin(rad1);
         const x1_out = cx + rOut * Math.cos(rad1);
         const y1_out = cy + rOut * Math.sin(rad1);
-        
+
         const x2_in = cx + rIn * Math.cos(rad2);
         const y2_in = cy + rIn * Math.sin(rad2);
         const x2_out = cx + rOut * Math.cos(rad2);
         const y2_out = cy + rOut * Math.sin(rad2);
-        
+
         return `
             M ${x1_in} ${y1_in}
             L ${x1_out} ${y1_out}
@@ -958,23 +958,23 @@
             p.classList.remove('selected');
             p.setAttribute("fill-opacity", "0.25");
         });
-        
+
         if (!activeKey) return;
-        
+
         const num = parseInt(activeKey.slice(0, -1));
         const mode = activeKey.slice(-1);
-        
+
         // Define compatible set
         const compatible = new Set();
         compatible.add(activeKey); // Same key
         compatible.add(`${num}${mode === 'A' ? 'B' : 'A'}`); // Relative mode
         compatible.add(`${num === 12 ? 1 : num + 1}${mode}`); // adjacent up
         compatible.add(`${num === 1 ? 12 : num - 1}${mode}`); // adjacent down
-        
+
         // Diagonal mediants: ±1 mod 12 with opposite letter
         compatible.add(`${num === 12 ? 1 : num + 1}${mode === 'A' ? 'B' : 'A'}`);
         compatible.add(`${num === 1 ? 12 : num - 1}${mode === 'A' ? 'B' : 'A'}`);
-        
+
         paths.forEach(p => {
             const key = p.dataset.key;
             if (key === activeKey) {
@@ -990,11 +990,11 @@
     // Save key override
     function saveKeyOverride() {
         if (!state.editingTrackId || !state.tempOverrideKey) return;
-        
+
         closeModals();
-        
+
         showToast("Saving key override...", false, true);
-        
+
         fetch(`/music/roomba/api/roomba/track/${state.editingTrackId}/features`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -1018,7 +1018,7 @@
     // Toast notices
     function showToast(text, isError = false, keepOpen = false) {
         el.autosaveToast.classList.remove('active');
-        
+
         if (isError) {
             el.toastSpinner.style.display = 'none';
             el.toastText.innerHTML = `<span class="text-danger">⚠️ ${escapeHtml(text)}</span>`;
@@ -1029,9 +1029,9 @@
             el.toastSpinner.style.display = 'none';
             el.toastText.innerHTML = `<span class="toast-success-icon">✓</span> ${escapeHtml(text)}`;
         }
-        
+
         el.autosaveToast.classList.add('active');
-        
+
         if (!keepOpen) {
             setTimeout(() => {
                 el.autosaveToast.classList.remove('active');

@@ -7,7 +7,7 @@
     --bg-panel: rgba(10, 15, 28, 0.75);
     --border-glass: rgba(255, 255, 255, 0.08);
     --border-glass-hover: rgba(255, 255, 255, 0.18);
-    
+
     /* Neon Accent Palette */
     --neon-cyan: #00f3ff;
     --neon-magenta: #ff00a0;
@@ -15,12 +15,12 @@
     --neon-green: #39ff14;
     --neon-yellow: #ffe600;
     --neon-purple: #9d4edd;
-    
+
     /* Text Colors */
     --text-primary: #f8f9fa;
     --text-secondary: #9aa0a6;
     --text-muted: #5f6368;
-    
+
     /* Fonts */
     --font-outfit: 'Outfit', sans-serif;
     --font-mono: 'Fira Code', monospace;
@@ -1217,7 +1217,7 @@
     .console-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .console-panel {
         min-height: auto;
         max-height: 500px;
@@ -1228,16 +1228,16 @@
     .crossfader-tracks {
         grid-template-columns: 1fr;
     }
-    
+
     .crossfader-fader {
         width: 100%;
         margin: 10px 0;
     }
-    
+
     #crossfade-slider {
         width: 80%;
     }
-    
+
     .fader-scale {
         width: 80%;
     }
@@ -1273,4 +1273,3 @@
 .btn-play-master:active {
     transform: translateY(1px);
 }
-

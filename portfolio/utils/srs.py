@@ -41,7 +41,7 @@ def get_due_anchors(user_id: int) -> list[dict]:
     return due_list
 
 
-def update_schedule_after_attempt(
+def update_schedule_after_attempt(  # noqa: C901
     user_id: int,
     anchor_bpm: int,
     rating: str,
