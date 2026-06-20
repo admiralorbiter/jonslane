@@ -132,8 +132,7 @@
 
 /* Hiding parts in reader mode */
 .ai-lab-body.mode-reader .xp-taskbar,
-.ai-lab-body.mode-reader .xp-desktop-sticky,
-.ai-lab-body.mode-reader .xp-status-panel {
+.ai-lab-body.mode-reader .xp-desktop-sticky {
     display: none !important;
 }
 
@@ -492,46 +491,6 @@
     outline-offset: -2px;
 }
 
-/* ==========================================================================
-   Lab Status Panel (System Information window)
-   ========================================================================== */
-.xp-status-panel {
-    background: var(--xp-window-bg);
-}
-
-.xp-status-panel .xp-window-body {
-    background: #fdfdfd;
-}
-
-.status-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.status-list li {
-    font-size: 0.85rem;
-    padding: 6px 0;
-    border-bottom: 1px solid #e5e5e5;
-    display: flex;
-    flex-direction: column;
-}
-
-.status-list li:last-child {
-    border-bottom: none;
-}
-
-.status-list .label {
-    font-weight: bold;
-    color: var(--xp-text-muted);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-}
-
-.status-list .val {
-    color: var(--xp-text-dark);
-    margin-top: 2px;
-}
 
 /* ==========================================================================
    Desktop Sticky Note (Post-it style card)
@@ -948,4 +907,60 @@
         padding: 6px 10px;
         justify-content: center;
     }
+}
+
+/* ==========================================================================
+   Desktop Shortcuts (My Computer & Recycle Bin)
+   ========================================================================== */
+.xp-desktop-shortcuts {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 10px 5px;
+    user-select: none;
+}
+
+.xp-shortcut-btn {
+    background: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    padding: 8px;
+    width: 95px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.xp-shortcut-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.xp-shortcut-btn:active {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.xp-shortcut-btn:focus-visible {
+    outline: 1px dotted #fff;
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.xp-shortcut-text {
+    font-family: var(--font-xp);
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.85);
+    margin-top: 5px;
+    word-wrap: break-word;
+    text-align: center;
+    line-height: 1.25;
+}
+
+/* Hide shortcuts in reader mode */
+.mode-reader .xp-desktop-shortcuts {
+    display: none !important;
 }
