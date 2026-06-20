@@ -1,6 +1,8 @@
 import os
 
 from flask import Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData, event
@@ -19,10 +21,8 @@ naming_convention = {
 db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention))
 migrate = Migrate()
 
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 
 @event.listens_for(Engine, "connect")
@@ -60,13 +60,14 @@ def create_app(config_name="development"):
 
     # Register blueprints
     from portfolio.routes.academy import academy_bp
+    from portfolio.routes.ai_literacy_lab import ai_lab_redirect_bp, ai_literacy_lab_bp
     from portfolio.routes.auth import auth_bp
     from portfolio.routes.game import game_bp
     from portfolio.routes.main import main_bp
     from portfolio.routes.piano import piano_bp
+    from portfolio.routes.roomba import roomba_bp
     from portfolio.routes.settings import settings_bp
     from portfolio.spotify_bridge.routes import spotify_bp
-    from portfolio.routes.roomba import roomba_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(game_bp)
@@ -76,6 +77,8 @@ def create_app(config_name="development"):
     app.register_blueprint(settings_bp)
     app.register_blueprint(spotify_bp)
     app.register_blueprint(roomba_bp)
+    app.register_blueprint(ai_literacy_lab_bp)
+    app.register_blueprint(ai_lab_redirect_bp)
 
     # Inject current_user dynamically into all templates
     @app.context_processor

@@ -1,0 +1,589 @@
+{% extends "base.html" %}
+
+{% block title %}AI Literacy Lab | Jon's Lane{% endblock %}
+{% block meta_description %}A Windows XP / computer lab inspired resource hub about AI literacy, source grounding, and using AI without outsourcing human judgment.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai_literacy_lab.css') }}?v=1.0.0">
+{% endblock %}
+
+{% block content %}
+<!-- Accessibility Skip Link -->
+<a href="#main-window" class="xp-skip-link">Skip to Main Content</a>
+
+<!-- View Mode Toggle Bar (Reader Mode / Notebook Mode) -->
+<div class="view-mode-bar">
+    <span>View Mode:</span>
+    <button id="btn-mode-notebook" class="view-mode-btn active" aria-pressed="true" aria-label="Switch to desktop notebook layout">
+        🖳 Notebook Mode
+    </button>
+    <button id="btn-mode-reader" class="view-mode-btn" aria-pressed="false" aria-label="Switch to accessible reader layout">
+        📖 Reader Mode
+    </button>
+</div>
+
+<!-- Desktop Container -->
+<div class="xp-desktop-container">
+
+    <!-- READER MODE SIDEBAR (TOC) - Only visible when .mode-reader is active -->
+    <aside class="reader-sidebar hidden" id="reader-toc-sidebar">
+        <div class="reader-sidebar-title">Lab Directory</div>
+        <ul class="reader-toc">
+            <li><a href="#hero-window" class="reader-toc-link">Intro & Philosophy</a></li>
+            <li><a href="#essay-window" class="reader-toc-link">Essay: Same Song, Louder Dance</a></li>
+            <li><a href="#tools" class="reader-toc-link">Tools & Workflows</a></li>
+            <li><a href="#research" class="reader-toc-link">Research & Source Grounding</a></li>
+            <li><a href="#risks" class="reader-toc-link">Risks & Hidden Costs</a></li>
+            <li><a href="#education" class="reader-toc-link">Education & AI Literacy</a></li>
+            <li><a href="#writing" class="reader-toc-link">Writing & Creativity</a></li>
+            <li><a href="#sources" class="reader-toc-link">Source Bank</a></li>
+            <li><a href="#experience" class="reader-toc-link">Personal Experience Bank</a></li>
+            <li><a href="#backlog" class="reader-toc-link">Lab Backlog</a></li>
+        </ul>
+
+        <div class="reader-sidebar-title" style="margin-top: 15px;">System Properties</div>
+        <ul class="reader-toc" style="padding: 10px; font-size: 0.8rem; line-height: 1.4; color: #555;">
+            <li><strong>Lab Mode:</strong> Active</li>
+            <li><strong>Status:</strong> Messy but useful</li>
+            <li><strong>Constraint:</strong> Human voice required</li>
+        </ul>
+    </aside>
+
+    <!-- MAIN DESKTOP CONTENT AREA -->
+    <main class="xp-desktop-main" id="main-content">
+
+        <!-- 1. Hero Intro Window -->
+        <section class="xp-window hero-window" id="hero-window" tabindex="0">
+            <div class="xp-window-titlebar">
+                <div class="xp-window-title">
+                    <span>💾 AI_Literacy_Intro.exe</span>
+                </div>
+                <div class="xp-window-controls">
+                    <button class="xp-win-btn minimize" aria-label="Minimize intro window" data-target="hero-window">_</button>
+                    <button class="xp-win-btn close" aria-label="Close intro window" data-target="hero-window">✕</button>
+                </div>
+            </div>
+            <div class="xp-window-body">
+                <div class="hero-intro-text">
+                    <h2>AI Literacy Lab</h2>
+                    <p class="subtitle">Essays, resources, source notes, classroom activities, and unfinished thoughts about using AI without outsourcing your judgment.</p>
+                    <p class="copy">
+                        "AI literacy is not prompt magic. It is knowing when to use AI, when not to use it, how to verify it, and how to preserve human judgment, taste, learning, and voice."
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Flagship Essay Window (Same Song, Louder Dance) -->
+        <section class="xp-window flagship-essay-container" id="essay-window" tabindex="0">
+            <div class="xp-window-titlebar">
+                <div class="xp-window-title">
+                    <span>🗎 Same_Song_Louder_Dance.txt</span>
+                </div>
+                <div class="xp-window-controls">
+                    <button class="xp-win-btn minimize" aria-label="Minimize essay window" data-target="essay-window">_</button>
+                    <button class="xp-win-btn close" aria-label="Close essay window" data-target="essay-window">✕</button>
+                </div>
+            </div>
+            <div class="xp-window-body">
+                <!-- Included modular essay content -->
+                {% include "ai_literacy_lab/essays/same_song.html" %}
+
+                <div style="margin-top: 15px;">
+                    <a href="{{ url_for('ai_literacy_lab.same_song_essay') }}" class="btn-open-essay">
+                        Open essay draft &rarr;
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Desktop Sticky Note -->
+        <div class="xp-desktop-sticky" id="desktop-sticky">
+            <div class="xp-sticky-header">Sticky Note</div>
+            <div class="xp-sticky-content">
+                “Start small. Keep the messy notes separate from the polished writing. Publish in pieces. Verify before making claims. Preserve the voice.”
+            </div>
+        </div>
+
+        <!-- 4. Folder Grid Header -->
+        <h3 class="folders-section-header" id="folders-header">
+            📁 Folder grid in C:\AI_Literacy_Lab
+        </h3>
+
+        <!-- Folder Grid -->
+        <div class="folders-grid">
+
+            <!-- Folder 1: Tools & Workflows -->
+            <a href="#tools" class="folder-card" id="tools" onclick="showFolderPreview('Tools & Workflows', 'How I use chatbots, coding agents, research tools, learning tools, and presentation tools without letting the tool become the thinker.'); return false;">
+                <div class="folder-card-inner">
+                    <div class="folder-header">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <h4 class="folder-title">Tools & Workflows</h4>
+                    </div>
+                    <p class="folder-desc">How I use chatbots, coding agents, research tools, and presentation tools without letting the tool become the thinker.</p>
+                    <div class="folder-status-row">
+                        <span class="status-tag tool-note">TOOL NOTE</span>
+                        <span class="folder-last-updated">1.0</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Folder 2: Research & Source Grounding -->
+            <a href="#research" class="folder-card" id="research" onclick="showFolderPreview('Research & Source Grounding', 'Deep research, source-grounded AI, hallucination management, verification habits, and the difference between using AI to understand a source versus using AI instead of reading it.'); return false;">
+                <div class="folder-card-inner">
+                    <div class="folder-header">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <h4 class="folder-title">Research & Source Grounding</h4>
+                    </div>
+                    <p class="folder-desc">Deep research, source-grounded AI, verification habits, and the difference between using AI to understand a source vs. instead of reading it.</p>
+                    <div class="folder-status-row">
+                        <span class="status-tag verify-before-sharing">VERIFY BEFORE SHARING</span>
+                        <span class="folder-last-updated">1.0</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Folder 3: Risks & Elephants in the Room -->
+            <a href="#risks" class="folder-card" id="risks" onclick="showFolderPreview('Risks & Elephants in the Room', 'Hallucinations, bias, sycophancy, AI slop, ed-tech wrappers, IP, labor, data centers, and the hidden costs of scale.'); return false;">
+                <div class="folder-card-inner">
+                    <div class="folder-header">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <h4 class="folder-title">Risks & Elephants</h4>
+                    </div>
+                    <p class="folder-desc">Hallucinations, bias, sycophancy, AI slop, ed-tech wrappers, IP, labor, data centers, and the hidden costs of scale.</p>
+                    <div class="folder-status-row">
+                        <span class="status-tag field-note">FIELD NOTE</span>
+                        <span class="folder-last-updated">1.0</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Folder 4: Education, Cheating & AI Literacy -->
+            <a href="#education" class="folder-card" id="education" onclick="showFolderPreview('Education, Cheating & AI Literacy', 'Cheating is the obvious problem, not the deepest one. This section is about process, motivation, detection, assignment design, and helping students learn with tools instead of outsourcing thought.'); return false;">
+                <div class="folder-card-inner">
+                    <div class="folder-header">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <h4 class="folder-title">Education & AI</h4>
+                    </div>
+                    <p class="folder-desc">Process, motivation, detection, assignment design, and helping students learn with tools instead of outsourcing thought.</p>
+                    <div class="folder-status-row">
+                        <span class="status-tag classroom-ready-soon">CLASSROOM READY SOON</span>
+                        <span class="folder-last-updated">1.0</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Folder 5: Writing, Feedback & Creativity -->
+            <a href="#writing" class="folder-card" id="writing" onclick="showFolderPreview('Writing, Feedback & Creativity', 'Writing as thinking, AI feedback, voice, taste, slop, brainstorming, and why preserving the human part still matters.'); return false;">
+                <div class="folder-card-inner">
+                    <div class="folder-header">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <h4 class="folder-title">Writing & Feedback</h4>
+                    </div>
+                    <p class="folder-desc">Writing as thinking, AI feedback, voice, taste, slop, brainstorming, and why preserving the human part still matters.</p>
+                    <div class="folder-status-row">
+                        <span class="status-tag personal-story">PERSONAL STORY</span>
+                        <span class="folder-last-updated">1.0</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Folder 6: Source Bank -->
+            <a href="#sources" class="folder-card" id="sources" onclick="showFolderPreview('Source Bank', 'Books, papers, articles, quotes, citation placeholders, and claims that need to be verified before publication.'); return false;">
+                <div class="folder-card-inner">
+                    <div class="folder-header">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <h4 class="folder-title">Source Bank</h4>
+                    </div>
+                    <p class="folder-desc">Books, papers, articles, quotes, citation placeholders, and claims that need to be verified before publication.</p>
+                    <div class="folder-status-row">
+                        <span class="status-tag needs-source">NEEDS SOURCE</span>
+                        <span class="folder-last-updated">1.0</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Folder 7: Personal Experience Bank -->
+            <a href="#experience" class="folder-card" id="experience" onclick="showFolderPreview('Personal Experience Bank', 'Stories from coding, teaching, early AI experiments, student conversations, research tools, and learning the hard way.'); return false;">
+                <div class="folder-card-inner">
+                    <div class="folder-header">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <h4 class="folder-title">Experience Bank</h4>
+                    </div>
+                    <p class="folder-desc">Stories from coding, teaching, early AI experiments, student conversations, and learning the hard way.</p>
+                    <div class="folder-status-row">
+                        <span class="status-tag field-note">FIELD NOTE</span>
+                        <span class="folder-last-updated">1.0</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Folder 8: Backlog -->
+            <a href="#backlog" class="folder-card" id="backlog" onclick="showFolderPreview('Backlog', 'Future pages, research gaps, citation cleanup, tool reviews, and ideas that are not ready yet but should not be lost.'); return false;">
+                <div class="folder-card-inner">
+                    <div class="folder-header">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <h4 class="folder-title">Lab Backlog</h4>
+                    </div>
+                    <p class="folder-desc">Future pages, research gaps, citation cleanup, tool reviews, and ideas that are not ready yet but should not be lost.</p>
+                    <div class="folder-status-row">
+                        <span class="status-tag draft">DRAFT</span>
+                        <span class="folder-last-updated">1.0</span>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+
+        <!-- 5. Lab Status Side/Bottom Panel -->
+        <section class="xp-window xp-status-panel" id="status-window" tabindex="0">
+            <div class="xp-window-titlebar">
+                <div class="xp-window-title">
+                    <span>⚙ System_Status.sys</span>
+                </div>
+                <div class="xp-window-controls">
+                    <button class="xp-win-btn minimize" aria-label="Minimize status window" data-target="status-window">_</button>
+                    <button class="xp-win-btn close" aria-label="Close status window" data-target="status-window">✕</button>
+                </div>
+            </div>
+            <div class="xp-window-body">
+                <h4 style="margin-bottom: 10px; color: var(--xp-blue-dark);">Lab Status</h4>
+                <ul class="status-list">
+                    <li>
+                        <span class="label">Current Mode</span>
+                        <span class="val">Organizing notes & blueprints</span>
+                    </li>
+                    <li>
+                        <span class="label">Publication Status</span>
+                        <span class="val">Messy but useful</span>
+                    </li>
+                    <li>
+                        <span class="label">Guiding Principle</span>
+                        <span class="val">Human judgment stays in the loop</span>
+                    </li>
+                    <li>
+                        <span class="label">Warning</span>
+                        <span class="val" style="color: #c00; font-weight: bold;">Confident output is not verified truth</span>
+                    </li>
+                    <li>
+                        <span class="label">Best Viewed With</span>
+                        <span class="val">Curiosity, skepticism, and a working bullshit detector</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Dynamic Folder Preview Window (Created in JS when folders are clicked) -->
+        <section class="xp-window hidden" id="preview-window" tabindex="0" style="margin-top: 15px;">
+            <div class="xp-window-titlebar">
+                <div class="xp-window-title" id="preview-window-title">
+                    <span>📁 Folder Preview</span>
+                </div>
+                <div class="xp-window-controls">
+                    <button class="xp-win-btn minimize" aria-label="Minimize preview window" data-target="preview-window">_</button>
+                    <button class="xp-win-btn close" aria-label="Close preview window" data-target="preview-window">✕</button>
+                </div>
+            </div>
+            <div class="xp-window-body">
+                <h3 id="preview-title" style="color: var(--xp-blue-dark); margin-bottom: 8px;">Folder Title</h3>
+                <p id="preview-body" style="font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px;">Folder Description</p>
+                <div style="font-size: 0.8rem; background: #fdfae6; border: 1px solid #e0dfc3; padding: 10px; border-radius: 3px;">
+                    📌 <strong>Section Placeholder:</strong> This section is currently a static stub. In a future update, this panel will fetch and display a list of interactive cards and articles.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+<!-- BOTTOM TASKBAR -->
+<div class="xp-taskbar" id="taskbar">
+    <button class="xp-start-btn" id="start-btn" aria-haspopup="true" aria-expanded="false" aria-label="Open Lab start menu">
+        <span style="font-size: 1.2rem;">🖼</span> Lab Menu
+    </button>
+
+    <!-- Taskbar open windows tabs -->
+    <div class="xp-taskbar-tasks">
+        <button class="xp-task-tab active" id="tab-hero-window" data-target="hero-window">
+            <span>💾</span> AI_Literacy_Intro...
+        </button>
+        <button class="xp-task-tab active" id="tab-essay-window" data-target="essay-window">
+            <span>🗎</span> Same_Song_Louder...
+        </button>
+        <button class="xp-task-tab active" id="tab-status-window" data-target="status-window">
+            <span>⚙</span> System_Status.sys
+        </button>
+        <button class="xp-task-tab hidden" id="tab-preview-window" data-target="preview-window">
+            <span>📁</span> Folder Preview
+        </button>
+    </div>
+
+    <!-- Tray Clock & System icons -->
+    <div class="xp-system-tray">
+        <div class="xp-tray-icons" aria-hidden="true">
+            <span>🔊</span> <span>🔌</span> <span>🖧</span>
+        </div>
+        <div class="xp-clock" id="xp-clock" aria-label="System time">
+            12:00 PM
+        </div>
+    </div>
+</div>
+
+<!-- START MENU (LAB MENU) POPUP -->
+<div class="xp-start-menu hidden" id="start-menu" role="menu" aria-label="Lab start menu">
+    <div class="xp-start-header">
+        <div class="xp-start-avatar" aria-hidden="true">👨‍💻</div>
+        <div class="xp-start-username">Jon's Lane User</div>
+    </div>
+    <div class="xp-start-body">
+        <div class="xp-start-left">
+            <h4 aria-hidden="true">Systems</h4>
+
+            <a href="/" class="xp-menu-link" role="menuitem">
+                <span class="icon" aria-hidden="true">🏠</span>
+                <div>
+                    <strong>Portfolio Home</strong>
+                    <span class="desc">Return to landing page</span>
+                </div>
+            </a>
+
+            <a href="/music" class="xp-menu-link" role="menuitem">
+                <span class="icon" aria-hidden="true">🎧</span>
+                <div>
+                    <strong>DJon Music Hub</strong>
+                    <span class="desc">MySpace retro audio</span>
+                </div>
+            </a>
+
+            {% if session.get('user_id') %}
+            <a href="/academy" class="xp-menu-link" role="menuitem">
+                <span class="icon" aria-hidden="true">🎓</span>
+                <div>
+                    <strong>CMI Academy</strong>
+                    <span class="desc">Rhythm training</span>
+                </div>
+            </a>
+            <a href="/settings" class="xp-menu-link" role="menuitem">
+                <span class="icon" aria-hidden="true">⚙</span>
+                <div>
+                    <strong>User Settings</strong>
+                    <span class="desc">Manage account</span>
+                </div>
+            </a>
+            {% endif %}
+
+            <div style="border-top: 1px solid #f0f0f0; margin: 8px 0;"></div>
+
+            <a href="#" class="xp-menu-link" role="menuitem" onclick="resetDesktop(); return false;">
+                <span class="icon" aria-hidden="true">🔄</span>
+                <div>
+                    <strong>Restart Desktop</strong>
+                    <span class="desc">Restore all windows</span>
+                </div>
+            </a>
+
+            {% if session.get('user_id') %}
+            <a href="/auth/logout" class="xp-menu-link" role="menuitem">
+                <span class="icon" aria-hidden="true">🔓</span>
+                <div>
+                    <strong>Log Out</strong>
+                    <span class="desc">End secure session</span>
+                </div>
+            </a>
+            {% else %}
+            <a href="/auth/login" class="xp-menu-link" role="menuitem">
+                <span class="icon" aria-hidden="true">🔒</span>
+                <div>
+                    <strong>Administrator Login</strong>
+                    <span class="desc">Sign in to sync attempts</span>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="xp-start-footer">
+        <button class="xp-shutdown-btn" onclick="shutdownLab();">Shut Down...</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize body class and view mode on load
+    document.addEventListener("DOMContentLoaded", function() {
+        document.body.classList.add('ai-lab-body');
+        document.body.classList.add('mode-notebook');
+
+        // Start live clock ticking
+        updateClock();
+        setInterval(updateClock, 60000);
+
+        // Setup Start Menu trigger
+        const startBtn = document.getElementById("start-btn");
+        const startMenu = document.getElementById("start-menu");
+
+        startBtn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            const isHidden = startMenu.classList.contains("hidden");
+            if (isHidden) {
+                startMenu.classList.remove("hidden");
+                startBtn.setAttribute("aria-expanded", "true");
+                startBtn.classList.add("active");
+            } else {
+                startMenu.classList.add("hidden");
+                startBtn.setAttribute("aria-expanded", "false");
+                startBtn.classList.remove("active");
+            }
+        });
+
+        document.addEventListener("click", function() {
+            startMenu.classList.add("hidden");
+            startBtn.setAttribute("aria-expanded", "false");
+            startBtn.classList.remove("active");
+        });
+
+        startMenu.addEventListener("click", function(e) {
+            e.stopPropagation();
+        });
+
+        // Setup Window controls (Minimize/Close buttons)
+        document.querySelectorAll(".xp-win-btn").forEach(btn => {
+            btn.addEventListener("click", function() {
+                const targetId = this.getAttribute("data-target");
+                const targetWin = document.getElementById(targetId);
+                const isClose = this.classList.contains("close");
+                const isMin = this.classList.contains("minimize");
+
+                if (isClose) {
+                    targetWin.classList.add("hidden");
+                    document.getElementById(`tab-${targetId}`).classList.add("hidden");
+                } else if (isMin) {
+                    targetWin.classList.add("hidden");
+                    document.getElementById(`tab-${targetId}`).classList.remove("active");
+                }
+            });
+        });
+
+        // Setup Taskbar tab buttons
+        document.querySelectorAll(".xp-task-tab").forEach(tab => {
+            tab.addEventListener("click", function() {
+                const targetId = this.getAttribute("data-target");
+                const targetWin = document.getElementById(targetId);
+                const tabId = this.id;
+
+                if (targetWin.classList.contains("hidden")) {
+                    targetWin.classList.remove("hidden");
+                    this.classList.add("active");
+                    targetWin.focus();
+                } else {
+                    if (this.classList.contains("active")) {
+                        targetWin.classList.add("hidden");
+                        this.classList.remove("active");
+                    } else {
+                        // Bring to front (focus)
+                        this.classList.add("active");
+                        targetWin.focus();
+                    }
+                }
+            });
+        });
+
+        // View Mode Toggles
+        const btnNotebook = document.getElementById("btn-mode-notebook");
+        const btnReader = document.getElementById("btn-mode-reader");
+        const sidebar = document.getElementById("reader-toc-sidebar");
+
+        btnNotebook.addEventListener("click", function() {
+            document.body.classList.remove('mode-reader');
+            document.body.classList.add('mode-notebook');
+
+            btnNotebook.classList.add('active');
+            btnNotebook.setAttribute('aria-pressed', 'true');
+            btnReader.classList.remove('active');
+            btnReader.setAttribute('aria-pressed', 'false');
+
+            sidebar.classList.add("hidden");
+
+            // Show sticky note & grid header & status panel
+            document.getElementById("desktop-sticky").classList.remove("hidden");
+            document.getElementById("status-window").classList.remove("hidden");
+            document.getElementById("folders-header").classList.remove("hidden");
+        });
+
+        btnReader.addEventListener("click", function() {
+            document.body.classList.remove('mode-notebook');
+            document.body.classList.add('mode-reader');
+
+            btnReader.classList.add('active');
+            btnReader.setAttribute('aria-pressed', 'true');
+            btnNotebook.classList.remove('active');
+            btnNotebook.setAttribute('aria-pressed', 'false');
+
+            sidebar.classList.remove("hidden");
+
+            // Restore all windows for readable view (in case they were closed/minimized)
+            document.querySelectorAll(".xp-window").forEach(win => {
+                win.classList.remove("hidden");
+            });
+            document.querySelectorAll(".xp-task-tab").forEach(tab => {
+                tab.classList.remove("hidden");
+                tab.classList.add("active");
+            });
+        });
+    });
+
+    // Update Live clock in Tray
+    function updateClock() {
+        const clockEl = document.getElementById("xp-clock");
+        if (!clockEl) return;
+        const now = new Date();
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        clockEl.textContent = `${hours}:${minutes} ${ampm}`;
+    }
+
+    // Open dynamic preview of a folder section
+    function showFolderPreview(title, description) {
+        // Toggle/unhide the preview window
+        const previewWin = document.getElementById("preview-window");
+        const previewTab = document.getElementById("tab-preview-window");
+
+        document.getElementById("preview-title").textContent = title;
+        document.getElementById("preview-body").textContent = description;
+        document.getElementById("preview-window-title").querySelector("span").textContent = `📁 Folder: ${title}`;
+
+        previewWin.classList.remove("hidden");
+        previewTab.classList.remove("hidden");
+        previewTab.classList.add("active");
+
+        // Scroll to it
+        previewWin.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        previewWin.focus();
+    }
+
+    // Start menu: Restore all windows
+    function resetDesktop() {
+        document.querySelectorAll(".xp-window").forEach(win => {
+            win.classList.remove("hidden");
+        });
+        document.querySelectorAll(".xp-task-tab").forEach(tab => {
+            tab.classList.remove("hidden");
+            tab.classList.add("active");
+        });
+        document.getElementById("start-menu").classList.add("hidden");
+    }
+
+    // Start menu: Shut down computer simulator
+    function shutdownLab() {
+        if (confirm("Are you sure you want to shut down the AI Literacy Lab? This will return you to the main portfolio website home page.")) {
+            window.location.href = "/";
+        }
+    }
+</script>
+{% endblock %}

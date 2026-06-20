@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Same_Song_Louder_Dance.txt - Notepad | Jon's Lane{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai_literacy_lab.css') }}?v=1.0.0">
+<style>
+    /* Inline additions specific to the standalone notepad reader page */
+    .ai-lab-body {
+        padding-bottom: 20px;
+    }
+
+    .notepad-window {
+        max-width: 850px;
+        margin: 40px auto;
+        background: var(--xp-window-bg);
+        border: 1px solid var(--xp-blue-border);
+        border-radius: 8px 8px 0 0;
+        box-shadow: var(--xp-shadow-window);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .notepad-menu-bar {
+        display: flex;
+        background: var(--xp-window-bg);
+        border-bottom: 1px solid #a0a0a0;
+        padding: 2px 10px;
+        gap: 15px;
+        font-size: 0.85rem;
+        position: relative;
+        user-select: none;
+    }
+
+    .notepad-menu-item {
+        cursor: pointer;
+        padding: 2px 6px;
+        color: #000;
+        position: relative;
+    }
+
+    .notepad-menu-item:hover {
+        background: #316ac5;
+        color: #fff;
+    }
+
+    .notepad-dropdown {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        background: var(--xp-window-bg);
+        border: 1px solid #7a7a7a;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        width: 120px;
+    }
+
+    .notepad-dropdown-item {
+        padding: 4px 12px;
+        text-decoration: none;
+        color: #000;
+        font-size: 0.85rem;
+        display: block;
+    }
+
+    .notepad-dropdown-item:hover {
+        background: #316ac5;
+        color: #fff;
+    }
+
+    .notepad-content {
+        background: #fff;
+        padding: 40px 60px;
+        font-family: var(--font-xp);
+        font-size: 1.15rem;
+        line-height: 1.75;
+        color: #000;
+        border: 2px solid var(--xp-window-border);
+        margin: 4px;
+        box-shadow: inset 1px 1px 2px rgba(0,0,0,0.15);
+    }
+
+    /* Override inner scroll limits from flagship-essay and essay-body styles */
+    .notepad-content .essay-body {
+        max-height: none !important;
+        overflow-y: visible !important;
+        border-bottom: none !important;
+        padding-right: 0 !important;
+    }
+
+    .notepad-content .essay-title {
+        font-family: var(--font-xp);
+        font-size: 2.2rem;
+        font-weight: bold;
+        color: var(--xp-blue-dark);
+        margin: 0;
+        border-bottom: 2px solid var(--xp-blue-dark);
+        padding-bottom: 8px;
+    }
+
+    .notepad-content .essay-meta {
+        font-family: var(--font-xp);
+        font-size: 1.1rem;
+        color: var(--xp-text-muted);
+        margin-top: 6px;
+        font-style: italic;
+        margin-bottom: 25px;
+    }
+
+    .notepad-content h3 {
+        font-family: var(--font-xp);
+        color: var(--xp-blue-dark);
+        font-weight: bold;
+        margin-top: 35px;
+        margin-bottom: 12px;
+        font-size: 1.35rem;
+        border-bottom: 1px dashed #ccc;
+        padding-bottom: 4px;
+    }
+
+    .notepad-content blockquote {
+        border-left: 4px solid var(--xp-blue-light);
+        margin: 25px 0;
+        padding: 15px 25px;
+        background: #f7f9fd;
+        font-style: italic;
+        font-size: 1.15rem;
+        color: #333;
+    }
+
+    .notepad-footer {
+        background: var(--xp-window-bg);
+        border-top: 1px solid #a0a0a0;
+        padding: 4px 15px;
+        font-size: 0.8rem;
+        color: #555;
+        text-align: right;
+        user-select: none;
+    }
+
+    /* Command button styled back link */
+    .btn-xp-back {
+        font-family: var(--font-xp);
+        background: #f0f0f0;
+        border: 1px solid #7a7a7a;
+        border-radius: 3px;
+        padding: 4px 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: var(--xp-bevel-out);
+        text-decoration: none;
+        color: #000;
+        display: inline-flex;
+        align-items: center;
+        margin: 20px auto 0;
+    }
+
+    .btn-xp-back:active {
+        box-shadow: var(--xp-bevel-in);
+    }
+
+    @media (max-width: 600px) {
+        .notepad-window {
+            margin: 10px;
+        }
+        .notepad-content {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notepad-window" role="document">
+    <!-- Window Title Bar -->
+    <div class="xp-window-titlebar">
+        <div class="xp-window-title">
+            <span>🗎 Same_Song_Louder_Dance.txt - Notepad</span>
+        </div>
+        <div class="xp-window-controls">
+            <!-- Close button routes back to lab desktop -->
+            <a href="{{ url_for('ai_literacy_lab.index') }}" class="xp-win-btn close" style="text-decoration: none;" aria-label="Close Notepad and return to desktop">✕</a>
+        </div>
+    </div>
+
+    <!-- Menu Bar -->
+    <nav class="notepad-menu-bar" aria-label="Notepad File Menu">
+        <div class="notepad-menu-item" id="file-menu-trigger">
+            File
+            <!-- Dropdown Exit -->
+            <div id="file-menu-dropdown" class="notepad-dropdown hidden">
+                <a href="{{ url_for('ai_literacy_lab.index') }}" class="notepad-dropdown-item">Exit</a>
+            </div>
+        </div>
+        <div class="notepad-menu-item" onclick="alert('This is a read-only simulated file viewer!');">Edit</div>
+        <div class="notepad-menu-item" onclick="alert('This is a read-only simulated file viewer!');">Format</div>
+        <div class="notepad-menu-item" onclick="alert('This is a read-only simulated file viewer!');">View</div>
+        <div class="notepad-menu-item" onclick="alert('Simulated Help file does not exist.');">Help</div>
+    </nav>
+
+    <!-- Main Text Area (Notepad content) -->
+    <div class="notepad-content">
+        {% include "ai_literacy_lab/essays/same_song.html" %}
+
+        <div style="text-align: center;">
+            <a href="{{ url_for('ai_literacy_lab.index') }}" class="btn-xp-back">
+                &larr; Back to Desktop
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="notepad-footer">
+        <span>Ln 1, Col 1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span>Windows (CRLF)</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.body.classList.add('ai-lab-body');
+
+        // Setup dropdown toggle for File menu
+        const fileTrigger = document.getElementById("file-menu-trigger");
+        const fileDropdown = document.getElementById("file-menu-dropdown");
+
+        fileTrigger.addEventListener("click", function(e) {
+            e.stopPropagation();
+            fileDropdown.classList.toggle("hidden");
+        });
+
+        document.addEventListener("click", function() {
+            fileDropdown.classList.add("hidden");
+        });
+    });
+</script>
+{% endblock %}
