@@ -1136,6 +1136,115 @@
     box-shadow: var(--xp-bevel-in);
 }
 
+/* Retro XP Checklist Component */
+.xp-checklist {
+    margin: 25px 0;
+    font-family: var(--font-xp);
+}
+
+.xp-checklist-item {
+    margin-bottom: 25px;
+    border: 1px solid var(--xp-window-border);
+    background: #fdfdfd;
+    box-shadow: var(--xp-bevel-out);
+    padding: 18px;
+    border-radius: 2px;
+}
+
+.xp-checklist-header {
+    font-weight: bold;
+    color: var(--xp-blue-dark);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--xp-window-border);
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+.xp-checklist-details ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.xp-checklist-details li {
+    margin-bottom: 8px;
+    list-style-type: none;
+    position: relative;
+    font-size: 1.05rem;
+}
+
+.xp-checklist-details li::before {
+    content: "↳";
+    position: absolute;
+    left: -18px;
+    color: var(--xp-text-muted);
+}
+
+.text-success {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.text-danger {
+    color: #c62828;
+    font-weight: bold;
+}
+
+/* Nested Preview Window inside Notepad */
+.xp-nested-preview {
+    margin-top: 15px;
+    border: 1px solid var(--xp-blue-border);
+    border-radius: 4px 4px 0 0;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.15);
+    background: var(--xp-window-bg);
+    overflow: hidden;
+}
+
+.xp-nested-titlebar {
+    background: linear-gradient(to right, var(--xp-blue-dark) 0%, var(--xp-blue-light) 100%);
+    color: var(--xp-white);
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    user-select: none;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.xp-nested-body {
+    background: var(--xp-white);
+    padding: 15px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    border-bottom: 1px solid var(--xp-window-border);
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.xp-nested-body blockquote {
+    margin: 10px 0;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    background: #f7f9fd;
+    border-left: 4px solid var(--xp-blue-light);
+    font-style: italic;
+    color: #333;
+}
+
+.xp-nested-body p {
+    margin: 0 0 10px;
+}
+
+.xp-nested-body p:last-child {
+    margin-bottom: 0;
+}
+
+.xp-nested-footer {
+    background: var(--xp-window-bg);
+    padding: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
 @media (max-width: 600px) {
     .notepad-window {
         margin: 10px;

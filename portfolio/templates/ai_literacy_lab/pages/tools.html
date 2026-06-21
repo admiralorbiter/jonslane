@@ -7,67 +7,76 @@
 
 {% block page_content %}
 <p>
-    This directory contains notes on how I use chatbots, coding agents, deep research tools, and other AI utilities without letting the machine replace human agency. The guiding principle runs through all of it:
+    I use AI tools every week, but I try not to use them as a replacement for thinking. Assume I am being cautious and thoughtful: reading the PDF before asking for a summary, writing the first draft of an email before asking for help, and making the final call myself after getting feedback.
 </p>
 
-<blockquote>
-    "Assume that I'm being cautious and thoughtful about usage, such as always reading the PDF before generating a summary or always writing the first draft of an email. Assume the worst about your laziest colleague. Like gun ownership, there will be good and bad usage. And like a gun, in the right situation you aren't just risking your own foot, but bigger fallout with inappropriate or thoughtless use."
-</blockquote>
-
-<h3>Chatbots: ChatGPT / Gemini / Claude</h3>
 <p>
-    Chatbots like ChatGPT, Gemini, and Claude are powerful assistants, but they must be used as partners rather than thought-replacements. I divide my usage into two patterns:
-</p>
-<ul>
-    <li>
-        <strong>Direct Editing (High Risk):</strong> Asking the model to "rewrite this email to sound more professional" or "polish this section." This is risky because the model often strips away your authentic voice, replacing it with corporate boilerplate — AI slop.
-    </li>
-    <li>
-        <strong>Indirect Editing (Low Risk / High Value):</strong> Asking the model for specific, actionable feedback rather than letting it rewrite your text. For example: <em>"Review this essay. Point out three areas where the argument feels weak, and suggest how I can make the transition between paragraphs smoother."</em>
-    </li>
-</ul>
-<p>
-    I also use chatbots for <strong>feedback cycles</strong> (feeding a draft to Claude to play peer reviewer), <strong>voice alignment</strong> (providing writing samples and style notes before any AI-assisted drafting), and <strong>quick factual queries</strong> — though key facts, imports, and citations always get manually verified.
-</p>
-<p>
-    Summaries deserve a hard rule of their own: <strong>always read the primary document or PDF first.</strong> Using AI summaries as a substitute for first contact with a text creates fragile knowledge and leaves you vulnerable to hallucinated claims presented with total confidence.
+    Of course, tools are not judged only by their careful users. Assume the worst about your laziest colleague, and the risks become easier to see. Like gun ownership, there will be responsible and irresponsible use. And in the wrong situation, careless use does not just risk your own foot. It can create bigger fallout for students, coworkers, readers, and institutions that trust the work.
 </p>
 
-<h3>Coding: Antigravity vs. Cursor vs. Claude Code</h3>
+<h3>System Configuration &amp; Workflows</h3>
 <p>
-    Coding with large language models has evolved from simple copy-paste autocomplete into full agentic development. The key distinction is between two mindsets:
+    Below is a breakdown of how I use these tools in practice, contrasting active workflows with lazy shortcuts:
 </p>
-<ul>
-    <li>
-        <strong>The Coder (AI Assistant):</strong> The AI does the heavy lifting — writing code, scanning directories, running commands, finding test failures. It is incredibly fast but lacks contextual understanding, architectural foresight, and critical taste.
-    </li>
-    <li>
-        <strong>The Editor (Human Driver):</strong> The human acts as the orchestrator. Your job is not to type every character, but to read every line, review the design, run the test suites, and enforce architectural hygiene.
-    </li>
-</ul>
-<p>
-    Blindly running AI-generated scripts is exactly the "gun aimed at your own foot" scenario — except the fallout hits your codebase, your users, and your colleagues. A lazy coder who acts as a passive conduit for AI output will introduce security vulnerabilities, performance bottlenecks, and unmaintainable technical debt.
-</p>
-<p>
-    Three tools I use regularly, compared:
-</p>
-<ul>
-    <li><strong>Cursor:</strong> Excellent for autocomplete, in-line edits, and multi-file code generation. Relies heavily on the user manually reviewing, accepting, and running code before anything lands in the project.</li>
-    <li><strong>Antigravity (Google):</strong> A massive leap forward. Its ability to run development servers, execute tests, capture traceback logs, and recursively feed frontend errors back into the model autonomously is surreal. It acts as an autonomous pair programmer rather than just an autocompleter — which makes the Editor mindset even more critical.</li>
-    <li><strong>Claude Code:</strong> Terminal-based, highly efficient for targeted refactors, shell commands, and quick git commits. Very direct — no UI, just results.</li>
-</ul>
 
-<h3>Research: Deep Research &amp; NotebookLM</h3>
-<p>
-    AI research tools represent a major shift in how we discover, synthesize, and verify complex information. My notes focus on two primary workflows:
-</p>
-<p>
-    <strong>OpenAI Deep Research</strong> performs agentic multi-step web searches, reading dozens of articles, tracing claims, and producing comprehensive reports. It is highly effective for synthesizing information when the web already contains rich data — assessing regional tech ecosystems, finding legal precedents, gathering market reports. It struggles with obscure, hyper-local, or rapidly changing details and can propagate false claims found in low-quality sources. It is a synthesis tool, not an oracle.
-</p>
-<p>
-    <strong>Google NotebookLM</strong> is source-grounded: it queries collections of documents (PDFs, docs, notes) that you upload. Its dynamic audio generation feature produces remarkably engaging simulated podcast conversations from your materials — an incredible tool for re-engaging with dry, complex, or older material in a conversational format. But the "First Contact" rule applies hard here: never use NotebookLM audio as your first contact with a text. Listening to a summary podcast without reading the source first results in shallow comprehension and passes the cognitive effort of learning to the model.
-</p>
-<p>
-    No matter how polished the synthesis, trust is not verified truth. I apply digital literacy methods (like Mike Caulfield's SIFT method) to trace AI-generated claims back to primary research papers, ensuring no hallucinations creep into academic or classroom resources.
-</p>
+<div class="xp-checklist">
+    <!-- Chatbots -->
+    <div class="xp-checklist-item">
+        <div class="xp-checklist-header">[✔] Chatbots: ChatGPT / Gemini / Claude</div>
+        <div class="xp-checklist-details">
+            <ul>
+                <li><strong class="text-success">Active workflow:</strong> Requesting constructive feedback, voice alignment, or target critique on your drafts.</li>
+                <li><strong class="text-danger">Lazy shortcut:</strong> Letting the chatbot write the first draft, producing sterile "AI slop."</li>
+                <li><strong>Additional notes:</strong> Useful for quick questions (which can be better than Google search when done carefully) and summarizing documents.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Coding -->
+    <div class="xp-checklist-item">
+        <div class="xp-checklist-header">[✔] Coding: Antigravity / Cursor / Claude Code / Codex</div>
+        <div class="xp-checklist-details">
+            <ul>
+                <li><strong class="text-success">Active workflow:</strong> Reviewing, testing, and iterating inside a real development workflow (acting as the Editor rather than just a copy-paste Coder).</li>
+                <li><strong class="text-danger">Lazy shortcut:</strong> Pretending the first answer is magic, and running unverified scripts that introduce technical debt.</li>
+            </ul>
+
+            <div class="xp-nested-preview">
+                <div class="xp-nested-titlebar">
+                    <span>🗎 kids_today_cant_hold_a_spade.txt (Preview)</span>
+                </div>
+                <div class="xp-nested-body">
+                    {% include "ai_literacy_lab/essays/kids_today.html" %}
+                </div>
+                <div class="xp-nested-footer">
+                    <a href="{{ url_for('ai_literacy_lab.render_page', page_path='tools/kids-today-cant-hold-a-spade') }}" class="btn-open-essay">
+                        Open full essay &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Research -->
+    <div class="xp-checklist-item">
+        <div class="xp-checklist-header">[✔] Research: Deep Research / GoogleLM</div>
+        <div class="xp-checklist-details">
+            <ul>
+                <li><strong class="text-success">Active workflow:</strong> Source-grounded synthesis, comparing info across multiple documents, and finding patterns, gaps, or better questions.</li>
+                <li><strong class="text-danger">Lazy shortcut:</strong> Accepting summaries as absolute truth without checking the primary sources.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Learning -->
+    <div class="xp-checklist-item">
+        <div class="xp-checklist-header">[✔] Learning &amp; Other: GoogleLM</div>
+        <div class="xp-checklist-details">
+            <ul>
+                <li><strong class="text-success">Active workflow:</strong> Using generated podcasts, summaries, videos, or everyday presentations as a second pass to re-engage with dry or complex texts.</li>
+                <li><strong class="text-danger">Lazy shortcut:</strong> Relying on generated audio or slides as "first contact" to avoid reading the primary text.</li>
+            </ul>
+        </div>
+    </div>
+</div>
 {% endblock %}
