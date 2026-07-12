@@ -29,6 +29,13 @@ PHYSICS_METADATA = {
         "icon": "🚄",
         "status": "active",
     },
+    "expanding-universe": {
+        "title": "Expanding Universe",
+        "category": "Cosmology",
+        "description": "What quantity changes when the universe expands? Visualize scale factors, Hubble flow, and comoving space.",
+        "icon": "🌌",
+        "status": "active",
+    },
     "spacetime-fabric": {
         "title": "Fabric of Spacetime",
         "category": "Relativity",

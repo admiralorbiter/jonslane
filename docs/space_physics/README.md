@@ -39,6 +39,26 @@ The first explorable lesson explores the state vector, evolution laws, and refer
     *   *Focus:* Frame reference shifts ($x' = x - ut$).
     *   *Interaction:* Dragging the frame velocity $u$ to compare stationary observer frames vs. moving observer frames, demonstrating that while trajectories shift, acceleration curves remain invariant ($a' = a$).
 
+### Module 2: Galilean Relativity & Reference Frames (`galilean_relativity.html`)
+Explores observers in moving frames, coordinate shifts, and invariance of laws:
+*   **Chapter 1: Who's Watching?** (Reference frame alignment)
+*   **Chapter 2: The Ball in the Train** (Visualizing trajectories in ground vs. train frames)
+*   **Chapter 3: State Vector Transformations** (Scrubbing coordinate transformation formulas)
+*   **Chapter 4: Symmetry & Equivalence** (Oscillator coordinate system swaps with anchor visualization)
+*   **Chapter 5: The Asteroid Chase** (Chasing closing velocities relative to space frames)
+*   **Chapter 6: Relativistic Divergence** (Galilean vs. Lorentz velocity additions racer tracks)
+
+### Module 3: Expanding Space Cosmology (`expanding_universe.html`)
+Covers comoving and physical coordinate kinematics, expansion histories, and rates:
+*   **Chapter 1: The Wrong Picture** (Explosion model vs. uniform space grid stretching)
+*   **Chapter 2: A Universe of Markers** (Origin selection and coordinate vectors)
+*   **Chapter 3: Two Kinds of Coordinates** (Comoving $\chi$ vs. physical proper distance $D$)
+*   **Chapter 4: The Scale Factor** (Matter, radiation, and dark energy scale profiles)
+*   **Chapter 5: Expansion as a Rate** (4-stacked graphs of scale derivatives: $a$, $\dot{a}$, $H$, $\ddot{a}$)
+*   **Chapter 6: No Preferred Center** (Re-centering observers with live-updating Hubble diagrams)
+*   **Chapter 7: Hubble Flow vs. Peculiar Motion** (Andromeda velocity vector boundary game)
+*   **Chapter 8: Model Scope & Limitations** (Consensus, model-dependent, and open questions)
+
 ---
 
 ## 3. UI/UX Paradigm

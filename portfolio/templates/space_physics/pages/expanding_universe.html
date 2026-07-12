@@ -1,0 +1,2043 @@
+{% extends "base.html" %}
+
+{% block title %}Expanding Universe | Space & Physics{% endblock %}
+{% block meta_description %}An interactive scrollytelling explorable on cosmic expansion: comoving grids, the scale factor a(t), the Hubble parameter H(t), and peculiar velocity dynamics.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<style>
+    /* Scrollytelling Centered Column Design */
+    .scrolly-container {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem 6rem 1.5rem;
+        font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+        color: var(--text-primary);
+        line-height: 1.625;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+        margin-bottom: 2.5rem;
+    }
+    .back-link:hover {
+        color: var(--neon-cyan);
+    }
+
+    .header-group {
+        margin-bottom: 4rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 2rem;
+    }
+
+    .subtitle-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-amber);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .page-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 2.5rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .page-intro {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+    }
+
+    /* Chapter layout */
+    .scrolly-chapter {
+        margin-bottom: 5.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding-bottom: 5rem;
+    }
+    .scrolly-chapter:last-of-type {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .chapter-num {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .chapter-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.75rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .chapter-prose {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+    .chapter-prose p {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Embedded simulator widget card */
+    .diagram-card {
+        background: rgba(14, 16, 23, 0.45);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+        margin: 2rem 0;
+    }
+
+    .diagram-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        padding-bottom: 0.5rem;
+    }
+
+    .diagram-canvas-wrapper {
+        position: relative;
+        background: #020205;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .diagram-canvas {
+        display: block;
+        width: 100%;
+        background: #020205;
+    }
+
+    /* Scrubbable Text variables */
+    .scrubbable-number {
+        color: var(--neon-cyan);
+        border-bottom: 1px dashed var(--neon-cyan);
+        padding: 0 0.15rem;
+        font-weight: bold;
+        cursor: ew-resize;
+        user-select: none;
+        display: inline-block;
+        font-family: var(--font-mono), monospace;
+        font-variant-numeric: tabular-nums;
+        touch-action: none;
+    }
+    .scrubbable-number:hover {
+        background: rgba(0, 242, 254, 0.1);
+        border-bottom-style: solid;
+    }
+
+    /* Button rows inside diagram cards */
+    .diagram-btn-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .diagram-btn-row-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .diagram-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--text-muted);
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        outline: none;
+    }
+    .diagram-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+    }
+    .diagram-btn.active {
+        background: rgba(0, 242, 254, 0.1);
+        border-color: var(--neon-cyan);
+        color: var(--neon-cyan);
+        font-weight: bold;
+    }
+
+    /* Collapsible Model Card */
+    .model-card-details {
+        background: rgba(255, 255, 255, 0.015);
+        border: 1px dashed rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        margin-bottom: 2.5rem;
+        transition: all 0.2s ease;
+    }
+    .model-card-details[open] {
+        background: rgba(14, 16, 23, 0.45);
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+    .model-card-summary {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.78rem;
+        color: var(--neon-amber);
+        padding: 0.65rem 0.95rem;
+        cursor: pointer;
+        user-select: none;
+        outline: none;
+    }
+    .model-card-summary:hover {
+        color: #ffffff;
+    }
+    .model-card-content {
+        padding: 0 0.95rem 0.95rem 0.95rem;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+    }
+    .model-card-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.25rem;
+    }
+    .model-card-table td {
+        padding: 0.35rem 0.45rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .model-card-table tr:last-child td {
+        border-bottom: none;
+    }
+    .model-card-table td:first-child {
+        font-weight: bold;
+        color: rgba(255, 255, 255, 0.5);
+        width: 30%;
+    }
+
+    /* Concept Quiz options */
+    .quiz-options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        margin-top: 1rem;
+    }
+    .quiz-option {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+        color: var(--text-muted);
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        outline: none;
+        font-size: 0.9rem;
+    }
+    .quiz-option:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .quiz-option.correct {
+        background: rgba(16, 185, 129, 0.08);
+        border-color: #10b981;
+        color: #34d399;
+    }
+    .quiz-option.incorrect {
+        background: rgba(239, 68, 68, 0.08);
+        border-color: #ef4444;
+        color: #f87171;
+    }
+
+    .feedback-banner {
+        margin-top: 1rem;
+        padding: 0.85rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        display: none;
+    }
+    .feedback-banner.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        color: #34d399;
+    }
+    .feedback-banner.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+
+    /* Common Misconception Callouts (Rod discussion) */
+    .misconception-card {
+        background: rgba(245, 158, 11, 0.03);
+        border: 1px solid rgba(245, 158, 11, 0.12);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin: 2rem 0;
+    }
+    .misconception-card h4 {
+        color: var(--neon-amber);
+        font-family: var(--font-mono), monospace;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.05em;
+    }
+    .misconception-card p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    /* Core Completed Banner */
+    .core-completed-banner {
+        background: rgba(16, 185, 129, 0.04);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 4.5rem 0;
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.05);
+        text-align: center;
+    }
+    .core-completed-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .core-completed-badge {
+        background: #10b981;
+        color: #020205;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.65rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border-radius: 9999px;
+        letter-spacing: 0.05em;
+    }
+    .core-completed-title {
+        color: #ffffff;
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.35rem;
+        font-style: italic;
+        margin: 0;
+    }
+    .core-completed-desc {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    /* Info Readouts */
+    .readout-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        color: #ffffff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<div class="scrolly-container">
+    <!-- Navigation Back Link -->
+    <a href="{{ url_for('space_physics.index') }}" class="back-link">
+        ← Back to Space Directory
+    </a>
+
+    <!-- Page Header -->
+    <header class="header-group">
+        <span class="subtitle-badge">Cosmology &amp; Kinematics</span>
+        <h1 class="page-title">What Does It Mean for the Universe to Expand?</h1>
+        <p class="page-intro">
+            What quantity changes when we say the universe is expanding? Instead of cataloging events, let's explore the mathematical model describing how cosmological distances change over time.
+        </p>
+    </header>
+
+    <!-- Collapsible Model Card -->
+    <details class="model-card-details">
+        <summary class="model-card-summary">⚙️ Cosmological Model Specification</summary>
+        <div class="model-card-content">
+            <table class="model-card-table">
+                <tr>
+                    <td>System</td>
+                    <td>Large-scale universe</td>
+                </tr>
+                <tr>
+                    <td>Idealization</td>
+                    <td>Homogeneous (uniform density) and isotropic (looks the same in all directions)</td>
+                </tr>
+                <tr>
+                    <td>Geometry</td>
+                    <td>Spatially flat introductory model</td>
+                </tr>
+                <tr>
+                    <td>State Variable</td>
+                    <td>Scale factor a(t)</td>
+                </tr>
+                <tr>
+                    <td>Derived Quantity</td>
+                    <td>Hubble parameter H(t) = ȧ(t)/a(t)</td>
+                </tr>
+                <tr>
+                    <td>Coordinates</td>
+                    <td>Comoving coordinate χ (fixed) and proper distance D(t) = a(t)·χ (expanding)</td>
+                </tr>
+                <tr>
+                    <td>Included Motion</td>
+                    <td>Hubble flow (recessional motion due to expanding space)</td>
+                </tr>
+                <tr>
+                    <td>Ignored Motion</td>
+                    <td>Local gravitational bound structures and peculiar velocities (introduced in Ch 7)</td>
+                </tr>
+                <tr>
+                    <td>Evolution Law</td>
+                    <td>Friedmann equation (deferred to Module 3)</td>
+                </tr>
+            </table>
+        </div>
+    </details>
+
+    <!-- CHAPTER 1: THE WRONG PICTURE -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 1</span>
+        <h2 class="chapter-title">The Wrong Picture</h2>
+        <div class="chapter-prose">
+            <p>
+                When thinking of the Big Bang, we often picture a tiny firecracker expanding into empty surrounding space. This is the <strong>explosion metaphor</strong>: a localized object with a defined center and an outer boundary, bursting into pre-existing emptiness.
+            </p>
+            <p>
+                But modern cosmology is based on a completely different premise: the expansion of space itself. 
+                <span style="color: var(--text-muted); font-size: 0.9rem; display: block; margin-top: 0.5rem; font-style: italic;">
+                    Note: "Expanding space" is a description of how cosmological distances evolve under a changing metric, not a claim that space behaves like a physical stretching fabric or material substance.
+                </span>
+            </p>
+            <p>
+                Compare the two models below. Drag the <strong>Scale factor slider</strong> to see how coordinates behave:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 1.1 — Explosion vs. Uniform Expansion</span>
+                <span>Scale a = <span class="scrubbable-number" id="scrub-ch1-scale" data-var="ch1_scale" data-min="0.5" data-max="2.0">1.0</span></span>
+            </div>
+            <div class="diagram-canvas-wrapper" style="display: flex; gap: 0.5rem; background: #000; padding: 0.25rem;">
+                <div style="flex: 1; text-align: center;">
+                    <div style="font-family: var(--font-mono), monospace; font-size: 0.7rem; color: var(--neon-amber); margin-bottom: 0.25rem;">EXPLOSION IN EMPTY SPACE</div>
+                    <canvas id="canvas-ch1-explosion" class="diagram-canvas" height="180" style="border: 1px solid rgba(255,255,255,0.05);"></canvas>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <div style="font-family: var(--font-mono), monospace; font-size: 0.7rem; color: var(--neon-cyan); margin-bottom: 0.25rem;">UNIFORM STRETCHING (GRID)</div>
+                    <canvas id="canvas-ch1-grid" class="diagram-canvas" height="180" style="border: 1px solid rgba(255,255,255,0.05);"></canvas>
+                </div>
+            </div>
+
+            <div class="quiz-options-list">
+                <button class="quiz-option" data-ans="A" id="btn-ch1-a">
+                    <strong>Model A: The Explosion.</strong> The universe has a center point where the Bang occurred, and galaxies move outward into surrounding empty space.
+                </button>
+                <button class="quiz-option" data-ans="B" id="btn-ch1-b">
+                    <strong>Model B: The Uniform Grid.</strong> There is no center or edge. Space itself stretches everywhere, causing the distance between all galaxies to grow uniformly.
+                </button>
+            </div>
+            <div class="feedback-banner" id="feedback-ch1"></div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 2: A UNIVERSE OF MARKERS -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 2</span>
+        <h2 class="chapter-title">A Universe of Markers</h2>
+        <div class="chapter-prose">
+            <p>
+                In an expanding homogeneous universe, every <strong>comoving</strong> observer sees other sufficiently distant comoving markers receding according to the same large-scale pattern. Observers with local peculiar velocity, or nearby objects bound by gravity, do not follow this general flow.
+            </p>
+            <p>
+                <strong>Click any galaxy dot</strong> to set the origin observer (cyan), then <strong>click another galaxy dot</strong> to set a target (magenta). Adjust the <strong>Scale slider</strong> to watch the comoving separation \(\Delta\chi\) and proper distance \(D(t)\) update:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 2.1 — Multicenter Reference Grid</span>
+                <span>Scale a = <span class="scrubbable-number" id="scrub-ch2-scale" data-var="ch2_scale" data-min="0.5" data-max="2.0">1.0</span></span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch2" class="diagram-canvas" height="220"></canvas>
+            </div>
+            <div style="margin-top: 0.5rem; font-family: var(--font-mono), monospace; font-size: 0.78rem; display: flex; flex-direction: column; gap: 0.3rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.5rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--neon-cyan);">Origin: <span id="readout-ch2-origin">Galaxy Center</span></span>
+                    <span style="color: var(--neon-magenta);">Target: <span id="readout-ch2-target">None selected</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--neon-amber);">Comoving Sep: \(\Delta\chi\) = <span id="readout-ch2-dchi">--</span></span>
+                    <span style="color: #ffffff;">Proper Dist: \(D(t) = a(t)\Delta\chi\) = <span id="readout-ch2-properdist">--</span></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 3: TWO KINDS OF COORDINATES -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 3</span>
+        <h2 class="chapter-title">Two Kinds of Coordinates</h2>
+        <div class="chapter-prose">
+            <p>
+                To model an expanding system mathematically, we split distance measurements into two distinct categories:
+            </p>
+            <ul>
+                <li><strong>Comoving Coordinate (\(\chi\))</strong>: A coordinate grid that is locked to the markers. As space expands, the comoving coordinates of galaxies do not change.</li>
+                <li><strong>Proper Distance (\(D\))</strong>: The spatial distance between two locations measured along a surface of constant cosmic time. This can be imagined as an idealized chain of local rulers laid between the locations at that cosmic instant.</li>
+            </ul>
+            <p>
+                They are linked by the scale factor \(a(t)\):
+                $$D(t) = a(t) \cdot \chi$$
+            </p>
+            <p>
+                Toggle between the two perspectives below to see how they represent coordinate grids. The simulation loops automatically, expanding and contracting:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-btn-row">
+                <button class="diagram-btn active" id="btn-ch3-comoving">Comoving View (χ constant)</button>
+                <button class="diagram-btn" id="btn-ch3-proper">Physical View (D changes)</button>
+            </div>
+            <div class="diagram-header">
+                <span>Diagram 3.1 — Grid Coordinate Transformations</span>
+                <span>Scale a(t) = <span id="readout-ch3-a" class="readout-badge">1.00</span></span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch3" class="diagram-canvas" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="misconception-card">
+            <h4>⚠️ Common Misconception: Does a physical rod expand?</h4>
+            <p>
+                If space expands, why don't our rulers, solar systems, or galaxies expand alongside it?
+                The scale factor describes the large-scale separation of comoving, unbound regions. Bound systems must be modeled using their own local dynamics. Within atoms, solids, solar systems, and galaxies, local electromagnetic or gravitational interactions dominate, so their internal distances do not simply scale with \(a(t)\). Expansion is not a physical "drag" force pulling objects apart.
+            </p>
+        </div>
+    </section>
+
+    <!-- CHAPTER 4: THE SCALE FACTOR -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 4</span>
+        <h2 class="chapter-title">The Scale Factor</h2>
+        <div class="chapter-prose">
+            <p>
+                The parameter \(a(t)\) represents the relative size scale of the universe. Because its absolute scale is arbitrary, cosmologists normalize it to \(1\) at the present day:
+                $$a(t_0) = 1$$
+            </p>
+            <p>
+                How \(a(t)\) changes over time depends on what components populate the universe. In a simplified model, we look at three extreme cases:
+            </p>
+            <ul>
+                <li><strong>Radiation Dominated (Spatially Flat)</strong>: Early universe, expanding as \(a(t) \propto t^{1/2}\) (decelerating).</li>
+                <li><strong>Matter Dominated (Spatially Flat)</strong>: Middle era, expanding as \(a(t) \propto t^{2/3}\) (decelerating).</li>
+                <li><strong>Cosmological Constant Dominated (Spatially Flat)</strong>: Late era, expanding exponentially as \(a(t) \propto e^{H_\Lambda t}\) (accelerating).</li>
+            </ul>
+
+            <div class="quantities-table-wrapper" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                <table class="model-card-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); text-align: left;">
+                            <th style="padding: 0.4rem; color: #ffffff;">Model</th>
+                            <th style="padding: 0.4rem; color: #ffffff;">Assumptions / Law</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 0.4rem; font-weight: bold; color: var(--neon-cyan);">Radiation</td>
+                            <td style="padding: 0.4rem;">Flat, radiation only: \(a(t) \propto t^{1/2}\) (decelerating)</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 0.4rem; font-weight: bold; color: var(--neon-cyan);">Matter</td>
+                            <td style="padding: 0.4rem;">Flat, pressureless matter only: \(a(t) \propto t^{2/3}\) (decelerating)</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 0.4rem; font-weight: bold; color: var(--neon-cyan);">Cosmological Constant</td>
+                            <td style="padding: 0.4rem;">Flat, constant vacuum energy density (\(w = -1\)): \(a(t) \propto e^{H_\Lambda t}\) (accelerating)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="font-size: 0.8rem; font-style: italic; color: var(--text-muted); margin-top: 0.5rem;">
+                    Note: These are simplified single-component model universes designed to show how different energy forms affect distance scaling, not consecutive parts of one real universe history.
+                </p>
+            </div>
+
+            <p>
+                Select an expansion history model and drag the <strong>time scrubber \(t\)</strong> to see its effect:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-btn-row-3">
+                <button class="diagram-btn" id="btn-ch4-rad">Radiation (t^1/2)</button>
+                <button class="diagram-btn active" id="btn-ch4-mat">Matter (t^2/3)</button>
+                <button class="diagram-btn" id="btn-ch4-de">Cosmological Constant (e^{H_Λ t})</button>
+            </div>
+            <div class="diagram-header">
+                <span>Diagram 4.1 — Expansion History Curves</span>
+                <span>Time t = <span class="scrubbable-number" id="scrub-ch4-t" data-var="ch4_t" data-min="0.1" data-max="5.0">2.5</span></span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch4" class="diagram-canvas" height="200"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 5: EXPANSION AS A RATE -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 5</span>
+        <h2 class="chapter-title">Expansion as a Rate</h2>
+        <div class="chapter-prose">
+            <p>
+                To measure how fast proper distance changes, we differentiate \(D(t) = a(t)\chi\) with respect to time:
+                $$\dot{D}(t) = \dot{a}(t)\chi$$
+            </p>
+            <p>
+                Since \(\chi = D(t) / a(t)\), we can substitute it back:
+                $$\dot{D}(t) = \frac{\dot{a}(t)}{a(t)} D(t)$$
+            </p>
+            <p>
+                We define the <strong>Hubble Parameter \(H(t)\)</strong> as the fractional expansion rate:
+                $$H(t) \equiv \frac{\dot{a}(t)}{a(t)}$$
+            </p>
+            <p>
+                This gives <strong>Hubble's Law</strong>: the Hubble recession rate of a comoving galaxy is directly proportional to its proper distance:
+                $$v_{\text{rec}} = H(t) D(t)$$
+            </p>
+            <p>
+                Let's look at the crucial distinction between these parameters. Drag the <strong>time slider \(t\)</strong> to inspect a universe that transitions from decelerating (matter-dominated) to accelerating (dark-energy-dominated) according to:
+                $$a(t) = t^{2/3} + 0.05 t^2$$
+            </p>
+
+            <div class="quantities-table-wrapper" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                <table class="model-card-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); text-align: left;">
+                            <th style="padding: 0.5rem; color: #ffffff;">Quantity</th>
+                            <th style="padding: 0.5rem; color: #ffffff;">Question it answers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 0.5rem; font-family: monospace; color: var(--neon-cyan);">a(t)</td>
+                            <td style="padding: 0.5rem;">How large is the current scale of the universe relative to normalization?</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 0.5rem; font-family: monospace; color: var(--neon-cyan);">\(\dot{a}(t)\)</td>
+                            <td style="padding: 0.5rem;">How quickly is that scale factor currently changing?</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 0.5rem; font-family: monospace; color: var(--neon-cyan);">H(t) = \(\dot{a}/a\)</td>
+                            <td style="padding: 0.5rem;">What is the fractional (percentage) rate of expansion?</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 0.5rem; font-family: monospace; color: var(--neon-cyan);">\(\ddot{a}(t)\)</td>
+                            <td style="padding: 0.5rem;">Is the expansion rate increasing (accelerating) or decreasing (decelerating)?</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 5.1 — Expansion Rates Dashboard</span>
+                <span>Time t = <span class="scrubbable-number" id="scrub-ch5-t" data-var="ch5_t" data-min="0.5" data-max="5.0">2.0</span> s</span>
+            </div>
+            <div class="diagram-canvas-wrapper" style="display: flex; gap: 0.5rem; background: #000; padding: 0.25rem;">
+                <canvas id="canvas-ch5-visual" class="diagram-canvas" height="280" style="flex: 1.1; border-right: 1px solid rgba(255,255,255,0.05);"></canvas>
+                <canvas id="canvas-ch5-graphs" class="diagram-canvas" height="280" style="flex: 1.4;"></canvas>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin-top: 0.5rem; font-size: 0.72rem; font-family: var(--font-mono), monospace;">
+                <span style="color: #ffffff;">Size scale a = <span id="readout-ch5-a">1.0</span></span>
+                <span style="color: var(--neon-cyan);">Speed ȧ = <span id="readout-ch5-adot">1.0</span></span>
+                <span style="color: var(--neon-amber);">Hubble H = <span id="readout-ch5-h">1.0</span></span>
+                <span style="color: var(--neon-magenta);">Acceleration ä = <span id="readout-ch5-addot">1.0</span></span>
+            </div>
+        </div>
+
+        <div class="misconception-card">
+            <h4>💡 Insight: How can the Hubble parameter decrease if expansion is speeding up?</h4>
+            <p>
+                Look at the graphs above between \(t = 1.0\) and \(t = 4.0\). The acceleration \(\ddot{a}\) becomes positive and the absolute speed \(\dot{a}\) increases. Proper distances between comoving locations are accelerating apart because \(\ddot{a} > 0\).
+                Yet the Hubble parameter \(H = \dot{a}/a\) is <strong>decreasing</strong>. Why? Because the size of the universe \(a\) is growing faster than the expansion speed \(\dot{a}\). The <em>fractional</em> rate of growth decreases even while the <em>absolute</em> rate of growth increases!
+            </p>
+        </div>
+    </section>
+
+    <!-- CORE COMPLETE LANDMARK BANNER -->
+    <div class="core-completed-banner">
+        <div class="core-completed-header">
+            <span class="core-completed-badge">Checkpoint</span>
+            <h3 class="core-completed-title">Core Pathway Completed</h3>
+        </div>
+        <p class="core-completed-desc">
+            You now understand the fundamental kinematics of cosmic expansion: comoving coordinates, proper distances, the scale factor \(a(t)\), the expansion rate \(\dot{a}(t)\), and the fractional Hubble parameter \(H(t)\). Next, let's explore their physical consequences.
+        </p>
+    </div>
+
+    <!-- CHAPTER 6: NO PREFERRED CENTER -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 6</span>
+        <h2 class="chapter-title">No Preferred Center</h2>
+        <div class="chapter-prose">
+            <p>
+                Hubble's law, \(v = H D\), is not a proof that we are at the center of the universe. Because the relationship is strictly linear, <strong>every comoving observer</strong> sees a Hubble diagram centered on themselves.
+                <span style="color: var(--text-muted); font-size: 0.9rem; display: block; margin-top: 0.5rem; font-style: italic;">
+                    Note: A linear velocity-distance law alone does not distinguish cosmological expansion from a localized explosion. The physical distinction lies in general relativity, where expansion is a metric property of a homogeneous spacetime without a central explosion point or an external empty space.
+                </span>
+            </p>
+            <p>
+                <strong>Click different galaxies</strong> on the grid below. The scatter plot on the right displays the relative recession speed vs. proper distance measured from that specific galaxy's perspective:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 6.1 — Hubble Diagram Invariance</span>
+                <span>Active Origin: <span id="readout-ch6-origin" style="color: var(--neon-cyan); font-weight: bold;">Galaxy A</span></span>
+            </div>
+            <div class="diagram-canvas-wrapper" style="display: flex; gap: 0.5rem; background: #000; padding: 0.25rem;">
+                <canvas id="canvas-ch6-grid" class="diagram-canvas" height="220" style="flex: 1.2; border-right: 1px solid rgba(255,255,255,0.05);"></canvas>
+                <canvas id="canvas-ch6-hubble" class="diagram-canvas" height="220" style="flex: 0.8;"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 7: HUBBLE FLOW VS. PECULIAR MOTION -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 7</span>
+        <h2 class="chapter-title">Hubble Flow vs. Peculiar Motion</h2>
+        <div class="chapter-prose">
+            <p>
+                In the real universe, galaxies are not strictly anchored to comoving coordinates. They also move locally due to the gravity of neighboring mass structures.
+            </p>
+            <p>
+                A galaxy's observed velocity is the vector sum of two components:
+                $$v_{\text{observed}} = v_{\text{Hubble}} + v_{\text{peculiar}}$$
+                <span style="color: var(--text-muted); font-size: 0.9rem; display: block; margin-top: 0.5rem; font-style: italic;">
+                    Note: This simple additive decomposition is an approximation valid for nearby systems at non-relativistic speeds. At cosmological distances, relative velocities must be computed using general relativistic geodesics and light travel times.
+                </span>
+            </p>
+            <ul>
+                <li><strong>Hubble Flow (\(v_{\text{Hubble}} = H \cdot D\))</strong>: The expansion of space carrying the galaxy away.</li>
+                <li><strong>Peculiar Motion (\(v_{\text{peculiar}}\))</strong>: The galaxy's local motion through space.</li>
+            </ul>
+            <p>
+                Observe the local system of Milky Way and Andromeda below. Adjust the <strong>Hubble expansion parameter \(H\)</strong> and <strong>Andromeda's peculiar velocity \(v_{\text{pec}}\)</strong> (negative values point toward the Milky Way):
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 7.1 — Hubble flow vs. peculiar vector additions</span>
+                <span>H = <span class="scrubbable-number" id="scrub-ch7-h" data-var="ch7_h" data-min="0" data-max="15">6</span> | v_pec = <span class="scrubbable-number" id="scrub-ch7-vpec" data-var="ch7_vpec" data-min="-150" data-max="50">-60</span> km/s</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch7" class="diagram-canvas" height="180"></canvas>
+            </div>
+            <div style="margin-top: 0.5rem; font-size: 0.78rem; font-family: var(--font-mono), monospace; display: flex; justify-content: space-between;">
+                <span style="color: var(--neon-cyan);">v_Hubble = <span id="readout-ch7-vhub">0</span> km/s</span>
+                <span style="color: var(--neon-amber);">v_pec = <span id="readout-ch7-vpeclive">0</span> km/s</span>
+                <span style="color: #ffffff;">v_net = <span id="readout-ch7-vnet">0</span> km/s</span>
+            </div>
+            <div style="margin-top: 0.4rem; font-size: 0.78rem; font-family: var(--font-mono), monospace; text-align: center; color: #ffffff;" id="readout-ch7-status">
+                Currently approaching (peculiar velocity dominates)
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 8: MODEL SCOPE & LIMITATIONS -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 8</span>
+        <h2 class="chapter-title">Model Scope &amp; Limitations</h2>
+        <div class="chapter-prose">
+            <p>
+                Every cosmological claim is only as solid as the model it is built on. Here is how our kinematics model stands in terms of evidence and scientific consensus:
+            </p>
+        </div>
+
+        <details class="model-card-details">
+            <summary class="model-card-summary">✅ Well Established Within This Framework</summary>
+            <div class="model-card-content">
+                <ul>
+                    <li><strong>Large-scale Hubble expansion</strong>: Directly measured by redshifts of distant galaxies.</li>
+                    <li><strong>Homogeneity and Isotropy</strong>: The Cosmic Microwave Background (CMB) shows the early universe was uniform to 1 part in 100,000.</li>
+                    <li><strong>Decoupling of Bound Systems</strong>: Gravitationally bound systems (atoms, planets, solar systems, galaxies) do not expand.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="model-card-details">
+            <summary class="model-card-summary">⚙️ Model-Dependent Assumptions</summary>
+            <div class="model-card-content">
+                <ul>
+                    <li><strong>General Relativity</strong>: We assume spacetime curvature behaves according to Einstein's equations.</li>
+                    <li><strong>Dark Energy Profile</strong>: Current calculations assume dark energy is a constant vacuum density (\(w = -1\)). If dark energy evolves, future predictions change.</li>
+                    <li><strong>Curvature</strong>: The universe is extremely close to flat (\(\Omega_k \approx 0\)), but a tiny curvature would alter the global geometry.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="model-card-details">
+            <summary class="model-card-summary">❓ Genuinely Open Questions</summary>
+            <div class="model-card-content">
+                <ul>
+                    <li><strong>What is Dark Energy?</strong> Its acceleration is well-measured, but its physical origin is unknown.</li>
+                    <li><strong>The Hubble Tension</strong>: Measurements of \(H_0\) using the CMB conflict with measurements using nearby supernova ladders, hinting at missing physics.</li>
+                    <li><strong>Initial Conditions</strong>: Why was the early universe in such a low-entropy, smooth state?</li>
+                </ul>
+            </div>
+        </details>
+
+        <div class="misconception-card" style="margin-top: 2.5rem; border-left: 4px solid var(--neon-cyan);">
+            <h4>❓ Questions This Model Does Not Yet Answer</h4>
+            <p>
+                Our current model is <em>kinematic</em>—it describes the geometry of expansion but doesn't explain the underlying dynamics. In future modules, we will address:
+            </p>
+            <ul style="font-size: 0.9rem; margin-left: 1.2rem; margin-top: 0.5rem; line-height: 1.6;">
+                <li><strong>What determines the scale factor \(a(t)\)?</strong> (Friedmann's dynamical equations and the density of matter, radiation, and dark energy).</li>
+                <li><strong>Is the universe spatially finite or infinite?</strong> (Global topology of flat, open, or closed spaces).</li>
+                <li><strong>Why did expansion transition from deceleration to acceleration?</strong> (Dark energy density vs. diluting matter density).</li>
+                <li><strong>How do we measure \(a(t)\) from ancient light?</strong> (Cosmological redshift and standard candles like Type Ia supernovae).</li>
+                <li><strong>What is the physical origin of dark energy?</strong> (Cosmological constant \(\Lambda\) vs. evolving fields).</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 4rem; text-align: center; padding: 2.5rem; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1);">
+            <span style="font-family: var(--font-mono), monospace; font-size: 0.75rem; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">NEXT COSMOLOGY MODULE PREVIEW</span>
+            <h3 style="font-family: var(--font-serif), Georgia, serif; font-size: 1.5rem; font-style: italic; color: #ffffff; margin-bottom: 1rem;">How Can Light Reveal Expansion?</h3>
+            <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 580px; margin: 0 auto 1.5rem auto; line-height: 1.6;">
+                How do we verify these mathematical coordinate systems from Earth? In the next module, we'll build an explorable model of light propagation, Doppler vs. cosmological redshift, and the relic Cosmic Microwave Background (CMB) radiation.
+            </p>
+            <a href="#" class="btn-ch5-action" style="display: inline-block; padding: 0.6rem 1.5rem; background: rgba(0, 242, 254, 0.1); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-family: var(--font-mono), monospace; transition: all 0.2s;" onmouseover="this.style.background='rgba(0, 242, 254, 0.2)';" onmouseout="this.style.background='rgba(0, 242, 254, 0.1)';">
+                Teaser: Explore Redshift &amp; CMB &rarr;
+            </a>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include MathJax for LaTeX processing -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Enforce space theme on body
+        document.body.classList.add('space-theme-body');
+
+        // Global color scheme
+        const COLOR_COMOVING = "#00f2fe"; // cyan
+        const COLOR_PROPER = "#ff00dd";   // magenta
+        const COLOR_SCALE = "#f59e0b";    // amber
+        const COLOR_WHITE = "#ffffff";
+        const COLOR_GRID = "rgba(255, 255, 255, 0.1)";
+        const COLOR_PECULIAR = "#f97316"; // orange
+        const COLOR_TEXT_MUTED = "rgba(255, 255, 255, 0.65)";
+
+        // Interactive States
+        let ch1_scale = 1.0;
+        let ch2_scale = 1.0;
+        let ch2_target_idx = 7; // default target (Marker -1, 1)
+        let ch3_a = 1.0;
+        let ch3_mode = "comoving"; // comoving vs proper
+        let ch3_time = 0.0;
+        let ch4_t = 2.5;
+        let ch4_model = "matter"; // radiation, matter, darkenergy
+        let ch5_t = 2.0;
+        let ch6_selected = 12; // index of origin galaxy
+        let ch6_origin_x = 0.0;
+        let ch6_origin_y = 0.0;
+        let ch7_h = 6;
+        let ch7_vpec = -60;
+
+        // Canvases
+        const c1e = document.getElementById("canvas-ch1-explosion");
+        const c1g = document.getElementById("canvas-ch1-grid");
+        const c2 = document.getElementById("canvas-ch2");
+        const c3 = document.getElementById("canvas-ch3");
+        const c4 = document.getElementById("canvas-ch4");
+        const c5v = document.getElementById("canvas-ch5-visual");
+        const c5g = document.getElementById("canvas-ch5-graphs");
+        const c6g = document.getElementById("canvas-ch6-grid");
+        const c6h = document.getElementById("canvas-ch6-hubble");
+        const c7 = document.getElementById("canvas-ch7");
+
+        const ctx1e = c1e.getContext("2d");
+        const ctx1g = c1g.getContext("2d");
+        const ctx2 = c2.getContext("2d");
+        const ctx3 = c3.getContext("2d");
+        const ctx4 = c4.getContext("2d");
+        const ctx5v = c5v.getContext("2d");
+        const ctx5g = c5g.getContext("2d");
+        const ctx6g = c6g.getContext("2d");
+        const ctx6h = c6h.getContext("2d");
+        const ctx7 = c7.getContext("2d");
+
+        // Set high-DPI scaling
+        function setupDPI(canvas) {
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.getBoundingClientRect().width;
+            const h = canvas.getBoundingClientRect().height;
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+        }
+
+        [c1e, c1g, c2, c3, c4, c5v, c5g, c6g, c6h, c7].forEach(setupDPI);
+
+        // Prepopulate Chapter 2 / Chapter 6 Galaxy grids
+        const galaxies_ch2 = [];
+        const gridCount = 5;
+        for (let r = 0; r < gridCount; r++) {
+            for (let c = 0; c < gridCount; c++) {
+                galaxies_ch2.push({
+                    row: r,
+                    col: c,
+                    cx: (c - 2) * 45, // comoving coordinates relative to center
+                    cy: (r - 2) * 45
+                });
+            }
+        }
+        let ch2_selected_idx = 12; // center one
+
+        // Ch2 Live Coordinate Math Readouts
+        function updateCh2Readouts() {
+            const originGal = galaxies_ch2[ch2_selected_idx];
+            const originCol = originGal.col - 2;
+            const originRow = 2 - originGal.row;
+            document.getElementById("readout-ch2-origin").textContent = `Marker (${originCol}, ${originRow})`;
+
+            const targetEl = document.getElementById("readout-ch2-target");
+            const dchiEl = document.getElementById("readout-ch2-dchi");
+            const properdistEl = document.getElementById("readout-ch2-properdist");
+
+            if (ch2_target_idx >= 0 && ch2_target_idx < galaxies_ch2.length) {
+                const targetGal = galaxies_ch2[ch2_target_idx];
+                const targetCol = targetGal.col - 2;
+                const targetRow = 2 - targetGal.row;
+                targetEl.textContent = `Marker (${targetCol}, ${targetRow})`;
+
+                // Calculate comoving separation (spacing of 45 pixels equals 1.0 comoving unit)
+                const dx_co = targetGal.cx - originGal.cx;
+                const dy_co = targetGal.cy - originGal.cy;
+                const dchi = Math.sqrt(dx_co * dx_co + dy_co * dy_co) / 45.0;
+                const proper_dist = dchi * ch2_scale;
+
+                dchiEl.textContent = dchi.toFixed(2);
+                properdistEl.textContent = proper_dist.toFixed(2);
+            } else {
+                targetEl.textContent = "None selected";
+                dchiEl.textContent = "--";
+                properdistEl.textContent = "--";
+            }
+        }
+
+        const galaxies_ch6 = [];
+        const gridCountCh6 = 5;
+        for (let r = 0; r < gridCountCh6; r++) {
+            for (let c = 0; c < gridCountCh6; c++) {
+                galaxies_ch6.push({
+                    row: r,
+                    col: c,
+                    cx: (c - 2) * 40,
+                    cy: (r - 2) * 40,
+                    name: `Galaxy ${String.fromCharCode(65 + r * gridCountCh6 + c)}`
+                });
+            }
+        }
+
+        // --- DRAWING FUNCTIONS ---
+
+        function drawCh1() {
+            const w = c1e.width / (window.devicePixelRatio || 1);
+            const h = c1e.height / (window.devicePixelRatio || 1);
+            const cX = w / 2;
+            const cY = h / 2;
+
+            // Model A: Explosion
+            ctx1e.fillStyle = "#020205";
+            ctx1e.fillRect(0, 0, w, h);
+
+            // Draw center point
+            ctx1e.beginPath();
+            ctx1e.arc(cX, cY, 4, 0, Math.PI * 2);
+            ctx1e.fillStyle = COLOR_SCALE;
+            ctx1e.fill();
+
+            // Draw boundary
+            ctx1e.beginPath();
+            ctx1e.arc(cX, cY, 70 * ch1_scale, 0, Math.PI * 2);
+            ctx1e.strokeStyle = "rgba(245, 158, 11, 0.25)";
+            ctx1e.lineWidth = 1;
+            ctx1e.setLineDash([4, 4]);
+            ctx1e.stroke();
+            ctx1e.setLineDash([]);
+
+            // Draw explosion dots
+            const particles = 18;
+            for (let i = 0; i < particles; i++) {
+                const angle = (i * Math.PI * 2) / particles;
+                const r = 25 * ch1_scale + (i % 3) * 8 * ch1_scale;
+                const px = cX + Math.cos(angle) * r;
+                const py = cY + Math.sin(angle) * r;
+                ctx1e.beginPath();
+                ctx1e.arc(px, py, 3, 0, Math.PI * 2);
+                ctx1e.fillStyle = COLOR_SCALE;
+                ctx1e.fill();
+            }
+
+            // Model B: Grid
+            const wg = c1g.width / (window.devicePixelRatio || 1);
+            const hg = c1g.height / (window.devicePixelRatio || 1);
+            ctx1g.fillStyle = "#020205";
+            ctx1g.fillRect(0, 0, wg, hg);
+
+            // Draw grid lines
+            const step = 30 * ch1_scale;
+            ctx1g.beginPath();
+            ctx1g.strokeStyle = COLOR_GRID;
+            ctx1g.lineWidth = 1;
+            for (let x = (wg/2) % step; x < wg; x += step) {
+                ctx1g.moveTo(x, 0); ctx1g.lineTo(x, hg);
+            }
+            for (let y = (hg/2) % step; y < hg; y += step) {
+                ctx1g.moveTo(0, y); ctx1g.lineTo(wg, y);
+            }
+            ctx1g.stroke();
+
+            // Draw grid dots
+            for (let x = (wg/2) % step; x < wg; x += step) {
+                for (let y = (hg/2) % step; y < hg; y += step) {
+                    ctx1g.beginPath();
+                    ctx1g.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx1g.fillStyle = COLOR_COMOVING;
+                    ctx1g.fill();
+                }
+            }
+        }
+
+        function drawCh2() {
+            const w = c2.width / (window.devicePixelRatio || 1);
+            const h = c2.height / (window.devicePixelRatio || 1);
+            const cX = w / 2;
+            const cY = h / 2;
+
+            ctx2.fillStyle = "#020205";
+            ctx2.fillRect(0, 0, w, h);
+
+            const originGal = galaxies_ch2[ch2_selected_idx];
+
+            // Ticks and Grid lines from the origin perspective
+            ctx2.strokeStyle = "rgba(255, 255, 255, 0.05)";
+            ctx2.lineWidth = 1;
+            ctx2.beginPath();
+            const gridSpacing = 45 * ch2_scale;
+            for (let i = -3; i <= 3; i++) {
+                const lx = cX + (originGal.cx + i * 45) * ch2_scale;
+                ctx2.moveTo(lx, 0); ctx2.lineTo(lx, h);
+                const ly = cY + (originGal.cy + i * 45) * ch2_scale;
+                ctx2.moveTo(0, ly); ctx2.lineTo(w, ly);
+            }
+            ctx2.stroke();
+
+            // Draw axis ticks centered on origin
+            ctx2.strokeStyle = "rgba(255, 255, 255, 0.25)";
+            ctx2.beginPath();
+            ctx2.moveTo(cX + originGal.cx * ch2_scale, 10);
+            ctx2.lineTo(cX + originGal.cx * ch2_scale, h - 10);
+            ctx2.moveTo(10, cY + originGal.cy * ch2_scale);
+            ctx2.lineTo(w - 10, cY + originGal.cy * ch2_scale);
+            ctx2.stroke();
+
+            // Draw dashed line between origin and target if selected
+            if (ch2_target_idx >= 0 && ch2_target_idx < galaxies_ch2.length) {
+                const origPx = cX + originGal.cx * ch2_scale;
+                const origPy = cY + originGal.cy * ch2_scale;
+                const targetGal = galaxies_ch2[ch2_target_idx];
+                const targPx = cX + targetGal.cx * ch2_scale;
+                const targPy = cY + targetGal.cy * ch2_scale;
+
+                ctx2.beginPath();
+                ctx2.setLineDash([4, 4]);
+                ctx2.moveTo(origPx, origPy);
+                ctx2.lineTo(targPx, targPy);
+                ctx2.strokeStyle = COLOR_SCALE;
+                ctx2.lineWidth = 2;
+                ctx2.stroke();
+                ctx2.setLineDash([]); // reset
+            }
+
+            // Draw dots & velocity vectors
+            galaxies_ch2.forEach((gal, idx) => {
+                const px = cX + gal.cx * ch2_scale;
+                const py = cY + gal.cy * ch2_scale;
+
+                // Calculate distance from active origin
+                const dx = (gal.cx - originGal.cx) * ch2_scale;
+                const dy = (gal.cy - originGal.cy) * ch2_scale;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                const isOrigin = idx === ch2_selected_idx;
+                const isTarget = idx === ch2_target_idx;
+
+                if (!isOrigin && dist > 5) {
+                    // Draw recession velocity vector (highlighting target vector)
+                    const vx = dx * 0.25;
+                    const vy = dy * 0.25;
+                    ctx2.beginPath();
+                    ctx2.moveTo(px, py);
+                    ctx2.lineTo(px + vx, py + vy);
+                    ctx2.strokeStyle = isTarget ? COLOR_PROPER : "rgba(255, 0, 221, 0.4)";
+                    ctx2.lineWidth = isTarget ? 2.5 : 1.5;
+                    ctx2.stroke();
+
+                    // Draw arrow tip
+                    const angle = Math.atan2(vy, vx);
+                    ctx2.beginPath();
+                    ctx2.moveTo(px + vx, py + vy);
+                    ctx2.lineTo(px + vx - 5 * Math.cos(angle - 0.4), py + vy - 5 * Math.sin(angle - 0.4));
+                    ctx2.lineTo(px + vx - 5 * Math.cos(angle + 0.4), py + vy - 5 * Math.sin(angle + 0.4));
+                    ctx2.closePath();
+                    ctx2.fillStyle = isTarget ? COLOR_PROPER : "rgba(255, 0, 221, 0.4)";
+                    ctx2.fill();
+                }
+
+                // Draw galaxy point
+                ctx2.beginPath();
+                ctx2.arc(px, py, (isOrigin || isTarget) ? 6 : 4, 0, Math.PI * 2);
+                ctx2.fillStyle = isOrigin ? COLOR_COMOVING : (isTarget ? COLOR_PROPER : "#94a3b8");
+                ctx2.fill();
+
+                if (isOrigin || isTarget) {
+                    ctx2.strokeStyle = "#ffffff";
+                    ctx2.lineWidth = 1.5;
+                    ctx2.stroke();
+                }
+            });
+        }
+
+        function drawCh3() {
+            const w = c3.width / (window.devicePixelRatio || 1);
+            const h = c3.height / (window.devicePixelRatio || 1);
+            const cX = w / 2;
+            const cY = h / 2;
+
+            ctx3.fillStyle = "#020205";
+            ctx3.fillRect(0, 0, w, h);
+
+            // Compute scale factor
+            ch3_a = 1.0 + 0.5 * Math.sin(ch3_time);
+            document.getElementById("readout-ch3-a").textContent = ch3_a.toFixed(2);
+
+            const gridScale = ch3_mode === "comoving" ? 1.0 : ch3_a;
+
+            // Draw grid
+            const step = 45 * gridScale;
+            ctx3.strokeStyle = ch3_mode === "comoving" ? COLOR_COMOVING : COLOR_PROPER;
+            ctx3.lineWidth = 1;
+            ctx3.beginPath();
+            for (let x = cX % step; x < w; x += step) {
+                ctx3.moveTo(x, 10); ctx3.lineTo(x, h - 10);
+            }
+            for (let y = cY % step; y < h; y += step) {
+                ctx3.moveTo(10, y); ctx3.lineTo(w - 10, y);
+            }
+            ctx3.stroke();
+
+            // Label comoving vs physical coords
+            ctx3.fillStyle = "rgba(255, 255, 255, 0.85)";
+            ctx3.font = "8px monospace";
+            ctx3.textAlign = "center";
+
+            for (let i = -2; i <= 2; i++) {
+                const tx = cX + i * 45 * gridScale;
+                if (tx > 10 && tx < w - 10) {
+                    // Draw ticks
+                    ctx3.beginPath();
+                    ctx3.moveTo(tx, cY - 4); ctx3.lineTo(tx, cY + 4);
+                    ctx3.strokeStyle = "#ffffff";
+                    ctx3.stroke();
+
+                    // Text labels
+                    let label = "";
+                    if (ch3_mode === "comoving") {
+                        label = `χ=${i}`;
+                    } else {
+                        label = `D=${(i * ch3_a).toFixed(1)}m`;
+                    }
+                    ctx3.fillText(label, tx, cY - 8);
+                }
+            }
+
+            // Draw galaxy dots
+            for (let i = -2; i <= 2; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    const px = cX + i * 45 * ch3_a;
+                    const py = cY + j * 45 * ch3_a;
+                    ctx3.beginPath();
+                    ctx3.arc(px, py, 4, 0, Math.PI * 2);
+                    ctx3.fillStyle = "#ffffff";
+                    ctx3.fill();
+                }
+            }
+
+            // Draw REWIND indicator during contraction phase
+            const isRewinding = Math.cos(ch3_time) < 0;
+            if (isRewinding) {
+                ctx3.fillStyle = COLOR_SCALE;
+                ctx3.font = "bold 9px monospace";
+                ctx3.textAlign = "right";
+                ctx3.fillText("REWIND ↩", w - 15, 20);
+            }
+        }
+
+        function drawCh4() {
+            const w = c4.width / (window.devicePixelRatio || 1);
+            const h = c4.height / (window.devicePixelRatio || 1);
+            const splitX = w * 0.45;
+
+            ctx4.fillStyle = "#020205";
+            ctx4.fillRect(0, 0, w, h);
+
+            // Compute scale factor
+            let a = 1.0;
+            const t = ch4_t;
+            if (ch4_model === "radiation") {
+                a = Math.sqrt(t) / Math.sqrt(2.5); // normalized at t=2.5
+            } else if (ch4_model === "matter") {
+                a = Math.pow(t, 2/3) / Math.pow(2.5, 2/3);
+            } else if (ch4_model === "darkenergy") {
+                a = Math.exp(0.4 * (t - 2.5));
+            }
+
+            // Left visual (expanding space)
+            const cX = splitX / 2;
+            const cY = h / 2;
+
+            // Draw grid
+            const step = 22 * a;
+            ctx4.beginPath();
+            ctx4.strokeStyle = COLOR_GRID;
+            ctx4.lineWidth = 1;
+            for (let x = cX % step; x < splitX - 10; x += step) {
+                ctx4.moveTo(x, 10); ctx4.lineTo(x, h - 10);
+            }
+            for (let y = cY % step; y < h - 10; y += step) {
+                ctx4.moveTo(10, y); ctx4.lineTo(splitX - 10, y);
+            }
+            ctx4.stroke();
+
+            // Draw dots
+            for (let i = -2; i <= 2; i++) {
+                for (let j = -2; j <= 2; j++) {
+                    const px = cX + i * 22 * a;
+                    const py = cY + j * 22 * a;
+                    if (px > 5 && px < splitX - 15 && py > 5 && py < h - 15) {
+                        ctx4.beginPath();
+                        ctx4.arc(px, py, 3, 0, Math.PI * 2);
+                        ctx4.fillStyle = COLOR_COMOVING;
+                        ctx4.fill();
+                    }
+                }
+            }
+
+            // Right plot (a(t) graph)
+            const graphX = splitX + 25;
+            const graphY = 30;
+            const graphW = w - graphX - 15;
+            const graphH = h - graphY - 30;
+
+            // Axes
+            ctx4.beginPath();
+            ctx4.strokeStyle = "rgba(255, 255, 255, 0.28)";
+            ctx4.lineWidth = 1.5;
+            ctx4.moveTo(graphX, graphY);
+            ctx4.lineTo(graphX, graphY + graphH);
+            ctx4.lineTo(graphX + graphW, graphY + graphH);
+            ctx4.stroke();
+
+            // Axis labels
+            ctx4.fillStyle = "rgba(255, 255, 255, 0.45)";
+            ctx4.font = "8px monospace";
+            ctx4.textAlign = "right";
+            ctx4.fillText("a(t)", graphX - 4, graphY + 5);
+            ctx4.textAlign = "center";
+            ctx4.fillText("time t", graphX + graphW / 2, graphY + graphH + 18);
+
+            // Draw horizontal dashed line at a = 1 (Today)
+            const y_a1 = graphY + graphH - (1.0 / 2.5) * graphH;
+            ctx4.beginPath();
+            ctx4.setLineDash([2, 3]);
+            ctx4.strokeStyle = "rgba(255, 255, 255, 0.25)";
+            ctx4.moveTo(graphX, y_a1);
+            ctx4.lineTo(graphX + graphW, y_a1);
+            ctx4.stroke();
+
+            // Draw vertical dashed line at t = 2.5 (Today normalization)
+            const x_t25 = graphX + (2.5 / 5.0) * graphW;
+            ctx4.moveTo(x_t25, y_a1);
+            ctx4.lineTo(x_t25, graphY + graphH);
+            ctx4.stroke();
+            ctx4.setLineDash([]); // reset
+
+            ctx4.fillStyle = "rgba(255, 255, 255, 0.5)";
+            ctx4.font = "8px monospace";
+            ctx4.textAlign = "left";
+            ctx4.fillText("Today (a=1)", graphX + 5, y_a1 - 4);
+
+            // Draw all three helper curves
+            ["radiation", "matter", "darkenergy"].forEach(modelName => {
+                ctx4.beginPath();
+                for (let tx = 0.1; tx <= 5.0; tx += 0.1) {
+                    let av = 1.0;
+                    if (modelName === "radiation") av = Math.sqrt(tx) / Math.sqrt(2.5);
+                    else if (modelName === "matter") av = Math.pow(tx, 2/3) / Math.pow(2.5, 2/3);
+                    else if (modelName === "darkenergy") av = Math.exp(0.4 * (tx - 2.5));
+
+                    const gx = graphX + (tx / 5.0) * graphW;
+                    const gy = graphY + graphH - (av / 2.5) * graphH;
+                    if (tx === 0.1) ctx4.moveTo(gx, gy);
+                    else ctx4.lineTo(gx, gy);
+                }
+                ctx4.strokeStyle = modelName === ch4_model ? COLOR_SCALE : "rgba(255, 255, 255, 0.1)";
+                ctx4.lineWidth = modelName === ch4_model ? 2 : 1;
+                ctx4.stroke();
+            });
+
+            // Acceleration/Deceleration text annotation
+            let accText = "";
+            let accColor = "";
+            if (ch4_model === "radiation" || ch4_model === "matter") {
+                accText = "Decelerating (ä < 0)";
+                accColor = "rgba(255, 255, 255, 0.5)";
+            } else if (ch4_model === "darkenergy") {
+                accText = "Accelerating (ä > 0)";
+                accColor = COLOR_COMOVING;
+            }
+            ctx4.fillStyle = accColor;
+            ctx4.font = "bold 9px monospace";
+            ctx4.textAlign = "right";
+            ctx4.fillText(accText, graphX + graphW - 5, graphY + 12);
+
+            // Draw current playhead
+            const px_p = graphX + (ch4_t / 5.0) * graphW;
+            const py_p = graphY + graphH - (a / 2.5) * graphH;
+
+            ctx4.beginPath();
+            ctx4.arc(px_p, py_p, 4, 0, Math.PI * 2);
+            ctx4.fillStyle = COLOR_SCALE;
+            ctx4.fill();
+        }
+
+        function drawCh5() {
+            const wv = c5v.width / (window.devicePixelRatio || 1);
+            const hv = c5v.height / (window.devicePixelRatio || 1);
+            const wg = c5g.width / (window.devicePixelRatio || 1);
+            const hg = c5g.height / (window.devicePixelRatio || 1);
+
+            // Compute physics quantities at ch5_t
+            const t = ch5_t;
+            const a = Math.pow(t, 2/3) + 0.05 * t * t;
+            const adot = (2/3) * Math.pow(t, -1/3) + 0.10 * t;
+            const H = adot / a;
+            const addot = -(2/9) * Math.pow(t, -4/3) + 0.10;
+
+            // Update readouts
+            document.getElementById("readout-ch5-a").textContent = a.toFixed(2);
+            document.getElementById("readout-ch5-adot").textContent = adot.toFixed(2);
+            document.getElementById("readout-ch5-h").textContent = H.toFixed(2);
+            document.getElementById("readout-ch5-addot").textContent = addot.toFixed(2);
+
+            // Visual track panel
+            ctx5v.fillStyle = "#020205";
+            ctx5v.fillRect(0, 0, wv, hv);
+
+            const cX = wv / 2;
+            const cY = hv / 2;
+
+            // Draw grid lines
+            const step = 20 * a;
+            ctx5v.strokeStyle = COLOR_GRID;
+            ctx5v.lineWidth = 1;
+            ctx5v.beginPath();
+            for (let x = cX % step; x < wv; x += step) {
+                ctx5v.moveTo(x, 10); ctx5v.lineTo(x, hv - 10);
+            }
+            for (let y = cY % step; y < hv; y += step) {
+                ctx5v.moveTo(10, y); ctx5v.lineTo(wv - 10, y);
+            }
+            ctx5v.stroke();
+
+            // Label central observer
+            ctx5v.beginPath();
+            ctx5v.arc(cX, cY, 5, 0, Math.PI * 2);
+            ctx5v.fillStyle = COLOR_COMOVING;
+            ctx5v.fill();
+
+            // Draw outer dot and velocity vector
+            const comovingDist = 3.0; // comoving units
+            const properX = cX + comovingDist * 20 * a;
+            if (properX < wv - 10) {
+                ctx5v.beginPath();
+                ctx5v.arc(properX, cY, 4, 0, Math.PI * 2);
+                ctx5v.fillStyle = COLOR_PROPER;
+                ctx5v.fill();
+
+                // Draw recession arrow
+                const recV = comovingDist * 20 * adot;
+                ctx5v.beginPath();
+                ctx5v.moveTo(properX, cY);
+                ctx5v.lineTo(properX + recV, cY);
+                ctx5v.strokeStyle = COLOR_SCALE;
+                ctx5v.lineWidth = 2.5;
+                ctx5v.stroke();
+
+                // Arrow tip
+                ctx5v.beginPath();
+                ctx5v.moveTo(properX + recV, cY);
+                ctx5v.lineTo(properX + recV - 6, cY - 4);
+                ctx5v.lineTo(properX + recV - 6, cY + 4);
+                ctx5v.closePath();
+                ctx5v.fillStyle = COLOR_SCALE;
+                ctx5v.fill();
+            }
+
+            // Draw tick marks and axis
+            ctx5v.strokeStyle = "rgba(255, 255, 255, 0.28)";
+            ctx5v.lineWidth = 1.5;
+            ctx5v.beginPath();
+            ctx5v.moveTo(15, cY + 40);
+            ctx5v.lineTo(wv - 15, cY + 40);
+            ctx5v.stroke();
+
+            const ticks_ch5 = [-2, -1, 0, 1, 2];
+            ticks_ch5.forEach(tick => {
+                const tx = cX + tick * 2.5 * 20 * a;
+                if (tx > 15 && tx < wv - 15) {
+                    ctx5v.beginPath();
+                    ctx5v.moveTo(tx, cY + 36); ctx5v.lineTo(tx, cY + 44);
+                    ctx5v.strokeStyle = "rgba(255, 255, 255, 0.45)";
+                    ctx5v.stroke();
+
+                    ctx5v.fillStyle = COLOR_TEXT_MUTED;
+                    ctx5v.font = "7px monospace";
+                    ctx5v.textAlign = "center";
+                    ctx5v.fillText(`${(tick * 2.5 * a).toFixed(1)}m`, tx, cY + 54);
+                }
+            });
+
+            // 4-Panel Stacked Graph Panel
+            ctx5g.fillStyle = "#020205";
+            ctx5g.fillRect(0, 0, wg, hg);
+
+            const graphH = 45;
+            const padY = 20;
+
+            const drawSubGraph = (index, label, ymin, ymax, valFunc, color) => {
+                const topY = 15 + index * (graphH + padY);
+
+                // Axis
+                ctx5g.beginPath();
+                ctx5g.strokeStyle = "rgba(255, 255, 255, 0.2)";
+                ctx5g.lineWidth = 1;
+                ctx5g.moveTo(25, topY);
+                ctx5g.lineTo(25, topY + graphH);
+                ctx5g.lineTo(wg - 15, topY + graphH);
+                ctx5g.stroke();
+
+                // Label
+                ctx5g.fillStyle = "rgba(255, 255, 255, 0.5)";
+                ctx5g.font = "bold 8px monospace";
+                ctx5g.textAlign = "left";
+                ctx5g.fillText(label, 28, topY - 3);
+
+                // Draw curve
+                ctx5g.beginPath();
+                ctx5g.lineWidth = 1.5;
+                ctx5g.strokeStyle = color;
+                for (let tx = 0.5; tx <= 5.0; tx += 0.05) {
+                    const gx = 25 + ((tx - 0.5) / 4.5) * (wg - 40);
+                    const val = valFunc(tx);
+                    const gy = topY + graphH - ((val - ymin) / (ymax - ymin)) * graphH;
+                    if (tx === 0.5) ctx5g.moveTo(gx, gy);
+                    else ctx5g.lineTo(gx, gy);
+                }
+                ctx5g.stroke();
+
+                // Draw playhead vertical line
+                const playheadX = 25 + ((t - 0.5) / 4.5) * (wg - 40);
+                ctx5g.beginPath();
+                ctx5g.moveTo(playheadX, topY);
+                ctx5g.lineTo(playheadX, topY + graphH);
+                ctx5g.strokeStyle = "rgba(255, 255, 255, 0.28)";
+                ctx5g.lineWidth = 1;
+                ctx5g.stroke();
+
+                // Draw current value dot
+                const currVal = valFunc(t);
+                const currY = topY + graphH - ((currVal - ymin) / (ymax - ymin)) * graphH;
+                ctx5g.beginPath();
+                ctx5g.arc(playheadX, currY, 3, 0, Math.PI * 2);
+                ctx5g.fillStyle = color;
+                ctx5g.fill();
+            };
+
+            // 1. Scale factor a(t)
+            drawSubGraph(0, "Scale Factor a(t)", 0.5, 4.5, tx => Math.pow(tx, 2/3) + 0.05 * tx * tx, "#ffffff");
+            // 2. Velocity ȧ(t)
+            drawSubGraph(1, "Expansion Rate ȧ(t)", 0.2, 1.4, tx => (2/3) * Math.pow(tx, -1/3) + 0.10 * tx, COLOR_COMOVING);
+            // 3. Hubble parameter H(t)
+            drawSubGraph(2, "Hubble H(t) = ȧ/a", 0.1, 1.2, tx => {
+                const av = Math.pow(tx, 2/3) + 0.05 * tx * tx;
+                const adv = (2/3) * Math.pow(tx, -1/3) + 0.10 * tx;
+                return adv / av;
+            }, COLOR_SCALE);
+            // 4. Acceleration ä(t)
+            drawSubGraph(3, "Acceleration ä(t)", -0.4, 0.2, tx => -(2/9) * Math.pow(tx, -4/3) + 0.10, COLOR_PROPER);
+        }
+
+        function drawCh6() {
+            const w = c6g.width / (window.devicePixelRatio || 1);
+            const h = c6g.height / (window.devicePixelRatio || 1);
+            const cX = w / 2;
+            const cY = h / 2;
+
+            ctx6g.fillStyle = "#020205";
+            ctx6g.fillRect(0, 0, w, h);
+
+            const activeGal = galaxies_ch6[ch6_selected];
+            document.getElementById("readout-ch6-origin").textContent = activeGal.name;
+
+            // Initialize smooth coordinates to avoid jump on first load
+            if (ch6_origin_x === 0.0 && ch6_origin_y === 0.0) {
+                ch6_origin_x = activeGal.cx;
+                ch6_origin_y = activeGal.cy;
+            }
+
+            // Smooth coordinate transition (LERP)
+            ch6_origin_x += (activeGal.cx - ch6_origin_x) * 0.15;
+            ch6_origin_y += (activeGal.cy - ch6_origin_y) * 0.15;
+
+            // Draw axis centered on selected galaxy (smoothly animated)
+            ctx6g.strokeStyle = "rgba(255, 255, 255, 0.07)";
+            ctx6g.lineWidth = 1;
+            ctx6g.beginPath();
+            ctx6g.moveTo(cX + ch6_origin_x, 0); ctx6g.lineTo(cX + ch6_origin_x, h);
+            ctx6g.moveTo(0, cY + ch6_origin_y); ctx6g.lineTo(w, cY + ch6_origin_y);
+            ctx6g.stroke();
+
+            // Draw galaxies
+            galaxies_ch6.forEach((gal, idx) => {
+                const px = cX + gal.cx;
+                const py = cY + gal.cy;
+
+                const isSelected = idx === ch6_selected;
+                ctx6g.beginPath();
+                ctx6g.arc(px, py, isSelected ? 5 : 3.5, 0, Math.PI * 2);
+                ctx6g.fillStyle = isSelected ? COLOR_COMOVING : "#64748b";
+                ctx6g.fill();
+
+                if (isSelected) {
+                    ctx6g.strokeStyle = "#ffffff";
+                    ctx6g.lineWidth = 1;
+                    ctx6g.stroke();
+                }
+            });
+
+            // Draw Hubble plot (recession speed vs proper distance)
+            const hw = c6h.width / (window.devicePixelRatio || 1);
+            const hh = c6h.height / (window.devicePixelRatio || 1);
+
+            ctx6h.fillStyle = "#020205";
+            ctx6h.fillRect(0, 0, hw, hh);
+
+            // Axes
+            ctx6h.beginPath();
+            ctx6h.strokeStyle = "rgba(255,255,255,0.28)";
+            ctx6h.lineWidth = 1.5;
+            ctx6h.moveTo(30, 20);
+            ctx6h.lineTo(30, hh - 25);
+            ctx6h.lineTo(hw - 15, hh - 25);
+            ctx6h.stroke();
+
+            // Labels
+            ctx6h.fillStyle = "rgba(255,255,255,0.45)";
+            ctx6h.font = "8px monospace";
+            ctx6h.textAlign = "center";
+            ctx6h.fillText("Distance D", hw / 2 + 10, hh - 10);
+            ctx6h.save();
+            ctx6h.translate(10, hh / 2 - 10);
+            ctx6h.rotate(-Math.PI / 2);
+            ctx6h.fillText("Recession v", 0, 0);
+            ctx6h.restore();
+
+            // Plot galaxies relative to origin (smoothly sliding as origin changes)
+            const H_const = 0.5; // scaled Hubble parameter
+            ctx6h.fillStyle = COLOR_PROPER;
+
+            galaxies_ch6.forEach((gal, idx) => {
+                if (idx === ch6_selected) return;
+
+                // Calculate distance relative to LERPed origin coordinates
+                const dx = gal.cx - ch6_origin_x;
+                const dy = gal.cy - ch6_origin_y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                // v = H * D
+                const vel = H_const * dist;
+
+                // Map to graph bounds
+                const gx = 30 + (dist / 170) * (hw - 55);
+                const gy = hh - 25 - (vel / 90) * (hh - 55);
+
+                ctx6h.beginPath();
+                ctx6h.arc(gx, gy, 3, 0, Math.PI * 2);
+                ctx6h.fill();
+            });
+
+            // Draw Hubble fit line (v = H * D)
+            ctx6h.beginPath();
+            ctx6h.moveTo(30, hh - 25);
+            ctx6h.lineTo(hw - 20, hh - 25 - (H_const * 160 / 90) * (hh - 55));
+            ctx6h.strokeStyle = "rgba(245, 158, 11, 0.4)";
+            ctx6h.lineWidth = 1.5;
+            ctx6h.stroke();
+
+            // Fitted slope text label
+            ctx6h.fillStyle = COLOR_SCALE;
+            ctx6h.font = "bold 8px monospace";
+            ctx6h.textAlign = "right";
+            ctx6h.fillText("slope = H", hw - 20, 20);
+        }
+
+        function drawCh7() {
+            const w = c7.width / (window.devicePixelRatio || 1);
+            const h = c7.height / (window.devicePixelRatio || 1);
+
+            ctx7.fillStyle = "#020205";
+            ctx7.fillRect(0, 0, w, h);
+
+            const cY = h / 2 - 10;
+            const mwX = 80;
+            const andX = w - 100;
+            const trackLength = andX - mwX;
+
+            // Draw track line
+            ctx7.beginPath();
+            ctx7.moveTo(40, cY);
+            ctx7.lineTo(w - 40, cY);
+            ctx7.strokeStyle = "rgba(255,255,255,0.15)";
+            ctx7.lineWidth = 2;
+            ctx7.stroke();
+
+            // Draw tick marks and axis units
+            const ticks_ch7 = [0, 10, 20, 30, 40];
+            ticks_ch7.forEach(tick => {
+                const tx = mwX + (tick / 40) * trackLength;
+                ctx7.beginPath();
+                ctx7.moveTo(tx, cY - 4); ctx7.lineTo(tx, cY + 4);
+                ctx7.strokeStyle = "rgba(255,255,255,0.3)";
+                ctx7.stroke();
+
+                ctx7.fillStyle = COLOR_TEXT_MUTED;
+                ctx7.font = "7px monospace";
+                ctx7.textAlign = "center";
+                ctx7.fillText(`${tick} Mpc`, tx, cY + 16);
+            });
+
+            // Milky Way
+            ctx7.beginPath();
+            ctx7.arc(mwX, cY, 7, 0, Math.PI * 2);
+            ctx7.fillStyle = COLOR_COMOVING;
+            ctx7.fill();
+            ctx7.fillStyle = "#ffffff";
+            ctx7.font = "bold 8px monospace";
+            ctx7.textAlign = "center";
+            ctx7.fillText("Milky Way (S)", mwX, cY - 14);
+
+            // Andromeda
+            ctx7.beginPath();
+            ctx7.arc(andX, cY, 6, 0, Math.PI * 2);
+            ctx7.fillStyle = COLOR_PROPER;
+            ctx7.fill();
+            ctx7.fillStyle = "#ffffff";
+            ctx7.fillText("Andromeda", andX, cY - 14);
+
+            // Calculate velocities
+            const dist_Mpc = 32.5; // distance
+            const v_hub = ch7_h * dist_Mpc;
+            const v_net = v_hub + ch7_vpec;
+
+            // Update readouts
+            document.getElementById("readout-ch7-vhub").textContent = v_hub.toFixed(0);
+            document.getElementById("readout-ch7-vpeclive").textContent = ch7_vpec.toFixed(0);
+            document.getElementById("readout-ch7-vnet").textContent = v_net.toFixed(0);
+
+            const statusEl = document.getElementById("readout-ch7-status");
+            if (v_net < 0) {
+                statusEl.textContent = "Currently approaching (peculiar motion points toward us)";
+                statusEl.style.color = "#ffffff";
+            } else if (v_net === 0) {
+                statusEl.textContent = "Balanced: Hubble recession rate equals peculiar velocity.";
+                statusEl.style.color = "#ffffff";
+            } else {
+                statusEl.textContent = "Currently receding (Hubble flow recession dominates)";
+                statusEl.style.color = "#ffffff";
+            }
+
+            // Draw vector arrows at Andromeda
+            const vectorScale = 0.5;
+
+            // 1. Hubble flow (pointing right, amber)
+            const ahub = v_hub * vectorScale;
+            if (ahub > 1) {
+                drawVectorArrow(ctx7, andX, cY, andX + ahub, cY, COLOR_SCALE);
+            }
+
+            // 2. Peculiar velocity (pointing left or right, orange)
+            const apec = ch7_vpec * vectorScale;
+            if (Math.abs(apec) > 1) {
+                drawVectorArrow(ctx7, andX, cY, andX + apec, cY, COLOR_PECULIAR);
+            }
+
+            // 3. Combined net velocity (white, drawn below track)
+            const anet = v_net * vectorScale;
+            if (Math.abs(anet) > 1) {
+                drawVectorArrow(ctx7, andX, cY + 12, andX + anet, cY + 12, "#ffffff");
+            }
+
+            // Draw labels for vectors
+            ctx7.font = "8px monospace";
+            ctx7.textAlign = "left";
+
+            if (ahub > 10) {
+                ctx7.fillStyle = COLOR_SCALE;
+                ctx7.fillText("v_Hubble", andX + ahub + 5, cY - 2);
+            }
+            if (Math.abs(apec) > 10) {
+                ctx7.fillStyle = COLOR_PECULIAR;
+                const textX = apec < 0 ? andX + apec - 45 : andX + apec + 5;
+                ctx7.fillText("v_pec", textX, cY + 8);
+            }
+            if (Math.abs(anet) > 10) {
+                ctx7.fillStyle = "#ffffff";
+                const textX = anet < 0 ? andX + anet - 45 : andX + anet + 5;
+                ctx7.fillText("v_net", textX, cY + 20);
+            }
+        }
+
+        function drawVectorArrow(ctx, x1, y1, x2, y2, color) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - 5 * Math.cos(angle - 0.45), y2 - 5 * Math.sin(angle - 0.45));
+            ctx.lineTo(x2 - 5 * Math.cos(angle + 0.45), y2 - 5 * Math.sin(angle + 0.45));
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        // --- INTERACTIVITY HANDLERS ---
+
+        // Ch1 Quiz logic
+        document.querySelectorAll(".quiz-option").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const ans = btn.getAttribute("data-ans");
+                const fb = document.getElementById("feedback-ch1");
+
+                document.querySelectorAll(".quiz-option").forEach(b => {
+                    b.classList.remove("correct", "incorrect");
+                });
+
+                if (ans === "B") {
+                    btn.classList.add("correct");
+                    fb.innerHTML = "<strong>Correct!</strong> In the modern cosmological model, there is no spatial center or boundary. Expansion is the uniform stretching of the coordinate grid itself, meaning every observer perceives themselves at the center of the expansion flow.";
+                    fb.className = "feedback-banner success";
+                    fb.style.display = "block";
+                } else {
+                    btn.classList.add("incorrect");
+                    fb.innerHTML = "<strong>Incorrect.</strong> Hint: If there is an explosion into pre-existing space, there must be a central starting coordinates origin and outer boundaries. But modern cosmology measures homogeneity everywhere, with no unique origin.";
+                    fb.className = "feedback-banner error";
+                    fb.style.display = "block";
+                }
+            });
+        });
+
+        // Ch2 Click coordinate origin/target
+        c2.addEventListener("mousedown", (e) => {
+            const rect = c2.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const w = c2.width / (window.devicePixelRatio || 1);
+            const h = c2.height / (window.devicePixelRatio || 1);
+            const cX = w / 2;
+            const cY = h / 2;
+
+            // Find closest dot
+            let closestIdx = ch2_selected_idx;
+            let minDist = 99999;
+
+            galaxies_ch2.forEach((gal, idx) => {
+                const px = cX + gal.cx * ch2_scale;
+                const py = cY + gal.cy * ch2_scale;
+                const dx = mouseX - px;
+                const dy = mouseY - py;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestIdx = idx;
+                }
+            });
+
+            if (minDist < 25) {
+                if (closestIdx === ch2_selected_idx) {
+                    // Clicked origin: reset target
+                    ch2_target_idx = -1;
+                } else if (ch2_target_idx === closestIdx) {
+                    // Clicked target: make it the origin
+                    ch2_selected_idx = closestIdx;
+                    ch2_target_idx = -1;
+                } else {
+                    // Clicked another galaxy: set as target
+                    ch2_target_idx = closestIdx;
+                }
+                updateCh2Readouts();
+            }
+        });
+
+        // Ch3 Buttons
+        document.getElementById("btn-ch3-comoving").addEventListener("click", () => {
+            document.getElementById("btn-ch3-comoving").classList.add("active");
+            document.getElementById("btn-ch3-proper").classList.remove("active");
+            ch3_mode = "comoving";
+        });
+        document.getElementById("btn-ch3-proper").addEventListener("click", () => {
+            document.getElementById("btn-ch3-proper").classList.add("active");
+            document.getElementById("btn-ch3-comoving").classList.remove("active");
+            ch3_mode = "proper";
+        });
+
+        // Ch4 Buttons
+        document.getElementById("btn-ch4-rad").addEventListener("click", () => {
+            setActiveCh4Button("btn-ch4-rad", "radiation");
+        });
+        document.getElementById("btn-ch4-mat").addEventListener("click", () => {
+            setActiveCh4Button("btn-ch4-mat", "matter");
+        });
+        document.getElementById("btn-ch4-de").addEventListener("click", () => {
+            setActiveCh4Button("btn-ch4-de", "darkenergy");
+        });
+
+        function setActiveCh4Button(id, model) {
+            ["btn-ch4-rad", "btn-ch4-mat", "btn-ch4-de"].forEach(btnId => {
+                document.getElementById(btnId).classList.remove("active");
+            });
+            document.getElementById(id).classList.add("active");
+            ch4_model = model;
+        }
+
+        // Ch6 Click to re-center
+        c6g.addEventListener("mousedown", (e) => {
+            const rect = c6g.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const w = c6g.width / (window.devicePixelRatio || 1);
+            const h = c6g.height / (window.devicePixelRatio || 1);
+            const cX = w / 2;
+            const cY = h / 2;
+
+            let closestIdx = ch6_selected;
+            let minDist = 99999;
+
+            galaxies_ch6.forEach((gal, idx) => {
+                const px = cX + gal.cx;
+                const py = cY + gal.cy;
+                const dx = mouseX - px;
+                const dy = mouseY - py;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestIdx = idx;
+                }
+            });
+
+            if (minDist < 25) {
+                ch6_selected = closestIdx;
+            }
+        });
+
+        // --- SCRUBBABLE VALUE ENGINE ---
+        function initScrubbableEngine() {
+            document.querySelectorAll(".scrubbable-number").forEach(num => {
+                let startX = 0;
+                let startVal = 0;
+
+                const onDragStart = (clientX) => {
+                    startX = clientX;
+                    const vName = num.getAttribute("data-var");
+                    if (vName === "ch1_scale") startVal = ch1_scale;
+                    else if (vName === "ch2_scale") startVal = ch2_scale;
+                    else if (vName === "ch4_t") startVal = ch4_t;
+                    else if (vName === "ch5_t") startVal = ch5_t;
+                    else if (vName === "ch7_h") startVal = ch7_h;
+                    else if (vName === "ch7_vpec") startVal = ch7_vpec;
+                };
+
+                const onDragMove = (clientX) => {
+                    const dx = clientX - startX;
+                    const min = parseFloat(num.getAttribute("data-min"));
+                    const max = parseFloat(num.getAttribute("data-max"));
+                    const vName = num.getAttribute("data-var");
+
+                    let sensitivity = 0.01;
+                    if (vName === "ch4_t" || vName === "ch5_t") sensitivity = 0.02;
+                    if (vName === "ch7_h") sensitivity = 0.1;
+                    if (vName === "ch7_vpec") sensitivity = 1.0;
+
+                    let newVal = startVal + dx * sensitivity;
+                    newVal = Math.max(min, Math.min(max, newVal));
+
+                    if (vName === "ch1_scale") {
+                        ch1_scale = newVal;
+                        num.textContent = ch1_scale.toFixed(1);
+                    } else if (vName === "ch2_scale") {
+                        ch2_scale = newVal;
+                        num.textContent = ch2_scale.toFixed(1);
+                        updateCh2Readouts();
+                    } else if (vName === "ch4_t") {
+                        ch4_t = newVal;
+                        num.textContent = ch4_t.toFixed(1);
+                    } else if (vName === "ch5_t") {
+                        ch5_t = newVal;
+                        num.textContent = ch5_t.toFixed(1);
+                    } else if (vName === "ch7_h") {
+                        ch7_h = Math.round(newVal);
+                        num.textContent = ch7_h.toFixed(0);
+                    } else if (vName === "ch7_vpec") {
+                        ch7_vpec = Math.round(newVal);
+                        num.textContent = ch7_vpec.toFixed(0);
+                    }
+                };
+
+                // Mouse support
+                num.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    onDragStart(e.clientX);
+
+                    const onMouseMove = (mEv) => {
+                        onDragMove(mEv.clientX);
+                    };
+                    const onMouseUp = () => {
+                        document.removeEventListener("mousemove", onMouseMove);
+                        document.removeEventListener("mouseup", onMouseUp);
+                    };
+                    document.addEventListener("mousemove", onMouseMove);
+                    document.addEventListener("mouseup", onMouseUp);
+                });
+
+                // Pointer/Touch support
+                num.addEventListener("pointerdown", (e) => {
+                    e.preventDefault();
+                    num.setPointerCapture(e.pointerId);
+                    onDragStart(e.clientX);
+
+                    const onPointerMove = (pEv) => {
+                        onDragMove(pEv.clientX);
+                    };
+                    const onPointerUp = () => {
+                        num.releasePointerCapture(e.pointerId);
+                        num.removeEventListener("pointermove", onPointerMove);
+                        num.removeEventListener("pointerup", onPointerUp);
+                    };
+                    num.addEventListener("pointermove", onPointerMove);
+                    num.addEventListener("pointerup", onPointerUp);
+                });
+            });
+        }
+
+        initScrubbableEngine();
+        updateCh2Readouts();
+
+        // Animation loop
+        function tick() {
+            ch3_time += 0.015;
+
+            drawCh1();
+            drawCh2();
+            drawCh3();
+            drawCh4();
+            drawCh5();
+            drawCh6();
+            drawCh7();
+
+            requestAnimationFrame(tick);
+        }
+
+        tick();
+
+        // Programmatically trigger MathJax typesetting once DOM and MathJax scripts are fully loaded
+        setTimeout(() => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise().catch(err => console.log("MathJax typesetting failed: ", err));
+            } else if (window.MathJax && window.MathJax.typeset) {
+                window.MathJax.typeset();
+            }
+        }, 800);
+    });
+</script>
+{% endblock %}
