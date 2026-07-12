@@ -8,10 +8,10 @@ This document details the mathematical formulations and simulation mechanics beh
 
 ### Chapter 1: Observer Coordinate Shifting
 An observer $S$ (stationary) and an observer $S'$ (moving at velocity $u$) measure the position of a particle.
-*   Lab frame coordinate: $x$
-*   Moving frame coordinate: $x'$
-*   Galilean coordinate shift:
-    $$x' = x - u t$$
+*   Lab frame coordinates: $x, t$
+*   Moving frame coordinates: $x', t'$
+*   Galilean coordinate transformations:
+    $$x' = x - u t, \quad t' = t$$
 
 ### Chapter 2: The Ball in the Train
 A ball is thrown vertically from a train car traveling horizontally at speed $u$. Let $t$ be the time elapsed since the throw.
@@ -68,8 +68,10 @@ A rocket chases an asteroid in deep space.
 ### Chapter 6: High-Speed Relativistic Divergence
 When velocities approach the speed of light $c$, Galilean velocity addition fails. We model a scaled speed of light $c = 100\,\text{m/s}$ for interactive visibility.
 *   **Galilean Velocity Addition:**
-    $$v'_{\text{Galilean}} = v - u$$
+    $$v_{\text{Galilean}} = u + v'$$
 *   **Lorentz Velocity Addition:**
-    $$v'_{\text{Lorentz}} = \frac{v - u}{1 - \frac{u v}{c^2}}$$
-*   **Divergence metric:**
-    The UI renders both velocities on a circular dial/speedometer gauge. As $v, u \to c$, the Galilean curve diverges dramatically (exceeding $c$), while the Lorentz curve asymptotically limits to $c$.
+    $$v_{\text{Lorentz}} = \frac{u + v'}{1 + \frac{u v'}{c^2}}$$
+*   **Visual comparison (Race Tracks):**
+    The page renders a side-by-side comparison of two universe models (Galilean vs. Einsteinian) using two racing tracks. Each track displays a moving train (moving at frame speed $u$) and a runner moving inside the train (speed $v'$ relative to the train). 
+    *   In the **Galilean Universe**, the runner's ground speed is simply $u + v'$. If this exceeds the toy speed of light ($100\,\text{m/s}$), a warning overlay is shown.
+    *   In the **Einsteinian Universe**, the runner's speed asymptotes to $c$ and can never exceed $100\,\text{m/s}$, illustrating the relativistic speed limit.
