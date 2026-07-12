@@ -8,6 +8,34 @@
 .lab-folder-card:hover .retro-folder-sheet {
     transform: translateY(-10px) rotate(-4deg) !important;
 }
+@keyframes spin-clockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes spin-counterclockwise {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+}
+/* Galaxy card hover micro-animations */
+.galaxy-card:hover .orbit-line-1 {
+    animation-duration: 3s !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+.galaxy-card:hover .orbit-line-2 {
+    animation-duration: 5s !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+.galaxy-card:hover .orbit-line-3 {
+    animation-duration: 8s !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+.galaxy-card:hover .central-star {
+    transform: scale(1.25);
+    box-shadow: 0 0 25px #ffb300, 0 0 50px #ff6600 !important;
+}
+.galaxy-card .central-star, .galaxy-card .orbit-line-1, .galaxy-card .orbit-line-2, .galaxy-card .orbit-line-3 {
+    transition: var(--transition-smooth);
+}
 </style>
 {% endblock %}
 
@@ -22,7 +50,7 @@
 </section>
 
 <!-- Sections Grid -->
-<section class="sections-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 460px)); justify-content: center; gap: 2.5rem; padding: 0 1rem; width: 100%; max-width: 1200px; margin: 2rem auto;">
+<section class="sections-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 460px)); justify-content: center; gap: 2.5rem; padding: 0 1rem; width: 100%; max-width: 1400px; margin: 2rem auto;">
     <!-- Music (djon) Section -->
     <a href="{{ url_for('main.music') }}" class="section-card vinyl-sleeve-card" style="max-width: 460px; width: 100%; margin: 0 auto;">
         <div>
@@ -47,10 +75,42 @@
         </div>
     </a>
 
+    <!-- Space & Physics Section -->
+    <a href="{{ url_for('space_physics.index') }}" class="section-card galaxy-card" style="max-width: 460px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div class="galaxy-preview-container" style="height: 180px; display: flex; justify-content: center; align-items: center; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 1.5rem; border: 1px dashed var(--border-color); overflow: hidden; position: relative;">
+                <!-- Orbit animation -->
+                <div class="cosmic-orbit-system" style="position: relative; width: 140px; height: 140px; display: flex; justify-content: center; align-items: center;">
+                    <!-- Central star -->
+                    <div class="central-star" style="width: 16px; height: 16px; background: #ffe680; border-radius: 50%; box-shadow: 0 0 15px #ffb300, 0 0 30px #ff6600; z-index: 5;"></div>
+                    <!-- Orbit 1 -->
+                    <div class="orbit-line-1" style="position: absolute; width: 55px; height: 55px; border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 50%; animation: spin-clockwise 8s linear infinite;">
+                        <div class="planet-1" style="position: absolute; top: -3px; left: 24px; width: 6px; height: 6px; background: #80ffd4; border-radius: 50%; box-shadow: 0 0 6px #00ffaa;"></div>
+                    </div>
+                    <!-- Orbit 2 -->
+                    <div class="orbit-line-2" style="position: absolute; width: 95px; height: 95px; border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 50%; animation: spin-counterclockwise 12s linear infinite;">
+                        <div class="planet-2" style="position: absolute; top: 14px; left: 12px; width: 8px; height: 8px; background: #80d4ff; border-radius: 50%; box-shadow: 0 0 8px #00aaff;"></div>
+                    </div>
+                    <!-- Orbit 3 -->
+                    <div class="orbit-line-3" style="position: absolute; width: 130px; height: 130px; border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 50%; animation: spin-clockwise 20s linear infinite;">
+                        <div class="planet-3" style="position: absolute; bottom: 8px; right: 32px; width: 7px; height: 7px; background: #ff80df; border-radius: 50%; box-shadow: 0 0 7px #ff00cc;"></div>
+                    </div>
+                </div>
+            </div>
+            <h2 class="card-title" style="margin-right: 0;">Space & Physics</h2>
+            <p class="card-body">
+                Explore interactive simulations of orbital mechanics, gravity slingshots, spacetime curvature, and fundamental physics questions.
+            </p>
+        </div>
+        <div class="card-links">
+            <span class="card-link">Launch Hub &rarr;</span>
+        </div>
+    </a>
+
     <!-- AI Literacy Lab Section -->
     <a href="{{ url_for('ai_literacy_lab.index') }}" class="section-card lab-folder-card" style="max-width: 460px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
-            <div class="lab-folder-preview-container" style="height: 160px; display: flex; justify-content: center; align-items: center; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 1.5rem; border: 1px dashed var(--border-color); overflow: hidden; position: relative;">
+            <div class="lab-folder-preview-container" style="height: 180px; display: flex; justify-content: center; align-items: center; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 1.5rem; border: 1px dashed var(--border-color); overflow: hidden; position: relative;">
                 <!-- Nostalgic CSS folder rendering -->
                 <div class="retro-folder-icon" style="width: 100px; height: 75px; background: #ffd066; border-radius: 0 8px 8px 8px; position: relative; border: 2px solid #e0af3c; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
                     <div class="retro-folder-tab" style="width: 45px; height: 15px; background: #e0af3c; border-radius: 4px 4px 0 0; position: absolute; top: -15px; left: -2px; border: 2px solid #e0af3c; border-bottom: none;"></div>

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Space & Physics Hub | Jon's Lane{% endblock %}
+{% block meta_description %}Interactive orbital gravity, spacetime grid curvature, and particle mechanics simulations.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<!-- Interactive Canvas Area -->
+<div class="canvas-container">
+    <canvas id="space-galaxy-canvas"></canvas>
+</div>
+
+<!-- Header overlay -->
+<header class="space-header">
+    <a href="/" class="physics-nav-back">&larr; Back to Workspace</a>
+    <h1 class="space-title">Space &amp; Physics</h1>
+    <p class="space-description">
+        Play with gravity, launch planets into orbit around a black hole, and explore fundamental concepts of physical law.
+    </p>
+</header>
+
+<!-- HUD Topics Selector -->
+<section class="glass-hud hud-topics-panel" aria-label="Physics Topics">
+    <h3 class="hud-panel-title">Topics Directory</h3>
+    
+    <nav class="topic-list">
+        {% for slug, topic in topics.items() %}
+            {% if topic.status == 'active' %}
+                <a href="{{ url_for('space_physics.render_page', page_path=slug) }}" class="topic-item-card active-topic" aria-label="Open topic: {{ topic.title }}">
+                    <div class="topic-item-icon" aria-hidden="true">{{ topic.icon }}</div>
+                    <div class="topic-item-details">
+                        <span class="topic-item-category">{{ topic.category }}</span>
+                        <h4 class="topic-item-title">{{ topic.title }}</h4>
+                        <p class="topic-item-desc">{{ topic.description }}</p>
+                    </div>
+                    <span class="topic-item-status-badge">Explore</span>
+                </a>
+            {% else %}
+                <div class="topic-item-card draft-topic" aria-disabled="true" title="Topic in progress">
+                    <div class="topic-item-icon" aria-hidden="true">🔒</div>
+                    <div class="topic-item-details">
+                        <span class="topic-item-category">{{ topic.category }}</span>
+                        <h4 class="topic-item-title">{{ topic.title }}</h4>
+                        <p class="topic-item-desc">{{ topic.description }}</p>
+                    </div>
+                    <span class="topic-item-status-badge">Locked</span>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </nav>
+</section>
+
+<!-- Instruction banner -->
+<div class="glass-hud hud-instruction-banner">
+    <div class="hud-instruction-pulse" aria-hidden="true"></div>
+    <span><strong>Cosmic Mechanics:</strong> Pull back and slingshot stars or planets by dragging on the canvas!</span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/galaxy_sim.js') }}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Enforce dark layout class on body
+        document.body.classList.add('space-theme-body');
+
+        // Initialize Sim
+        const sim = new GalaxySimulation('space-galaxy-canvas');
+    });
+</script>
+{% endblock %}

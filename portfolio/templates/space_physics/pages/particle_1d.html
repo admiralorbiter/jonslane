@@ -1,0 +1,1653 @@
+{% extends "base.html" %}
+
+{% block title %}Why Position Is Not Enough | Space & Physics{% endblock %}
+{% block meta_description %}An interactive scrollytelling explorable of classical state spaces, numerical integrations, and reference frames.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<style>
+    /* Scrollytelling Centered Column Design */
+    .scrolly-container {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem 6rem 1.5rem;
+        font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+        color: var(--text-primary);
+        line-height: 1.625;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+        margin-bottom: 2.5rem;
+    }
+    .back-link:hover {
+        color: var(--neon-cyan);
+    }
+
+    .header-group {
+        margin-bottom: 4rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 2rem;
+    }
+
+    .subtitle-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-amber);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .page-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 2.5rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .page-intro {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+    }
+
+    /* Chapter layout */
+    .scrolly-chapter {
+        margin-bottom: 5.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding-bottom: 5rem;
+    }
+    .scrolly-chapter:last-of-type {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .chapter-num {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .chapter-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.75rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .chapter-prose {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+    .chapter-prose p {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Embedded simulator widget card */
+    .diagram-card {
+        background: rgba(14, 16, 23, 0.45);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+        margin: 2rem 0;
+    }
+
+    .diagram-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        padding-bottom: 0.5rem;
+    }
+
+    .diagram-canvas-wrapper {
+        position: relative;
+        background: #020205;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .diagram-canvas {
+        display: block;
+        width: 100%;
+        background: #020205;
+    }
+
+    /* Scrubbable Text variables */
+    .scrubbable-number {
+        color: var(--neon-cyan);
+        border-bottom: 1px dashed var(--neon-cyan);
+        padding: 0 0.15rem;
+        font-weight: bold;
+        cursor: ew-resize;
+        user-select: none;
+        display: inline-block;
+        font-family: var(--font-mono), monospace;
+        font-variant-numeric: tabular-nums;
+    }
+    .scrubbable-number:hover {
+        background: rgba(0, 242, 254, 0.1);
+        border-bottom-style: solid;
+    }
+
+    /* Button rows inside diagram cards */
+    .diagram-btn-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .diagram-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        color: var(--text-muted);
+        padding: 0.5rem 0.25rem;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    .diagram-btn.active {
+        background: var(--neon-amber-soft);
+        border-color: var(--neon-amber);
+        color: #ffffff;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+    }
+    .diagram-btn:hover:not(.active) {
+        border-color: rgba(255,255,255,0.2);
+        color: #ffffff;
+    }
+
+    /* Double track relativistic split */
+    .split-track-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    /* Banner alerts */
+    .feedback-banner {
+        border-radius: 8px;
+        padding: 1rem;
+        font-size: 0.85rem;
+        margin-top: 1.25rem;
+        line-height: 1.5;
+        display: none;
+    }
+    .feedback-banner.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        color: #a7f3d0;
+    }
+    .feedback-banner.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    /* Math equations display */
+    .math-display-box {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-top: 1rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="scrolly-container">
+    
+    <!-- Navigation Back Link -->
+    <a href="{{ url_for('space_physics.index') }}" class="back-link">
+        ← Back to Space Directory
+    </a>
+
+    <!-- Page Header -->
+    <header class="header-group">
+        <span class="subtitle-badge">Classical Mechanics & State Vectors</span>
+        <h1 class="page-title">Why Position Is Not Enough</h1>
+        <p class="page-intro">
+            What information must we know about a physical system right now in order to predict what it will do next?
+        </p>
+    </header>
+
+    <!-- CHAPTER 1: POSITION -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 1</span>
+        <h2 class="chapter-title">A Particle Exists</h2>
+        <div class="chapter-prose">
+            <p>
+                Imagine the simplest possible physical system: a single point particle confined to move along a straight, one-dimensional track.
+            </p>
+            <p>
+                At any given moment, the particle is sitting at some coordinate relative to the origin. This value is its <strong>position</strong> (\(x\)).
+            </p>
+            <p>
+                To build your first intuition, drag the particle on the track below. Notice how changing its physical location updates the coordinate value: 
+                <span class="scrubbable-number" id="scrub-ch1-x" data-var="ch1_x" data-min="-150" data-max="150">80</span> meters.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 1.1 — Physical Position Track</span>
+                <span>drag particle directly</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch1" class="diagram-canvas" height="90"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 2: DIVERGING FUTURES -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 2</span>
+        <h2 class="chapter-title">But Position Alone is Not Enough</h2>
+        <div class="chapter-prose">
+            <p>
+                Suppose we want to predict the future. If we only know that our particle is sitting at position \(x = 0\) right now, do we know where it will be one second from now?
+            </p>
+            <p>
+                <strong>No.</strong> It could sit still. It could drift to the right. It could zip to the left. 
+            </p>
+            <p>
+                To illustrate this fundamental limitation, look at the two particles below. They start at the <strong>exact same position</strong>, yet their paths instantly diverge. One moves left, while the other moves right.
+            </p>
+            <p>
+                Same starting coordinate, completely different futures. To predict what happens next, we need another piece of information.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 2.1 — Diverging Futures (Looping)</span>
+                <span>same start, different directions</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch2" class="diagram-canvas" height="90"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 3: VELOCITY COMPLETES THE STATE -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 3</span>
+        <h2 class="chapter-title">Velocity Completes the State</h2>
+        <div class="chapter-prose">
+            <p>
+                The missing piece is the rate of change of position over time, which we call <strong>velocity</strong> (\(v = dx/dt\)). 
+            </p>
+            <p>
+                Together, position and velocity form the <strong>State Vector</strong> of the particle:
+                $$\mathbf{S}(t) = \begin{bmatrix} x(t) \\ v(t) \end{bmatrix}$$
+            </p>
+            <p>
+                If you know both numbers, you know the complete "state" of the system at this moment. 
+            </p>
+            <p>
+                Try dragging the particle below to set the initial position \(x_0\) = 
+                <span class="scrubbable-number" id="scrub-ch3-x" data-var="ch3_x" data-min="-120" data-max="120">50</span> m, 
+                and drag the arrowhead tip to set the initial velocity \(v_0\) = 
+                <span class="scrubbable-number" id="scrub-ch3-v" data-var="ch3_v" data-min="-25" data-max="25">12</span> m/s. 
+                Observe how the slope of the position line changes on the graph below it.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 3.1 — Interactive State Vector & Trajectory</span>
+                <span>drag particle or velocity tip</span>
+            </div>
+            <div class="diagram-canvas-wrapper" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <canvas id="canvas-ch3" class="diagram-canvas" height="90"></canvas>
+                <canvas id="canvas-ch3-graph" class="diagram-canvas" height="120"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 4: LAWS OF MOTION -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 4</span>
+        <h2 class="chapter-title">Evolution Laws: What Changes the State?</h2>
+        <div class="chapter-prose">
+            <p>
+                Position changes because of velocity. But what changes velocity? That requires <strong>acceleration</strong> (\(a = dv/dt\)), which is caused by forces: \(F = ma\).
+            </p>
+            <p>
+                According to Newton, we can describe the movement of any physical system as a set of coupled differential equations:
+            </p>
+            <div class="math-display-box" id="ch4-equation-display">
+                $$\frac{dx}{dt} = v, \quad \frac{dv}{dt} = \frac{F(x,v,t)}{m}$$
+            </div>
+            <p>
+                By changing the force law \(F\), we change how the velocity evolves. Select different <strong>Force Laws</strong> below to watch how the particle accelerates and decelerates under different physical rules:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 4.1 — Acceleration & Force Models</span>
+                <span>select force law below</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch4" class="diagram-canvas" height="90"></canvas>
+            </div>
+            <div class="diagram-btn-row">
+                <button class="diagram-btn btn-ch4-force active" data-force="free">Free (F=0)</button>
+                <button class="diagram-btn btn-ch4-force" data-force="constant">Constant</button>
+                <button class="diagram-btn btn-ch4-force" data-force="spring">Spring</button>
+                <button class="diagram-btn btn-ch4-force" data-force="drag">Drag</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 5: PHASE SPACE -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 5</span>
+        <h2 class="chapter-title">Phase Space: State as a Point</h2>
+        <div class="chapter-prose">
+            <p>
+                Instead of tracking position and velocity separately over time, we can plot them directly against each other on a 2D coordinate grid called <strong>Phase Space</strong>.
+            </p>
+            <p>
+                At any instant, the complete state of the particle is represented by a <strong>single dot</strong> \((x, v)\). As the particle moves, this dot traces out a path.
+            </p>
+            <p>
+                Select a force law below to watch the orbit unfold. Under a <strong>Spring Force</strong>, the state vector traces a closed circle (energy conservation). Under <strong>Viscous Drag</strong>, it spirals inward as energy decays.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 5.1 — Phase Space Coordinates & Physical Track</span>
+                <span>observe coordinates live</span>
+            </div>
+            <div class="diagram-canvas-wrapper" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <canvas id="canvas-ch5-phys" class="diagram-canvas" height="90"></canvas>
+                <canvas id="canvas-ch5-phase" class="diagram-canvas" height="240"></canvas>
+            </div>
+            <div class="diagram-btn-row" style="grid-template-columns: repeat(2, 1fr);">
+                <button class="diagram-btn btn-ch5-force active" data-force="spring">Spring Force</button>
+                <button class="diagram-btn btn-ch5-force" data-force="drag">Viscous Drag</button>
+            </div>
+        </div>
+
+        <!-- Concept check form -->
+        <div class="glass-panel" style="padding: 1.5rem; margin-top: 2rem;">
+            <span class="subtitle-badge" style="color: var(--neon-cyan);">Concept Check</span>
+            <h4 style="margin: 0.25rem 0 1rem 0; color: #ffffff; font-size: 1.1rem; font-family: var(--font-serif); font-style: italic;">
+                Why does friction cause the Phase Space trajectory to spiral inward toward (0,0)?
+            </h4>
+            <form id="quiz-form-ch5" onsubmit="return false;">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <label class="lab-question-option" id="opt-ch5-1" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer;">
+                        <input type="radio" name="ch5-quiz" value="A" style="margin-top: 0.2rem;">
+                        <span><strong>A)</strong> Friction increases the spring constant over time, speeding it up.</span>
+                    </label>
+                    <label class="lab-question-option" id="opt-ch5-2" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer;">
+                        <input type="radio" name="ch5-quiz" value="B" style="margin-top: 0.2rem;">
+                        <span><strong>B)</strong> Friction drains kinetic energy from the system, shrinking both velocity and position.</span>
+                    </label>
+                    <label class="lab-question-option" id="opt-ch5-3" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer;">
+                        <input type="radio" name="ch5-quiz" value="C" style="margin-top: 0.2rem;">
+                        <span><strong>C)</strong> Friction shifts the gravity center, locking the coordinate.</span>
+                    </label>
+                </div>
+                <button type="button" id="btn-submit-q-ch5" class="hud-btn" style="margin-top: 1.25rem; width: 100%; border-color: var(--neon-cyan); background: var(--neon-cyan-glow);">
+                    Submit Answer
+                </button>
+            </form>
+            <div id="feedback-ch5" class="feedback-banner"></div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 6: SOLVER ERROR -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 6</span>
+        <h2 class="chapter-title">Different Solvers, Different Futures</h2>
+        <div class="chapter-prose">
+            <p>
+                In the real world, computers cannot solve differential equations exactly. They approximate the next step using a time step size: \(\Delta t\).
+            </p>
+            <p>
+                The choice of algorithm is critical. <strong>Forward Euler</strong> (magenta) is simple, but it is unstable—it continuously artificially adds energy to the spring, causing it to spiral outward. <strong>Euler-Cromer</strong> (cyan) is a symplectic solver that preserves phase space volume and oscillates stably.
+            </p>
+            <p>
+                Adjust the simulation step size \(\Delta t\) = 
+                <span class="scrubbable-number" id="scrub-ch6-dt" data-var="ch6_dt" data-min="0.10" data-max="2.40">0.10</span> seconds. 
+                Observe what happens when \(\Delta t\) crosses the critical threshold:
+                <span id="ch6-dt-crit" style="font-family: monospace; color: var(--neon-amber);">\(\Delta t_{\text{crit}} = 2.00\) s</span>.
+            </p>
+            <div id="ch6-stability-warning" class="feedback-banner error" style="margin: 1rem 0; display: none;">
+                ⚠️ <strong>Numerical Instability Triggered!</strong> The selected time step \(\Delta t \ge 2.0\) s exceeds the stability limit. Both solvers explode.
+            </div>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 6.1 — Solver Comparison in Phase Space</span>
+                <span>drag dt value above</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch6-phase" class="diagram-canvas" height="400"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 7: GALILEAN RELATIVITY -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 7</span>
+        <h2 class="chapter-title">Galilean Relativity: Whose State?</h2>
+        <div class="chapter-prose">
+            <p>
+                We have looked at the state vector from a single perspective. But what if we look at the same particle from a coordinate frame S' moving at a relative speed \(u\)?
+            </p>
+            <p>
+                Under the Galilean transformation, coordinates shift:
+                $$x' = x - ut, \quad v' = v - u, \quad a' = a$$
+            </p>
+            <p>
+                Adjust the observer's relative speed \(u\) = 
+                <span class="scrubbable-number" id="scrub-ch7-u" data-var="ch7_u" data-min="-10" data-max="10">3</span> m/s. 
+                Observe the tracks below. Position and velocity are different for each frame, but the **acceleration graph** matches exactly. The laws of physics are invariant!
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 7.1 — Stacked Reference Frame Systems</span>
+                <span>adjust relative speed u above</span>
+            </div>
+            <div class="diagram-canvas-wrapper split-track-grid" style="padding: 0.75rem;">
+                <div style="font-size: 0.7rem; color: var(--neon-cyan); font-family: monospace;">LAB FRAME S (STATIONARY)</div>
+                <canvas id="canvas-ch7-lab" class="diagram-canvas" height="70"></canvas>
+                <div style="font-size: 0.7rem; color: var(--neon-magenta); font-family: monospace;">MOVING FRAME S'</div>
+                <canvas id="canvas-ch7-moving" class="diagram-canvas" height="70"></canvas>
+                <div style="font-size: 0.7rem; color: var(--neon-amber); font-family: monospace;">ACCELERATION FOR BOTH FRAMES (a' = a)</div>
+                <canvas id="canvas-ch7-acc" class="diagram-canvas" height="100"></canvas>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- MathJax for rendering equations -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.body.classList.add('space-theme-body');
+
+        // Coordinate state declarations
+        let ch1_x = 80;
+        let ch2_t = 0.0;
+        let ch3_x = 50;
+        let ch3_v = 12;
+        let ch3_history = [];
+        let ch4_law = "free";
+        let ch4_t = 0.0;
+        let ch4_history = [];
+        let ch5_law = "spring";
+        let ch5_t = 0.0;
+        let ch5_history = [];
+        let ch5_ghost_active = false;
+        let ch5_ghost_type = "";
+        let ch5_ghost_history = [];
+        let ch6_dt = 0.10;
+        let ch6_history_exact = [];
+        let ch6_history_euler = [];
+        let ch6_history_ec = [];
+        let ch7_u = 3;
+        let ch7_t = 0.0;
+        let ch7_history = [];
+
+        // Constants
+        const mass = 1.0;
+        const k_spring = 0.04;
+        const b_damping = 0.015;
+        const F_const = 0.15;
+
+        // Canvases
+        const c1 = document.getElementById("canvas-ch1");
+        const c2 = document.getElementById("canvas-ch2");
+        const c3 = document.getElementById("canvas-ch3");
+        const c3g = document.getElementById("canvas-ch3-graph");
+        const c4 = document.getElementById("canvas-ch4");
+                const c5p = document.getElementById("canvas-ch5-phys");
+        const c5ph = document.getElementById("canvas-ch5-phase");
+        const c6ph = document.getElementById("canvas-ch6-phase");
+        const c7l = document.getElementById("canvas-ch7-lab");
+        const c7m = document.getElementById("canvas-ch7-moving");
+        const c7a = document.getElementById("canvas-ch7-acc");
+
+        // Contexts
+        const ctx1 = c1.getContext("2d");
+        const ctx2 = c2.getContext("2d");
+        const ctx3 = c3.getContext("2d");
+        const ctx3g = c3g.getContext("2d");
+        const ctx4 = c4.getContext("2d");
+        const ctx5p = c5p.getContext("2d");
+        const ctx5ph = c5ph.getContext("2d");
+        const ctx6ph = c6ph.getContext("2d");
+        const ctx7l = c7l.getContext("2d");
+        const ctx7m = c7m.getContext("2d");
+        const ctx7a = c7a.getContext("2d");
+
+        // Color Constants for High-Contrast Canvas Drawing
+        const COLOR_CYAN = "#00f2fe";
+        const COLOR_MAGENTA = "#ff00dd";
+        const COLOR_AMBER = "#f59e0b";
+        const COLOR_WHITE = "#ffffff";
+        const COLOR_ORANGE = "#f97316";
+        const COLOR_GRID = "rgba(255, 255, 255, 0.15)";
+        const COLOR_TRACK = "rgba(255, 255, 255, 0.28)";
+        const COLOR_ZERO = "rgba(255, 255, 255, 0.45)";
+        const COLOR_TEXT_MUTED = "rgba(255, 255, 255, 0.65)";
+
+        // DPI Scaling
+        function resizeCanvases() {
+            const w = document.querySelector(".diagram-card").clientWidth - 48; // padding offset
+            scaleCanvasForDPI(c1, ctx1, w, 90);
+            scaleCanvasForDPI(c2, ctx2, w, 90);
+            scaleCanvasForDPI(c3, ctx3, w, 90);
+            scaleCanvasForDPI(c3g, ctx3g, w, 120);
+            scaleCanvasForDPI(c4, ctx4, w, 90);
+            scaleCanvasForDPI(c5p, ctx5p, w, 90);
+            scaleCanvasForDPI(c5ph, ctx5ph, w, 240);
+            scaleCanvasForDPI(c6ph, ctx6ph, w, 400);
+            scaleCanvasForDPI(c7l, ctx7l, w, 70);
+            scaleCanvasForDPI(c7m, ctx7m, w, 70);
+            scaleCanvasForDPI(c7a, ctx7a, w, 100);
+        }
+
+        function scaleCanvasForDPI(canvas, context, width, height) {
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + "px";
+            canvas.style.height = height + "px";
+            context.scale(dpr, dpr);
+        }
+        resizeCanvases();
+        window.addEventListener("resize", resizeCanvases);
+
+        // Precomputations
+        function precomputeCh3() {
+            ch3_history = [];
+            for (let t = 0.0; t <= 4.0; t += 0.04) {
+                ch3_history.push({ t: t, x: ch3_x + ch3_v * t });
+            }
+        }
+
+        function precomputeCh4() {
+            ch4_history = [];
+            let x = 60.0;
+            let v = 0.0;
+            const f_const_val = 0.8;
+            const b_damping_val = 0.3;
+
+            if (ch4_law === "free") {
+                x = -120.0;
+                v = 40.0;
+            } else if (ch4_law === "constant") {
+                x = -120.0;
+                v = 10.0;
+            } else if (ch4_law === "spring") {
+                x = 80.0;
+                v = 0.0;
+            } else if (ch4_law === "drag") {
+                x = -120.0;
+                v = 70.0;
+            }
+
+            for (let t = 0.0; t <= 6.01; t += 0.02) {
+                let force = 0.0;
+                if (ch4_law === "free") force = 0.0;
+                else if (ch4_law === "constant") force = f_const_val;
+                else if (ch4_law === "spring") force = -k_spring * x;
+                else if (ch4_law === "drag") force = -b_damping_val * v;
+
+                ch4_history.push({ t: t, x: x, v: v, f: force });
+                
+                // Integrate
+                let a = force / mass;
+                v += a * 0.02;
+                x += v * 0.02;
+            }
+        }
+
+        function precomputeCh5() {
+            ch5_history = [];
+            ch5_ghost_history = [];
+            let x = 60.0;
+            let v = 0.0;
+            let gx = 60.0;
+            let gv = 0.0;
+
+            for (let t = 0.0; t <= 40.01; t += 0.02) {
+                let force = (ch5_law === "spring") ? (-k_spring * x) : (-k_spring * x - b_damping * v);
+                ch5_history.push({ t: t, x: x, v: v });
+                let a = force / mass;
+                v += a * 0.02;
+                x += v * 0.02;
+
+                if (ch5_ghost_active) {
+                    let gForce = 0.0;
+                    if (ch5_ghost_type === "A") {
+                        let activeK = k_spring * (1.0 + t * 0.15);
+                        gForce = -activeK * gx;
+                    } else if (ch5_ghost_type === "C") {
+                        gForce = -k_spring * gx + 1.2;
+                    }
+                    ch5_ghost_history.push({ t: t, x: gx, v: gv });
+                    let ga = gForce / mass;
+                    gv += ga * 0.02;
+                    gx += gv * 0.02;
+                }
+            }
+        }
+
+        function precomputeCh6() {
+            ch6_history_exact = [];
+            ch6_history_euler = [];
+            ch6_history_ec = [];
+
+            const w = Math.sqrt(1.0 / mass); // ch6 uses k = 1.0 for visible limits
+            const x0 = 80.0;
+            const v0 = 0.0;
+
+            // Exact
+            for (let t = 0; t <= 20.0; t += 0.05) {
+                ch6_history_exact.push({
+                    x: x0 * Math.cos(w * t) + (v0 / w) * Math.sin(w * t),
+                    v: -x0 * w * Math.sin(w * t) + v0 * Math.cos(w * t)
+                });
+            }
+
+            // Forward Euler
+            let feX = x0, feV = v0;
+            for (let t = 0; t <= 20.0; t += ch6_dt) {
+                ch6_history_euler.push({ x: feX, v: feV });
+                let a = -1.0 * feX; // force = -kx
+                let nextX = feX + feV * ch6_dt;
+                let nextV = feV + a * ch6_dt;
+                feX = nextX;
+                feV = nextV;
+            }
+
+            // Euler-Cromer
+            let ecX = x0, ecV = v0;
+            for (let t = 0; t <= 20.0; t += ch6_dt) {
+                ch6_history_ec.push({ x: ecX, v: ecV });
+                let a = -1.0 * ecX;
+                let nextV = ecV + a * ch6_dt;
+                let nextX = ecX + nextV * ch6_dt;
+                ecX = nextX;
+                ecV = nextV;
+            }
+
+            // Update warning banner
+            const warn = document.getElementById("ch6-stability-warning");
+            if (ch6_dt >= 2.0) warn.style.display = "block";
+            else warn.style.display = "none";
+        }
+
+        function precomputeCh7() {
+            ch7_history = [];
+            let x = 60.0;
+            let v = 0.0;
+            for (let t = 0.0; t <= 6.01; t += 0.02) {
+                let force = -k_spring * x; // spring motion
+                ch7_history.push({ t: t, x: x, v: v, a: force / mass });
+                v += (force / mass) * 0.02;
+                x += v * 0.02;
+            }
+        }
+
+        // --- DRAWING METHODS ---
+
+        function drawCh1() {
+            const w = c1.width / (window.devicePixelRatio || 1);
+            const h = c1.height / (window.devicePixelRatio || 1);
+            ctx1.fillStyle = "#020205";
+            ctx1.fillRect(0, 0, w, h);
+
+            const centerY = h / 2 + 10;
+            const centerX = w / 2;
+
+            // Track axis
+            ctx1.beginPath();
+            ctx1.moveTo(20, centerY);
+            ctx1.lineTo(w - 20, centerY);
+            ctx1.strokeStyle = COLOR_TRACK;
+            ctx1.lineWidth = 3;
+            ctx1.stroke();
+
+            // Zero line
+            ctx1.beginPath();
+            ctx1.moveTo(centerX, centerY - 10);
+            ctx1.lineTo(centerX, centerY + 10);
+            ctx1.strokeStyle = COLOR_ZERO;
+            ctx1.lineWidth = 1.5;
+            ctx1.stroke();
+
+            ctx1.fillStyle = COLOR_WHITE;
+            ctx1.font = "bold 10px monospace";
+            ctx1.fillText("x = 0", centerX - 12, centerY - 15);
+
+            // Particle
+            ctx1.fillStyle = COLOR_CYAN;
+            ctx1.shadowBlur = 10;
+            ctx1.shadowColor = "rgba(0, 242, 254, 0.5)";
+            ctx1.beginPath();
+            ctx1.arc(centerX + ch1_x, centerY, 8, 0, Math.PI * 2);
+            ctx1.fill();
+            ctx1.shadowBlur = 0;
+        }
+
+        function drawCh2() {
+            const w = c2.width / (window.devicePixelRatio || 1);
+            const h = c2.height / (window.devicePixelRatio || 1);
+            ctx2.fillStyle = "#020205";
+            ctx2.fillRect(0, 0, w, h);
+
+            const centerY = h / 2 + 10;
+            const centerX = w / 2;
+
+            // Track
+            ctx2.beginPath();
+            ctx2.moveTo(20, centerY);
+            ctx2.lineTo(w - 20, centerY);
+            ctx2.strokeStyle = COLOR_TRACK;
+            ctx2.lineWidth = 3;
+            ctx2.stroke();
+
+            // Particle A (cyan, moving right)
+            const xa = centerX + 4.0 * ch2_t * 22;
+            ctx2.fillStyle = COLOR_CYAN;
+            ctx2.shadowBlur = 8;
+            ctx2.shadowColor = "rgba(0, 242, 254, 0.5)";
+            ctx2.beginPath();
+            ctx2.arc(xa, centerY, 7, 0, Math.PI * 2);
+            ctx2.fill();
+
+            // Particle B (magenta, moving left)
+            const xb = centerX - 4.0 * ch2_t * 22;
+            ctx2.fillStyle = COLOR_MAGENTA;
+            ctx2.shadowBlur = 8;
+            ctx2.shadowColor = "rgba(255, 0, 221, 0.5)";
+            ctx2.beginPath();
+            ctx2.arc(xb, centerY, 7, 0, Math.PI * 2);
+            ctx2.fill();
+            ctx2.shadowBlur = 0;
+
+            // Direction text
+            ctx2.fillStyle = COLOR_WHITE;
+            ctx2.font = "bold 9px monospace";
+            ctx2.fillText("v = +4.0 m/s", xa - 25, centerY - 12);
+            ctx2.fillText("v = -4.0 m/s", xb - 25, centerY - 12);
+        }
+
+        function drawCh3() {
+            const w = c3.width / (window.devicePixelRatio || 1);
+            const h = c3.height / (window.devicePixelRatio || 1);
+            ctx3.fillStyle = "#020205";
+            ctx3.fillRect(0, 0, w, h);
+
+            const centerY = h / 2 + 10;
+            const centerX = w / 2;
+
+            // Track
+            ctx3.beginPath();
+            ctx3.moveTo(20, centerY);
+            ctx3.lineTo(w - 20, centerY);
+            ctx3.strokeStyle = COLOR_TRACK;
+            ctx3.lineWidth = 3;
+            ctx3.stroke();
+
+            const px = centerX + ch3_x;
+
+            // Particle
+            ctx3.fillStyle = COLOR_CYAN;
+            ctx3.shadowBlur = 10;
+            ctx3.shadowColor = "rgba(0, 242, 254, 0.5)";
+            ctx3.beginPath();
+            ctx3.arc(px, centerY, 8, 0, Math.PI * 2);
+            ctx3.fill();
+            ctx3.shadowBlur = 0;
+
+            // Velocity Arrow
+            const arrowLen = ch3_v * 6.0;
+            if (Math.abs(arrowLen) > 2) {
+                ctx3.beginPath();
+                ctx3.moveTo(px, centerY);
+                ctx3.lineTo(px + arrowLen, centerY);
+                ctx3.strokeStyle = arrowLen > 0 ? COLOR_CYAN : COLOR_MAGENTA;
+                ctx3.lineWidth = 3.5;
+                ctx3.stroke();
+
+                // Head
+                ctx3.beginPath();
+                const sign = Math.sign(arrowLen);
+                ctx3.moveTo(px + arrowLen, centerY);
+                ctx3.lineTo(px + arrowLen - sign * 6, centerY - 5);
+                ctx3.lineTo(px + arrowLen - sign * 6, centerY + 5);
+                ctx3.closePath();
+                ctx3.fillStyle = arrowLen > 0 ? COLOR_CYAN : COLOR_MAGENTA;
+                ctx3.fill();
+            }
+
+            // Arrow tip knob
+            ctx3.fillStyle = COLOR_WHITE;
+            ctx3.beginPath();
+            ctx3.arc(px + arrowLen, centerY, 4.5, 0, Math.PI * 2);
+            ctx3.fill();
+
+            // Graph drawing
+            const wg = c3g.width / (window.devicePixelRatio || 1);
+            const hg = c3g.height / (window.devicePixelRatio || 1);
+            ctx3g.fillStyle = "#020205";
+            ctx3g.fillRect(0, 0, wg, hg);
+
+            // Frame
+            ctx3g.strokeStyle = COLOR_GRID;
+            ctx3g.lineWidth = 1.5;
+            ctx3g.strokeRect(40, 15, wg - 50, hg - 30);
+
+            // Center line (x=0)
+            const gCenterY = 15 + (hg - 30) / 2;
+            ctx3g.beginPath();
+            ctx3g.moveTo(40, gCenterY);
+            ctx3g.lineTo(wg - 10, gCenterY);
+            ctx3g.strokeStyle = "rgba(255, 255, 255, 0.08)";
+            ctx3g.stroke();
+
+            // Label
+            ctx3g.fillStyle = COLOR_WHITE;
+            ctx3g.font = "bold 10px monospace";
+            ctx3g.fillText("Position x(t)", 45, 26);
+
+            // Curve
+            if (ch3_history.length > 0) {
+                ctx3g.beginPath();
+                ch3_history.forEach((pt, idx) => {
+                    const plotX = 40 + (pt.t / 4.0) * (wg - 50);
+                    const plotY = gCenterY - (pt.x / 150.0) * ((hg - 30) / 2);
+                    if (idx === 0) ctx3g.moveTo(plotX, plotY);
+                    else ctx3g.lineTo(plotX, plotY);
+                });
+                ctx3g.strokeStyle = COLOR_CYAN;
+                ctx3g.lineWidth = 3;
+                ctx3g.stroke();
+            }
+        }
+
+        function drawCh4() {
+            const w = c4.width / (window.devicePixelRatio || 1);
+            const h = c4.height / (window.devicePixelRatio || 1);
+            ctx4.fillStyle = "#020205";
+            ctx4.fillRect(0, 0, w, h);
+
+            const centerY = h / 2 + 10;
+            const centerX = w / 2;
+
+            // Track
+            ctx4.beginPath();
+            ctx4.moveTo(20, centerY);
+            ctx4.lineTo(w - 20, centerY);
+            ctx4.strokeStyle = COLOR_TRACK;
+            ctx4.lineWidth = 3;
+            ctx4.stroke();
+
+            // Look up loop frame
+            if (ch4_history.length > 0) {
+                const idx = Math.min(ch4_history.length - 1, Math.floor((ch4_t / 6.0) * ch4_history.length));
+                const pt = ch4_history[idx];
+
+                const px = centerX + pt.x * 1.5; // scaled position mapping
+
+                // Draw Spring coils if spring force law
+                if (ch4_law === "spring") {
+                    ctx4.beginPath();
+                    ctx4.moveTo(centerX, centerY);
+                    const coils = 12;
+                    const step = (pt.x * 1.5) / coils;
+                    for (let i = 0; i <= coils; i++) {
+                        const cx = centerX + i * step;
+                        const cy = centerY + (i % 2 === 0 ? -6 : 6) * (i === 0 || i === coils ? 0 : 1);
+                        ctx4.lineTo(cx, cy);
+                    }
+                    ctx4.strokeStyle = "rgba(255, 255, 255, 0.25)";
+                    ctx4.lineWidth = 1.5;
+                    ctx4.stroke();
+                }
+
+                // Main particle
+                ctx4.fillStyle = COLOR_CYAN;
+                ctx4.shadowBlur = 8;
+                ctx4.shadowColor = "rgba(0, 242, 254, 0.5)";
+                ctx4.beginPath();
+                ctx4.arc(px, centerY, 8, 0, Math.PI * 2);
+                ctx4.fill();
+                ctx4.shadowBlur = 0;
+
+                // Force Vector arrow (amber)
+                const fArrow = pt.f * 120.0;
+                if (Math.abs(fArrow) > 2) {
+                    ctx4.beginPath();
+                    ctx4.moveTo(px, centerY - 15);
+                    ctx4.lineTo(px + fArrow, centerY - 15);
+                    ctx4.strokeStyle = COLOR_AMBER;
+                    ctx4.lineWidth = 2.5;
+                    ctx4.stroke();
+
+                    // Arrowhead
+                    ctx4.beginPath();
+                    const sign = Math.sign(fArrow);
+                    ctx4.moveTo(px + fArrow, centerY - 15);
+                    ctx4.lineTo(px + fArrow - sign * 5, centerY - 18);
+                    ctx4.lineTo(px + fArrow - sign * 5, centerY - 12);
+                    ctx4.closePath();
+                    ctx4.fillStyle = COLOR_AMBER;
+                    ctx4.fill();
+
+                    ctx4.fillStyle = COLOR_WHITE;
+                    ctx4.font = "bold 9px monospace";
+                    ctx4.fillText(`F = ${pt.f.toFixed(2)} N`, px + (fArrow > 0 ? 5 : -45), centerY - 22);
+                }
+            }
+        }
+
+        function drawCh5() {
+            // 1. Physical Track
+            const wp = c5p.width / (window.devicePixelRatio || 1);
+            const hp = c5p.height / (window.devicePixelRatio || 1);
+            ctx5p.fillStyle = "#020205";
+            ctx5p.fillRect(0, 0, wp, hp);
+
+            const centerY = hp / 2 + 10;
+            const centerX = wp / 2;
+
+            // Axis
+            ctx5p.beginPath();
+            ctx5p.moveTo(20, centerY);
+            ctx5p.lineTo(wp - 20, centerY);
+            ctx5p.strokeStyle = COLOR_TRACK;
+            ctx5p.lineWidth = 3;
+            ctx5p.stroke();
+
+            // Zero Line
+            ctx5p.beginPath();
+            ctx5p.moveTo(centerX, centerY - 10);
+            ctx5p.lineTo(centerX, centerY + 10);
+            ctx5p.strokeStyle = COLOR_ZERO;
+            ctx5p.lineWidth = 1.5;
+            ctx5p.stroke();
+
+            let activeState = null;
+            let activeGhostState = null;
+
+            if (ch5_history.length > 0) {
+                const idx = Math.min(ch5_history.length - 1, Math.floor((ch5_t / 40.0) * ch5_history.length));
+                activeState = ch5_history[idx];
+
+                // Main particle
+                ctx5p.fillStyle = COLOR_CYAN;
+                ctx5p.shadowBlur = 8;
+                ctx5p.shadowColor = "rgba(0, 242, 254, 0.5)";
+                ctx5p.beginPath();
+                ctx5p.arc(centerX + activeState.x, centerY, 8, 0, Math.PI * 2);
+                ctx5p.fill();
+                ctx5p.shadowBlur = 0;
+
+                // Ghost particle
+                if (ch5_ghost_active && ch5_ghost_history.length > idx) {
+                    activeGhostState = ch5_ghost_history[idx];
+                    ctx5p.save();
+                    ctx5p.setLineDash([4, 4]);
+                    ctx5p.strokeStyle = COLOR_ORANGE;
+                    ctx5p.fillStyle = "rgba(249, 115, 22, 0.2)";
+                    ctx5p.beginPath();
+                    ctx5p.arc(centerX + activeGhostState.x, centerY, 7, 0, Math.PI * 2);
+                    ctx5p.fill();
+                    ctx5p.stroke();
+                    ctx5p.restore();
+                }
+            }
+
+            // 2. Phase Space Plot
+            const wph = c5ph.width / (window.devicePixelRatio || 1);
+            const hph = c5ph.height / (window.devicePixelRatio || 1);
+            ctx5ph.fillStyle = "#020205";
+            ctx5ph.fillRect(0, 0, wph, hph);
+
+            const cX = wph / 2;
+            const cY = hph / 2;
+
+            // Axes
+            ctx5ph.strokeStyle = COLOR_GRID;
+            ctx5ph.lineWidth = 1.5;
+            ctx5ph.beginPath();
+            ctx5ph.moveTo(15, cY); ctx5ph.lineTo(wph - 15, cY);
+            ctx5ph.moveTo(cX, 15); ctx5ph.lineTo(cX, hph - 15);
+            ctx5ph.stroke();
+
+            ctx5ph.fillStyle = COLOR_WHITE;
+            ctx5ph.font = "bold 9px monospace";
+            ctx5ph.fillText("Position x", wph - 65, cY - 6);
+            ctx5ph.fillText("Velocity v", cX + 6, 22);
+
+            const xMap = 1.2;
+            const vMap = 4.5;
+
+            // Draw full background trails
+            if (ch5_history.length > 0) {
+                ctx5ph.beginPath();
+                ch5_history.forEach((pt, idx) => {
+                    const px = cX + pt.x * xMap;
+                    const py = cY - pt.v * vMap;
+                    if (idx === 0) ctx5ph.moveTo(px, py);
+                    else ctx5ph.lineTo(px, py);
+                });
+                ctx5ph.strokeStyle = ch5_law === "spring" ? "rgba(0, 242, 254, 0.4)" : "rgba(255, 0, 221, 0.4)";
+                ctx5ph.lineWidth = 1.5;
+                ctx5ph.stroke();
+            }
+
+            if (ch5_ghost_active && ch5_ghost_history.length > 0) {
+                ctx5ph.beginPath();
+                ch5_ghost_history.forEach((pt, idx) => {
+                    const px = cX + pt.x * xMap;
+                    const py = cY - pt.v * vMap;
+                    if (idx === 0) ctx5ph.moveTo(px, py);
+                    else ctx5ph.lineTo(px, py);
+                });
+                ctx5ph.strokeStyle = "rgba(249, 115, 22, 0.45)";
+                ctx5ph.lineWidth = 1.5;
+                ctx5ph.stroke();
+            }
+
+            // Draw current coordinates and projection crosshairs
+            if (activeState) {
+                const px = cX + activeState.x * xMap;
+                const py = cY - activeState.v * vMap;
+
+                ctx5ph.save();
+                ctx5ph.setLineDash([3, 3]);
+                ctx5ph.strokeStyle = "rgba(255,255,255,0.25)";
+                ctx5ph.beginPath();
+                ctx5ph.moveTo(px, cY); ctx5ph.lineTo(px, py); ctx5ph.lineTo(cX, py);
+                ctx5ph.stroke();
+                ctx5ph.restore();
+
+                // Pills on axes
+                ctx5ph.fillStyle = "rgba(10, 15, 25, 0.9)";
+                ctx5ph.strokeStyle = COLOR_WHITE;
+                ctx5ph.beginPath();
+                ctx5ph.roundRect(px - 18, cY - 14, 36, 12, 4);
+                ctx5ph.fill(); ctx5ph.stroke();
+
+                ctx5ph.fillStyle = COLOR_WHITE;
+                ctx5ph.font = "bold 9px monospace";
+                ctx5ph.textAlign = "center";
+                ctx5ph.fillText(activeState.x.toFixed(0), px, cY - 5);
+
+                ctx5ph.fillStyle = "rgba(10, 15, 25, 0.9)";
+                ctx5ph.strokeStyle = COLOR_WHITE;
+                ctx5ph.beginPath();
+                ctx5ph.roundRect(cX - 22, py - 6, 44, 12, 4);
+                ctx5ph.fill(); ctx5ph.stroke();
+
+                ctx5ph.fillStyle = COLOR_WHITE;
+                ctx5ph.fillText(activeState.v.toFixed(1), cX, py + 3);
+
+                // Current Dot
+                ctx5ph.fillStyle = COLOR_CYAN;
+                ctx5ph.shadowBlur = 10;
+                ctx5ph.shadowColor = "rgba(0, 242, 254, 0.6)";
+                ctx5ph.beginPath();
+                ctx5ph.arc(px, py, 5, 0, Math.PI * 2);
+                ctx5ph.fill();
+                ctx5ph.shadowBlur = 0;
+            }
+
+            if (ch5_ghost_active && activeGhostState) {
+                const gpx = cX + activeGhostState.x * xMap;
+                const gpy = cY - activeGhostState.v * vMap;
+
+                ctx5ph.fillStyle = COLOR_ORANGE;
+                ctx5ph.beginPath();
+                ctx5ph.arc(gpx, gpy, 4.5, 0, Math.PI * 2);
+                ctx5ph.fill();
+            }
+        }
+
+        function drawCh6() {
+            const w = c6ph.width / (window.devicePixelRatio || 1);
+            const h = c6ph.height / (window.devicePixelRatio || 1);
+            ctx6ph.fillStyle = "#020205";
+            ctx6ph.fillRect(0, 0, w, h);
+
+            const cX = w / 2;
+            const cY = h / 2;
+
+            // Grid axes
+            ctx6ph.strokeStyle = COLOR_GRID;
+            ctx6ph.lineWidth = 1.5;
+            ctx6ph.beginPath();
+            ctx6ph.moveTo(15, cY); ctx6ph.lineTo(w - 15, cY);
+            ctx6ph.moveTo(cX, 15); ctx6ph.lineTo(cX, h - 15);
+            ctx6ph.stroke();
+
+            ctx6ph.fillStyle = COLOR_WHITE;
+            ctx6ph.font = "bold 9px monospace";
+            ctx6ph.fillText("Position x", w - 85, cY - 8);
+            ctx6ph.fillText("Velocity v", cX + 8, 25);
+
+            const xMap = 0.95; // reduced scale to keep spirals within bounds
+            const vMap = 0.95;
+
+            // 2. Forward Euler (unstable, magenta)
+            if (ch6_history_euler.length > 0) {
+                ctx6ph.beginPath();
+                ch6_history_euler.forEach((pt, idx) => {
+                    const px = cX + pt.x * xMap;
+                    const py = cY - pt.v * vMap;
+                    if (idx === 0) ctx6ph.moveTo(px, py);
+                    else ctx6ph.lineTo(px, py);
+                });
+                ctx6ph.strokeStyle = COLOR_MAGENTA;
+                ctx6ph.lineWidth = 2.0;
+                ctx6ph.stroke();
+            }
+
+            // 3. Euler-Cromer (stable, cyan)
+            if (ch6_history_ec.length > 0) {
+                ctx6ph.beginPath();
+                ch6_history_ec.forEach((pt, idx) => {
+                    const px = cX + pt.x * xMap;
+                    const py = cY - pt.v * vMap;
+                    if (idx === 0) ctx6ph.moveTo(px, py);
+                    else ctx6ph.lineTo(px, py);
+                });
+                ctx6ph.strokeStyle = COLOR_CYAN;
+                ctx6ph.lineWidth = 2.0;
+                ctx6ph.stroke();
+            }
+
+            // 1. Analytical Exact (White dashed line, drawn last for visibility)
+            if (ch6_history_exact.length > 0) {
+                ctx6ph.save();
+                ctx6ph.setLineDash([4, 4]); // dashed line overlay
+                ctx6ph.beginPath();
+                ch6_history_exact.forEach((pt, idx) => {
+                    const px = cX + pt.x * xMap;
+                    const py = cY - pt.v * vMap;
+                    if (idx === 0) ctx6ph.moveTo(px, py);
+                    else ctx6ph.lineTo(px, py);
+                });
+                ctx6ph.strokeStyle = COLOR_WHITE;
+                ctx6ph.lineWidth = 2.0;
+                ctx6ph.stroke();
+                ctx6ph.restore();
+            }
+
+            // Legend labels
+            ctx6ph.fillStyle = COLOR_WHITE;
+            ctx6ph.font = "bold 9px monospace";
+            ctx6ph.fillText("Exact analytical", 20, 25);
+            ctx6ph.fillStyle = COLOR_CYAN;
+            ctx6ph.fillText("Euler-Cromer (Symplectic)", 20, 37);
+            ctx6ph.fillStyle = COLOR_MAGENTA;
+            ctx6ph.fillText("Forward Euler (Explicit)", 20, 49);
+        }
+
+        function drawCh7() {
+            // Lab Frame
+            const wl = c7l.width / (window.devicePixelRatio || 1);
+            const hl = c7l.height / (window.devicePixelRatio || 1);
+            ctx7l.fillStyle = "#020205";
+            ctx7l.fillRect(0, 0, wl, hl);
+
+            const centerY_l = hl / 2 + 10;
+            const cX = wl / 2;
+
+            ctx7l.beginPath();
+            ctx7l.moveTo(20, centerY_l); ctx7l.lineTo(wl - 20, centerY_l);
+            ctx7l.strokeStyle = COLOR_TRACK;
+            ctx7l.lineWidth = 3;
+            ctx7l.stroke();
+
+            // Moving Frame
+            ctx7m.fillStyle = "#020205";
+            ctx7m.fillRect(0, 0, wl, hl);
+            ctx7m.beginPath();
+            ctx7m.moveTo(20, centerY_l); ctx7m.lineTo(wl - 20, centerY_l);
+            ctx7m.strokeStyle = COLOR_TRACK;
+            ctx7m.lineWidth = 3;
+            ctx7m.stroke();
+
+            if (ch7_history.length > 0) {
+                const idx = Math.min(ch7_history.length - 1, Math.floor((ch7_t / 6.0) * ch7_history.length));
+                const pt = ch7_history[idx];
+
+                // Lab particle (Stationary observer)
+                const px_l = cX + pt.x * 1.5;
+                ctx7l.fillStyle = COLOR_CYAN;
+                ctx7l.shadowBlur = 8;
+                ctx7l.shadowColor = "rgba(0, 242, 254, 0.5)";
+                ctx7l.beginPath();
+                ctx7l.arc(px_l, centerY_l, 6, 0, Math.PI * 2);
+                ctx7l.fill();
+                ctx7l.shadowBlur = 0;
+
+                // Moving observer frame coordinate shift: x' = x - ut
+                const px_m = cX + (pt.x - ch7_u * pt.t) * 1.5;
+                ctx7m.fillStyle = COLOR_MAGENTA;
+                ctx7m.shadowBlur = 8;
+                ctx7m.shadowColor = "rgba(255, 0, 221, 0.5)";
+                ctx7m.beginPath();
+                ctx7m.arc(px_m, centerY_l, 6, 0, Math.PI * 2);
+                ctx7m.fill();
+                ctx7m.shadowBlur = 0;
+            }
+
+            // Acceleration Graph (Overlays exactly)
+            const wa = c7a.width / (window.devicePixelRatio || 1);
+            const ha = c7a.height / (window.devicePixelRatio || 1);
+            ctx7a.fillStyle = "#020205";
+            ctx7a.fillRect(0, 0, wa, ha);
+
+            ctx7a.strokeStyle = COLOR_GRID;
+            ctx7a.lineWidth = 1.5;
+            ctx7a.strokeRect(40, 10, wa - 50, ha - 20);
+
+            const gCY = 10 + (ha - 20) / 2;
+
+            if (ch7_history.length > 0) {
+                // Lab Acceleration
+                ctx7a.beginPath();
+                ch7_history.forEach((pt, idx) => {
+                    const plotX = 40 + (pt.t / 6.0) * (wa - 50);
+                    const plotY = gCY - (pt.a / 8.0) * ((ha - 20) / 2);
+                    if (idx === 0) ctx7a.moveTo(plotX, plotY);
+                    else ctx7a.lineTo(plotX, plotY);
+                });
+                ctx7a.strokeStyle = COLOR_CYAN;
+                ctx7a.lineWidth = 3.5;
+                ctx7a.stroke();
+
+                // Moving Frame Acceleration (Invariance - Overlays perfectly in magenta dashed)
+                ctx7a.beginPath();
+                ch7_history.forEach((pt, idx) => {
+                    const plotX = 40 + (pt.t / 6.0) * (wa - 50);
+                    // a' = a
+                    const plotY = gCY - (pt.a / 8.0) * ((ha - 20) / 2);
+                    if (idx === 0) ctx7a.moveTo(plotX, plotY);
+                    else ctx7a.lineTo(plotX, plotY);
+                });
+                ctx7a.save();
+                ctx7a.setLineDash([4, 4]);
+                ctx7a.strokeStyle = COLOR_MAGENTA;
+                ctx7a.lineWidth = 2.0;
+                ctx7a.stroke();
+                ctx7a.restore();
+            }
+
+            ctx7a.fillStyle = COLOR_WHITE;
+            ctx7a.font = "bold 9px monospace";
+            ctx7a.fillText("Acceleration curves overlay (a' = a)", 45, 20);
+        }
+
+        let ch1_dragging = false;
+        c1.addEventListener("mousedown", (e) => {
+            ch1_dragging = true;
+            handleCh1Drag(e);
+        });
+        document.addEventListener("mousemove", (e) => {
+            if (ch1_dragging) handleCh1Drag(e);
+        });
+        document.addEventListener("mouseup", () => {
+            ch1_dragging = false;
+        });
+
+        function handleCh1Drag(e) {
+            const rect = c1.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const w = c1.width / (window.devicePixelRatio || 1);
+            const centerX = w / 2;
+            ch1_x = Math.max(-150, Math.min(150, mouseX - centerX));
+            document.getElementById("scrub-ch1-x").textContent = ch1_x.toFixed(0);
+        }
+
+        // Ch3 state dragging
+        let ch3_dragging_x = false;
+        let ch3_dragging_v = false;
+
+        c3.addEventListener("mousedown", (e) => {
+            const rect = c3.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const w = c3.width / (window.devicePixelRatio || 1);
+            const cX = w / 2;
+
+            const px = cX + ch3_x;
+            const arrowTipX = px + ch3_v * 6.0;
+
+            if (Math.abs(mouseX - arrowTipX) < 24) {
+                ch3_dragging_v = true;
+            } else if (Math.abs(mouseX - px) < 15) {
+                ch3_dragging_x = true;
+            }
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            const rect = c3.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const w = c3.width / (window.devicePixelRatio || 1);
+            const cX = w / 2;
+
+            if (ch3_dragging_x) {
+                ch3_x = Math.max(-120, Math.min(120, mouseX - cX));
+                document.getElementById("scrub-ch3-x").textContent = ch3_x.toFixed(0);
+                precomputeCh3();
+            } else if (ch3_dragging_v) {
+                const px = cX + ch3_x;
+                ch3_v = Math.max(-25, Math.min(25, (mouseX - px) / 6.0));
+                document.getElementById("scrub-ch3-v").textContent = ch3_v.toFixed(0);
+                precomputeCh3();
+            }
+        });
+
+        document.addEventListener("mouseup", () => {
+            ch3_dragging_x = false;
+            ch3_dragging_v = false;
+        });
+
+        // Ch4 Force selector
+        document.querySelectorAll(".btn-ch4-force").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".btn-ch4-force").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                ch4_law = btn.getAttribute("data-force");
+                precomputeCh4();
+                ch4_t = 0.0;
+
+                // Update equations display with MathJax
+                const display = document.getElementById("ch4-equation-display");
+                if (ch4_law === "free") display.innerHTML = "$$\\frac{dx}{dt} = v, \\quad \\frac{dv}{dt} = 0$$";
+                else if (ch4_law === "constant") display.innerHTML = "$$\\frac{dx}{dt} = v, \\quad \\frac{dv}{dt} = \\frac{F}{m} = 0.80$$";
+                else if (ch4_law === "spring") display.innerHTML = "$$\\frac{dx}{dt} = v, \\quad \\frac{dv}{dt} = -\\frac{k}{m}x = -0.04x$$";
+                else if (ch4_law === "drag") display.innerHTML = "$$\\frac{dx}{dt} = v, \\quad \\frac{dv}{dt} = -\\frac{b}{m}v = -0.30v$$";
+
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([display]).catch(err => console.log(err));
+                }
+            });
+        });
+
+        // Ch5 Force selector
+        document.querySelectorAll(".btn-ch5-force").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".btn-ch5-force").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                ch5_law = btn.getAttribute("data-force");
+                precomputeCh5();
+                ch5_t = 0.0;
+            });
+        });
+
+        // Chapter 5 Dragging/Timeline-Scrubbing Handlers
+        let ch5_user_dragging = false;
+        let ch5_drag_target = ""; // "phys" or "phase"
+
+        c5p.addEventListener("mousedown", (e) => {
+            ch5_user_dragging = true;
+            ch5_drag_target = "phys";
+            handleCh5DragEvent(e);
+        });
+
+        c5ph.addEventListener("mousedown", (e) => {
+            ch5_user_dragging = true;
+            ch5_drag_target = "phase";
+            handleCh5DragEvent(e);
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (ch5_user_dragging) {
+                handleCh5DragEvent(e);
+            }
+        });
+
+        document.addEventListener("mouseup", () => {
+            ch5_user_dragging = false;
+            ch5_drag_target = "";
+        });
+
+        function handleCh5DragEvent(e) {
+            if (ch5_history.length === 0) return;
+            
+            if (ch5_drag_target === "phys") {
+                const rect = c5p.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const wp = c5p.width / (window.devicePixelRatio || 1);
+                const centerX = wp / 2;
+                
+                const clickX = mouseX - centerX;
+                
+                let minD = Infinity;
+                let bestT = 0;
+                for (let i = 0; i < ch5_history.length; i++) {
+                    const pt = ch5_history[i];
+                    const dx = pt.x - clickX;
+                    const d = dx * dx;
+                    if (d < minD) {
+                        minD = d;
+                        bestT = pt.t;
+                    }
+                }
+                ch5_t = bestT;
+            } else if (ch5_drag_target === "phase") {
+                const rect = c5ph.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const wph = c5ph.width / (window.devicePixelRatio || 1);
+                const hph = c5ph.height / (window.devicePixelRatio || 1);
+                const cX = wph / 2;
+                const cY = hph / 2;
+
+                const xMap = 1.2;
+                const vMap = 4.5;
+
+                const clickX = (mouseX - cX) / xMap;
+                const clickV = (cY - mouseY) / vMap;
+
+                let minD = Infinity;
+                let bestT = 0;
+                for (let i = 0; i < ch5_history.length; i++) {
+                    const pt = ch5_history[i];
+                    const dx = pt.x - clickX;
+                    const dv = pt.v - clickV;
+                    const d = dx * dx + dv * dv;
+                    if (d < minD) {
+                        minD = d;
+                        bestT = pt.t;
+                    }
+                }
+                ch5_t = bestT;
+            }
+        }
+
+        // --- SCRUBBABLE VALUE ENGINE ---
+        function initScrubbableEngine() {
+            document.querySelectorAll(".scrubbable-number").forEach(num => {
+                let startX = 0;
+                let startVal = 0;
+
+                num.addEventListener("mousedown", (e) => {
+                    e.preventDefault(); // prevent browser text selection during dragging
+                    startX = e.clientX;
+                    const vName = num.getAttribute("data-var");
+                    if (vName === "ch1_x") startVal = ch1_x;
+                    else if (vName === "ch3_x") startVal = ch3_x;
+                    else if (vName === "ch3_v") startVal = ch3_v;
+                    else if (vName === "ch6_dt") startVal = ch6_dt * 100;
+                    else if (vName === "ch7_u") startVal = ch7_u;
+
+                    const onMouseMove = (mEv) => {
+                        const dx = mEv.clientX - startX;
+                        const min = parseFloat(num.getAttribute("data-min"));
+                        const max = parseFloat(num.getAttribute("data-max"));
+                        let newVal = startVal + dx;
+
+                        if (vName === "ch1_x") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch1_x = newVal;
+                            num.textContent = ch1_x.toFixed(0);
+                        } else if (vName === "ch3_x") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch3_x = newVal;
+                            num.textContent = ch3_x.toFixed(0);
+                            precomputeCh3();
+                        } else if (vName === "ch3_v") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch3_v = newVal;
+                            num.textContent = ch3_v.toFixed(0);
+                            precomputeCh3();
+                        } else if (vName === "ch6_dt") {
+                            newVal = Math.max(min * 100, Math.min(max * 100, newVal));
+                            ch6_dt = newVal / 100;
+                            num.textContent = ch6_dt.toFixed(2);
+                            precomputeCh6();
+                        } else if (vName === "ch7_u") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch7_u = newVal;
+                            num.textContent = ch7_u.toFixed(0);
+                        }
+                    };
+
+                    const onMouseUp = () => {
+                        document.removeEventListener("mousemove", onMouseMove);
+                        document.removeEventListener("mouseup", onMouseUp);
+                    };
+
+                    document.addEventListener("mousemove", onMouseMove);
+                    document.addEventListener("mouseup", onMouseUp);
+                });
+            });
+        }
+        initScrubbableEngine();
+
+        // --- CONCEPT QUIZ SUBMIT ---
+        const btnCh5Quiz = document.getElementById("btn-submit-q-ch5");
+        const feedbackCh5 = document.getElementById("feedback-ch5");
+
+        btnCh5Quiz.addEventListener("click", () => {
+            const selected = document.querySelector('input[name="ch5-quiz"]:checked');
+            if (!selected) {
+                feedbackCh5.textContent = "Please select an option first.";
+                feedbackCh5.className = "feedback-banner error";
+                feedbackCh5.style.display = "block";
+                return;
+            }
+
+            // Remove previous highlights
+            document.querySelectorAll("#quiz-form-ch5 .lab-question-option").forEach(el => {
+                el.classList.remove("correct", "incorrect");
+            });
+
+            const val = selected.value;
+
+            if (val === "B") {
+                document.getElementById("opt-ch5-2").classList.add("correct");
+                feedbackCh5.innerHTML = "<strong>Correct!</strong> Damping force \(F = -bv\) always opposes velocity. This drains mechanical energy from the system, causing the state vector dot \((x,v)\) to spiral inward and asymptotically rest at the origin \((0,0)\).";
+                feedbackCh5.className = "feedback-banner success";
+                feedbackCh5.style.display = "block";
+                ch5_ghost_active = false;
+                precomputeCh5();
+            } else {
+                ch5_ghost_active = true;
+                ch5_t = 0.0;
+
+                if (val === "A") {
+                    document.getElementById("opt-ch5-1").classList.add("incorrect");
+                    document.getElementById("opt-ch5-2").classList.add("correct");
+                    ch5_ghost_type = "A";
+                    feedbackCh5.innerHTML = "<strong>Incorrect.</strong> If friction increased stiffness (Option A), the ghost particle (orange dashed) would oscillate faster and spiral *outward* (blowing up in energy). Observe the simulation.";
+                    feedbackCh5.className = "feedback-banner error";
+                    feedbackCh5.style.display = "block";
+                } else if (val === "C") {
+                    document.getElementById("opt-ch5-3").classList.add("incorrect");
+                    document.getElementById("opt-ch5-2").classList.add("correct");
+                    ch5_ghost_type = "C";
+                    feedbackCh5.innerHTML = "<strong>Incorrect.</strong> A gravity offset (Option C) shifts the center midpoint of the oscillation, but doesn't remove energy. The ghost particle (orange dashed) swings indefinitely around a new midpoint without decaying.";
+                    feedbackCh5.className = "feedback-banner error";
+                    feedbackCh5.style.display = "block";
+                }
+                precomputeCh5();
+            }
+        });
+
+        // Initialize state arrays
+        precomputeCh3();
+        precomputeCh4();
+        precomputeCh5();
+        precomputeCh6();
+        precomputeCh7();
+
+        // SINGLE TICK ANIMATION LOOP (60fps)
+        function tick() {
+            // Loop updates
+            ch2_t += 0.012; if (ch2_t > 3.0) ch2_t = 0.0;
+            ch4_t += 0.016; if (ch4_t > 6.0) ch4_t = 0.0;
+            if (!ch5_user_dragging) {
+                ch5_t += 0.016; if (ch5_t > 40.0) ch5_t = 0.0;
+            }
+            ch7_t += 0.016; if (ch7_t > 6.0) ch7_t = 0.0;
+
+            // Draws
+            drawCh1();
+            drawCh2();
+            drawCh3();
+            drawCh4();
+            drawCh5();
+            drawCh6();
+            drawCh7();
+
+            requestAnimationFrame(tick);
+        }
+        tick();
+    });
+</script>
+{% endblock %}
