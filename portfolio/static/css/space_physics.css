@@ -705,3 +705,14 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: #f87171;
 }
+
+/* === Quantum Wavefunction Lab Design Tokens === */
+:root {
+    --qm-psi-re:      #4A90D9;
+    --qm-psi-im:      #E04848;
+    --qm-prob-fill:   rgba(255, 255, 255, 0.22);
+    --qm-prob-stroke: rgba(255, 255, 255, 0.85);
+    --qm-potential:   rgba(255, 170, 0, 0.35);
+    --qm-barrier:     #FFAA00;
+}
+

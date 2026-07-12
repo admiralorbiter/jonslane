@@ -1,0 +1,675 @@
+{% extends "base.html" %}
+
+{% block title %}Quantum Wavefunction Sandbox | Space & Physics{% endblock %}
+{% block meta_description %}An interactive single-screen dashboard simulation of the complex-valued Schrödinger wavefunction, quantum tunneling, and uncertainty relations.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<style>
+    /* Premium Single-Screen Dashboard Layout styling overrides */
+    .lab-viewport {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem 1.5rem 2.5rem 1.5rem;
+        font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+        color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        min-height: 820px;
+        box-sizing: border-box;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+        margin-bottom: 1rem;
+    }
+    .back-link:hover {
+        color: var(--neon-cyan);
+    }
+
+    .lab-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 0.75rem;
+    }
+
+    .lab-title-group h1 {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.8rem;
+        font-style: italic;
+        color: #ffffff;
+        margin: 0;
+    }
+    .lab-title-group p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0.25rem 0 0 0;
+    }
+
+    /* Chapter Tabs Navigation styling */
+    .quest-tabs-nav {
+        display: flex;
+        gap: 0.35rem;
+        overflow-x: auto;
+    }
+    .quest-tab-btn {
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-family: var(--font-mono), monospace;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.25s ease;
+        white-space: nowrap;
+    }
+    .quest-tab-btn:hover {
+        border-color: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+    }
+    .quest-tab-btn.active {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: var(--neon-cyan);
+        color: var(--neon-cyan);
+        box-shadow: 0 0 8px rgba(0, 255, 213, 0.2);
+    }
+    .quest-tab-btn.completed {
+        border-color: var(--neon-emerald);
+        color: var(--neon-emerald);
+    }
+
+    /* Main Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 370px;
+        gap: 1.5rem;
+        flex: 1;
+        min-height: 0; /* Important for scroll/shrink behaviors inside grid */
+    }
+
+    /* Left Visualizer & Control Area */
+    .left-workspace {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-height: 0;
+    }
+
+    .main-canvas-container {
+        position: relative;
+        height: 480px; /* Explicit height to utilize space better */
+        background: #030308;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    #main-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        cursor: crosshair;
+    }
+
+    /* Workspace Toolbar under Main Canvas */
+    .workspace-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(15, 17, 28, 0.4);
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .tool-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .tool-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        padding: 0.35rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .tool-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .tool-btn.active {
+        background: rgba(99, 102, 241, 0.25);
+        border-color: var(--neon-cyan);
+        color: var(--neon-cyan);
+    }
+    .workspace-toolbar select {
+        background: #090b11;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .workspace-toolbar input[type="range"] {
+        background: #090b11;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 130px; /* Fixed width for sliders to prevent squishing */
+    }
+
+    /* Playback Controls Footer */
+    .playback-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(10, 11, 20, 0.8);
+        backdrop-filter: blur(15px);
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-playback {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        padding: 0.45rem 1rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .btn-playback:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    #btn-play-pause.running {
+        background: rgba(224, 72, 72, 0.15);
+        border-color: rgba(224, 72, 72, 0.4);
+        color: #ff8888;
+    }
+
+    .display-toggle-group {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    .display-toggle-group label {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        cursor: pointer;
+    }
+
+    /* Phase wheel widget */
+    .phase-widget-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.7rem;
+        font-family: var(--font-mono), monospace;
+        color: var(--text-muted);
+    }
+    .phase-color-wheel {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+        border: 1.5px solid #ffffff;
+        position: relative;
+    }
+    .phase-wheel-needle {
+        width: 1.5px;
+        height: 8px;
+        background: #ffffff;
+        position: absolute;
+        bottom: 50%;
+        left: calc(50% - 0.75px);
+        transform-origin: bottom center;
+        transform: rotate(0deg);
+    }
+
+    /* Right Dashboard Sidebar */
+    .right-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-height: 0;
+        overflow-y: auto;
+        padding-right: 0.25rem;
+    }
+    /* Custom scrollbar for sidebar */
+    .right-sidebar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .right-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .right-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+    }
+
+    .sidebar-panel {
+        background: rgba(10, 11, 20, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel-header {
+        font-size: 0.75rem;
+        font-family: var(--font-mono), monospace;
+        text-transform: uppercase;
+        color: var(--neon-cyan);
+        letter-spacing: 0.1em;
+        margin: 0 0 0.65rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 0.35rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Momentum visualizer canvas */
+    #momentum-canvas {
+        width: 100%;
+        height: 120px;
+        background: #030308;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        display: block;
+    }
+
+    /* 2D Uncertainty Canvas */
+    #uncertainty-canvas {
+        width: 100%;
+        height: 100px;
+        background: #030308;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        display: block;
+        margin-top: 0.5rem;
+    }
+
+    .hud-stats {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    .hud-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.15rem 0;
+    }
+    .hud-label {
+        color: var(--text-muted);
+    }
+    .hud-value {
+        color: #ffffff;
+        font-weight: 500;
+    }
+    .hud-value.near-minimum {
+        color: var(--neon-emerald);
+    }
+    .hud-value.elevated {
+        color: var(--neon-amber);
+    }
+    .hud-value.high {
+        color: var(--neon-magenta);
+    }
+
+    /* Quest Log Briefing Box styling */
+    .quest-log-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 220px;
+    }
+    .quest-briefing-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 0.25rem;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: var(--text-muted);
+    }
+    .quest-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-style: italic;
+        font-size: 1.15rem;
+        color: #ffffff;
+        margin: 0 0 0.5rem 0;
+    }
+    .quest-objective-box {
+        background: rgba(0, 255, 213, 0.03);
+        border: 1px dashed rgba(0, 255, 213, 0.2);
+        border-radius: 6px;
+        padding: 0.65rem 0.75rem;
+        margin: 0.75rem 0;
+        font-size: 0.8rem;
+    }
+    .quest-objective-title {
+        font-family: var(--font-mono), monospace;
+        color: var(--neon-cyan);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .quest-checklist {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .quest-checklist li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.45rem;
+        margin-bottom: 0.25rem;
+    }
+    .quest-check {
+        font-size: 0.9rem;
+        line-height: 1;
+        margin-top: 0.1rem;
+    }
+    .quest-check.pending {
+        color: rgba(255, 255, 255, 0.2);
+    }
+    .quest-check.success {
+        color: var(--neon-emerald);
+        text-shadow: 0 0 4px rgba(0, 255, 150, 0.4);
+    }
+
+    /* Collapsible math accordion */
+    .math-disclosure {
+        margin-top: 0.75rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 0.5rem;
+    }
+    .math-disclosure-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-family: var(--font-sans), sans-serif;
+        font-size: 0.75rem;
+        cursor: pointer;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: color 0.2s;
+    }
+    .math-disclosure-btn:hover {
+        color: #ffffff;
+    }
+    .math-disclosure-content {
+        display: none;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        padding-top: 0.4rem;
+        border-left: 2px solid rgba(99, 102, 241, 0.3);
+        padding-left: 0.5rem;
+        margin-top: 0.25rem;
+    }
+    .math-disclosure-content p {
+        margin: 0 0 0.5rem 0;
+    }
+    .math-disclosure-content p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Settings modal trigger */
+    .btn-settings {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .btn-settings:hover {
+        color: #ffffff;
+    }
+    .settings-dropdown {
+        display: none;
+        position: absolute;
+        top: 2.5rem;
+        right: 0.5rem;
+        background: rgba(10, 11, 20, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        z-index: 50;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        width: 220px;
+        font-size: 0.75rem;
+    }
+    .settings-row {
+        margin-bottom: 0.65rem;
+    }
+    .settings-row label {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: var(--text-muted);
+    }
+    .settings-row input, .settings-row select {
+        width: 100%;
+        background: #000000;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        padding: 0.25rem 0.4rem;
+        border-radius: 4px;
+        font-family: var(--font-mono), monospace;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<div class="lab-viewport" id="lab-quantum-wavefunction">
+    <!-- Hub Backlink -->
+    <a href="{{ url_for('space_physics.index') }}" class="back-link">
+        ← Back to Space & Physics Hub
+    </a>
+
+    <!-- Top Header bar -->
+    <header class="lab-header-row">
+        <div class="lab-title-group">
+            <h1>Quantum Wavefunction Sandbox</h1>
+            <p>A real-time laboratory to explore the quantum state vector, wave propagation, and Heisenberg uncertainty.</p>
+        </div>
+
+        <!-- Settings dropdown wrapper -->
+        <div style="position: relative;">
+            <button class="btn-settings" id="btn-settings-toggle" title="Solver Settings">
+                ⚙️ Setup
+            </button>
+            <div class="settings-dropdown" id="settings-dropdown">
+                <div class="settings-row">
+                    <label for="set-grid-n">Grid Resolution (N)</label>
+                    <select id="set-grid-n">
+                        <option value="256">256 points (Fast)</option>
+                        <option value="512" selected>512 points (Default)</option>
+                        <option value="1024">1024 points (Hi-Res)</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <label for="set-dt">Time step (dt)</label>
+                    <input type="range" id="set-dt" min="0.001" max="0.015" step="0.001" value="0.005">
+                    <span id="dt-readout" style="float:right; font-family: monospace;">0.005</span>
+                </div>
+                <div class="settings-row">
+                    <label for="set-cap-strength">Absorber strength (η)</label>
+                    <input type="range" id="set-cap-strength" min="0.01" max="0.25" step="0.01" value="0.08">
+                    <span id="cap-readout" style="float:right; font-family: monospace;">0.08</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Quests Tabs Header -->
+    <nav class="quest-tabs-nav" aria-label="Quest Chapters" style="margin-bottom: 1.25rem;">
+        <button class="quest-tab-btn active" data-chapter="1" id="tab-ch-1">Quest 1: Dispersion</button>
+        <button class="quest-tab-btn" data-chapter="2" id="tab-ch-2">Quest 2: Quantization</button>
+        <button class="quest-tab-btn" data-chapter="3" id="tab-ch-3">Quest 3: Tunneling</button>
+        <button class="quest-tab-btn" data-chapter="4" id="tab-ch-4">Quest 4: Sculptor</button>
+        <button class="quest-tab-btn" data-chapter="5" id="tab-ch-5">Quest 5: Bohr Beat</button>
+        <button class="quest-tab-btn" data-chapter="6" id="tab-ch-6">Quest 6: Spring Mimic</button>
+        <button class="quest-tab-btn" data-chapter="7" id="tab-ch-7">Quest 7: Born Rule</button>
+        <button class="quest-tab-btn" data-chapter="8" id="tab-ch-8">Quest 8: Double Well</button>
+    </nav>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+        
+        <!-- Left Side Workspace -->
+        <div class="left-workspace">
+            
+            <!-- Wavefunction Visualization Area -->
+            <div class="main-canvas-container">
+                <canvas id="main-canvas" width="800" height="400" aria-label="Quantum wavefunction simulation canvas" tabindex="0"></canvas>
+            </div>
+
+            <!-- Workspace Action Toolbar -->
+            <div class="workspace-toolbar" id="canvas-toolbar">
+                <div class="tool-group" id="drawing-tools">
+                    <button class="tool-btn active" data-tool="draw" id="tool-draw-barrier">✏️ Draw Well/Barrier</button>
+                    <button class="tool-btn" data-tool="erase" id="tool-erase-barrier">🧹 Erase</button>
+                    <button class="tool-btn" id="btn-clear-pot">🗑️ Clear Potential</button>
+                    <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 0.3rem; margin-left: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="chk-auto-smooth" checked> Auto-Smooth
+                    </label>
+                </div>
+                <div class="tool-group" id="chapter-sliders-container">
+                    <!-- Sliders populated dynamically by experiments.js -->
+                </div>
+            </div>
+
+            <!-- Footer Playback Controls -->
+            <footer class="playback-controls">
+                <div class="tool-group">
+                    <button class="btn-playback" id="btn-play-pause">⏸ Pause</button>
+                    <button class="btn-playback" id="btn-step-frame">⏭ Step</button>
+                    <button class="btn-playback" id="btn-reset-sim">↺ Reset Quest</button>
+                </div>
+
+                <div class="display-toggle-group">
+                    <label><input type="checkbox" id="chk-show-real" checked> Wave Real (ψ_re)</label>
+                    <label><input type="checkbox" id="chk-show-imag" checked> Wave Imag (ψ_im)</label>
+                    <label><input type="checkbox" id="chk-show-prob" checked> Probability |ψ|²</label>
+                    <label><input type="checkbox" id="chk-show-phase" checked> Phase Gradient</label>
+                </div>
+
+                <!-- Phase Color Wheel reference and scale needle -->
+                <div class="phase-widget-container" title="Bohr Phase rotation e^(-iEt/hbar)">
+                    <span>Bohr Phase:</span>
+                    <div class="phase-color-wheel" id="phase-color-wheel">
+                        <div class="phase-wheel-needle" id="phase-wheel-needle"></div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+        <!-- Right Side Stats & Briefings Column -->
+        <div class="right-sidebar">
+            
+            <!-- Quest Briefings & Checklist Log -->
+            <div class="sidebar-panel quest-log-panel">
+                <div class="panel-header">Quest Logbook</div>
+                <div class="quest-briefing-scroll" id="quest-briefing-box">
+                    <!-- Text Briefings & checklists injected dynamically by experiments.js -->
+                </div>
+            </div>
+
+            <!-- Momentum space density panel -->
+            <div class="sidebar-panel" style="flex-shrink: 0;">
+                <div class="panel-header">Momentum Spectrum |φ(k)|²</div>
+                <canvas id="momentum-canvas" width="300" height="120"></canvas>
+            </div>
+
+            <!-- Uncertainty HUD & 2D hyperbola panel -->
+            <div class="sidebar-panel" style="flex-shrink: 0;">
+                <div class="panel-header">Uncertainty Space (Δx · Δp)</div>
+                
+                <div class="hud-stats">
+                    <div class="hud-row">
+                        <span class="hud-label">Spread Δx:</span>
+                        <span class="hud-value" id="hud-dx">— a₀</span>
+                    </div>
+                    <div class="hud-row">
+                        <span class="hud-label">Spread Δp:</span>
+                        <span class="hud-value" id="hud-dp">— ℏ/a₀</span>
+                    </div>
+                    <div class="hud-row">
+                        <span class="hud-label">Product ΔxΔp:</span>
+                        <span class="hud-value" id="hud-product">— ℏ</span>
+                    </div>
+                </div>
+
+                <canvas id="uncertainty-canvas" width="300" height="100"></canvas>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Defer loading scripts -->
+<script src="{{ url_for('static', filename='js/labs/quantum_wavefunction/fft_local.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/labs/quantum_wavefunction/solver.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/labs/quantum_wavefunction/renderer.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/labs/quantum_wavefunction/experiments.js') }}" defer></script>
+
+<script>
+    // Settings dropdown interaction
+    document.addEventListener("DOMContentLoaded", () => {
+        const toggle = document.getElementById("btn-settings-toggle");
+        const dropdown = document.getElementById("settings-dropdown");
+        
+        toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        });
+
+        document.addEventListener("click", () => {
+            dropdown.style.display = "none";
+        });
+
+        dropdown.addEventListener("click", (e) => {
+            e.stopPropagation();
+        });
+    });
+</script>
+{% endblock %}

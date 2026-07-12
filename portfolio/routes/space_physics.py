@@ -57,12 +57,12 @@ PHYSICS_METADATA = {
         "icon": "🪐",
         "status": "draft",
     },
-    "quantum-uncertainty": {
-        "title": "Quantum Uncertainty",
+    "quantum-wavefunction": {
+        "title": "Quantum Wavefunction",
         "category": "Quantum Physics",
-        "description": "Why measuring a particle's position forces its momentum into complete unpredictability.",
+        "description": "Step into the quantum sandbox. Draw potential wells, observe tunneling, compute energy levels, and collapse superpositions in this interactive quest lab.",
         "icon": "Δ",
-        "status": "draft",
+        "status": "active",
     },
 }
 
