@@ -22,6 +22,13 @@ PHYSICS_METADATA = {
         "icon": "⚛",
         "status": "active",
     },
+    "galilean-relativity": {
+        "title": "Galilean Relativity",
+        "category": "Classical Mechanics",
+        "description": "How coordinate systems shift for moving observers, and why physical laws are invariant.",
+        "icon": "🚄",
+        "status": "active",
+    },
     "spacetime-fabric": {
         "title": "Fabric of Spacetime",
         "category": "Relativity",

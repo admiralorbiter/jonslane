@@ -1,0 +1,1143 @@
+{% extends "base.html" %}
+
+{% block title %}Galilean Relativity | Space & Physics{% endblock %}
+{% block meta_description %}An interactive scrollytelling explorable on observer reference frames, Galilean coordinate boosts, and relativistic speed limits.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<style>
+    /* Scrollytelling Centered Column Design */
+    .scrolly-container {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem 6rem 1.5rem;
+        font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+        color: var(--text-primary);
+        line-height: 1.625;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+        margin-bottom: 2.5rem;
+    }
+    .back-link:hover {
+        color: var(--neon-cyan);
+    }
+
+    .header-group {
+        margin-bottom: 4rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 2rem;
+    }
+
+    .subtitle-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-amber);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .page-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 2.5rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .page-intro {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+    }
+
+    /* Chapter layout */
+    .scrolly-chapter {
+        margin-bottom: 5.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding-bottom: 5rem;
+    }
+    .scrolly-chapter:last-of-type {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .chapter-num {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .chapter-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.75rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .chapter-prose {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+    .chapter-prose p {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Embedded simulator widget card */
+    .diagram-card {
+        background: rgba(14, 16, 23, 0.45);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+        margin: 2rem 0;
+    }
+
+    .diagram-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        padding-bottom: 0.5rem;
+    }
+
+    .diagram-canvas-wrapper {
+        position: relative;
+        background: #020205;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .diagram-canvas {
+        display: block;
+        width: 100%;
+        background: #020205;
+    }
+
+    /* Scrubbable Text variables */
+    .scrubbable-number {
+        color: var(--neon-cyan);
+        border-bottom: 1px dashed var(--neon-cyan);
+        padding: 0 0.15rem;
+        font-weight: bold;
+        cursor: ew-resize;
+        user-select: none;
+        display: inline-block;
+        font-family: var(--font-mono), monospace;
+        font-variant-numeric: tabular-nums;
+    }
+    .scrubbable-number:hover {
+        background: rgba(0, 242, 254, 0.1);
+        border-bottom-style: solid;
+    }
+
+    /* Button rows inside diagram cards */
+    .diagram-btn-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .diagram-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        color: var(--text-muted);
+        padding: 0.5rem 0.25rem;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    .diagram-btn.active {
+        background: rgba(245, 158, 11, 0.12);
+        border-color: var(--neon-amber);
+        color: #ffffff;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+    }
+    .diagram-btn:hover:not(.active) {
+        border-color: rgba(255,255,255,0.2);
+        color: #ffffff;
+    }
+
+    /* Banner alerts */
+    .feedback-banner {
+        border-radius: 8px;
+        padding: 1rem;
+        font-size: 0.85rem;
+        margin-top: 1.25rem;
+        line-height: 1.5;
+        display: none;
+    }
+    .feedback-banner.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        color: #a7f3d0;
+    }
+    .feedback-banner.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    /* Quiz Question Card */
+    .quiz-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-top: 1.5rem;
+    }
+    .quiz-question {
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 0.75rem;
+    }
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .quiz-option {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+    }
+    .quiz-option:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .quiz-option.incorrect {
+        background: rgba(239, 68, 68, 0.08);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+    }
+    .quiz-option.correct {
+        background: rgba(16, 185, 129, 0.08);
+        border-color: rgba(16, 185, 129, 0.3);
+        color: #a7f3d0;
+    }
+
+    /* Navigation grid for relative velocity challenge */
+    .game-input-row {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    .game-input {
+        background: #020205;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        color: #ffffff;
+        padding: 0.5rem 0.75rem;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.9rem;
+        width: 120px;
+        outline: none;
+    }
+    .game-input:focus {
+        border-color: var(--neon-cyan);
+        box-shadow: 0 0 8px rgba(0, 242, 254, 0.25);
+    }
+    .game-btn {
+        background: var(--neon-cyan);
+        color: #020205;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        padding: 0.5rem 1.25rem;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .game-btn:hover {
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<div class="scrolly-container">
+    <a href="/space-physics" class="back-link">&larr; Back to Space Directory</a>
+
+    <header class="header-group">
+        <span class="subtitle-badge">EXPLORABLE MODULE 2</span>
+        <h1 class="page-title">Galilean Relativity: Whose State?</h1>
+        <p class="page-intro">
+            If two observers are moving relative to one another, who measures the "true" state of the universe?
+        </p>
+    </header>
+
+    <!-- CHAPTER 1: WHO'S WATCHING? -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 1</span>
+        <h2 class="chapter-title">Who's Watching?</h2>
+        <div class="chapter-prose">
+            <p>
+                In classical physics, there is no absolute "center" to space. To define the position of a particle, we must first choose a <strong>reference frame</strong>—a set of coordinates anchored to an observer.
+            </p>
+            <p>
+                Imagine a stationary observer, \(S\) (cyan), standing on the ground, and a second observer, \(S'\) (magenta), riding in a train car moving at a relative speed \(u\).
+            </p>
+            <p>
+                Drag the observer's relative speed \(u = \) <span class="scrubbable-number" id="scrub-ch1-u" data-var="ch1_u" data-min="-20" data-max="20">5</span> m/s. 
+                Observe how the coordinates printed on the track shift relative to each observer's zero point:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 1.1 — Reference Frame Alignment</span>
+                <span>drag u value above</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch1" class="diagram-canvas" height="150"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 2: THE BALL IN THE TRAIN -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 2</span>
+        <h2 class="chapter-title">The Ball in the Train</h2>
+        <div class="chapter-prose">
+            <p>
+                What happens when we perform an experiment inside the train? Let's throw a ball straight up.
+            </p>
+            <p>
+                From the perspective of the passenger inside the train (\(S'\)), the ball simply goes straight up and falls straight back down. It travels in a <strong>one-dimensional vertical line</strong>.
+            </p>
+            <p>
+                But to an observer standing on the ground (\(S\)), the ball is moving horizontally with the train while it rises and falls. To the ground observer, the ball traces out a <strong>two-dimensional parabolic arc</strong>!
+            </p>
+            <p>
+                Adjust the train speed \(u = \) <span class="scrubbable-number" id="scrub-ch2-u" data-var="ch2_u" data-min="-30" data-max="30">12</span> m/s, and the throw speed \(v_{\text{throw}} = \) <span class="scrubbable-number" id="scrub-ch2-v" data-var="ch2_v" data-min="10" data-max="35">20</span> m/s:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 2.1 — Trajectory Comparison</span>
+                <span>drag u and v_throw values above</span>
+            </div>
+            <div class="diagram-canvas-wrapper" style="display: flex; gap: 0.5rem; background: #000;">
+                <canvas id="canvas-ch2-ground" class="diagram-canvas" height="200" style="flex: 1; border-right: 1px solid rgba(255,255,255,0.05);"></canvas>
+                <canvas id="canvas-ch2-train" class="diagram-canvas" height="200" style="flex: 1;"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 3: STATE VECTOR TRANSFORMATIONS -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 3</span>
+        <h2 class="chapter-title">How the State Vector Transforms</h2>
+        <div class="chapter-prose">
+            <p>
+                We can write down exactly how the coordinates shift using the <strong>Galilean coordinate transformations</strong>. 
+                If the moving frame travels along the x-axis at speed \(u\), the position \(x'\), velocity \(v'\), and acceleration \(a'\) relate to the ground measurements as:
+            </p>
+            <p style="text-align: center;">
+                \[x' = x - ut, \quad v' = v - u, \quad a' = a\]
+            </p>
+            <p>
+                Observe how the numbers shift by scrubbing the relative frame speed \(u = \) <span class="scrubbable-number" id="scrub-ch3-u" data-var="ch3_u" data-min="-30" data-max="30">10</span> m/s:
+            </p>
+            <p>
+                Let a particle have position \(x = 50\,\text{m}\), velocity \(v = 25\,\text{m/s}\), and acceleration \(a = 3.5\,\text{m/s}^2\). In the moving frame \(S'\), its state transforms to:
+                <br>
+                <strong>Position:</strong> \(x' = 50 - (\text{u} \times t)\) &rarr; <span id="val-ch3-xprime" style="color: var(--neon-magenta); font-family: monospace; font-weight: bold;">50.0</span> m (at \(t = 1\,\text{s}\))
+                <br>
+                <strong>Velocity:</strong> \(v' = 25 - u\) &rarr; <span id="val-ch3-vprime" style="color: var(--neon-magenta); font-family: monospace; font-weight: bold;">15.0</span> m/s
+                <br>
+                <strong>Acceleration:</strong> \(a' = a\) &rarr; <span id="val-ch3-aprime" style="color: var(--neon-cyan); font-family: monospace; font-weight: bold;">3.5</span> m/s² (completely invariant!)
+            </p>
+        </div>
+
+        <div class="quiz-card">
+            <div class="quiz-question">Concept Check: What happens if the train accelerates?</div>
+            <div class="quiz-options">
+                <button class="quiz-option" data-ans="A">Option A: Acceleration remains invariant (\(a' = a\)).</button>
+                <button class="quiz-option" data-ans="B">Option B: The frame S' becomes non-inertial, and Galilean invariance breaks.</button>
+                <button class="quiz-option" data-ans="C">Option C: The particle's mass increases to compensate.</button>
+            </div>
+            <div id="feedback-ch3" class="feedback-banner"></div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 4: SYMMETRY & EQUIVALENCE -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 4</span>
+        <h2 class="chapter-title">Symmetry & Observer Equivalence</h2>
+        <div class="chapter-prose">
+            <p>
+                Because acceleration is identical in both frames (\(a' = a\)), Newton's laws of motion hold equally in both. A passenger on the train and a person on the ground will discover the exact same laws of physics!
+            </p>
+            <p>
+                Let's watch a spring-mass oscillator. Observe the dynamics from either frame. Notice how the spring constant \(k\) and mass \(m\) generate identical oscillatory frequencies, even though their positions differ:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 4.1 — Spring Oscillator Invariance</span>
+                <span>Select active perspective below</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch4" class="diagram-canvas" height="180"></canvas>
+            </div>
+            <div class="diagram-btn-row">
+                <button class="diagram-btn active btn-ch4-frame" data-frame="lab">Stationary Observer (Ground)</button>
+                <button class="diagram-btn btn-ch4-frame" data-frame="train">Moving Observer (Train)</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 5: THE ASTEROID CHASE -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 5</span>
+        <h2 class="chapter-title">The Asteroid Chase</h2>
+        <div class="chapter-prose">
+            <p>
+                Let's put this into practice with a deep-space navigation problem. 
+                A rocket is chasing an asteroid. From the solar system's coordinate frame, the asteroid moves at \(35\,\text{m/s}\) and the rocket moves at \(22\,\text{m/s}\).
+            </p>
+            <p>
+                Toggle the active reference frame below to view the solar system frame or switch to the rocket's frame:
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 5.1 — Mission Control Navigation HUD</span>
+                <span>Toggle perspective and solve below</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch5" class="diagram-canvas" height="240"></canvas>
+            </div>
+            <div class="diagram-btn-row">
+                <button class="diagram-btn active btn-ch5-frame" data-frame="earth">Solar System Frame</button>
+                <button class="diagram-btn btn-ch5-frame" data-frame="rocket">Rocket Frame (S')</button>
+            </div>
+        </div>
+
+        <div class="quiz-card">
+            <div class="quiz-question">Navigation Challenge: In the rocket's reference frame, what is the closing velocity of the asteroid?</div>
+            <p class="chapter-prose" style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                Enter your answer in m/s:
+            </p>
+            <div class="game-input-row">
+                <input type="number" id="game-ch5-ans" class="game-input" placeholder="e.g. 15">
+                <button id="btn-ch5-verify" class="game-btn">Validate Solution</button>
+            </div>
+            <div id="feedback-ch5" class="feedback-banner"></div>
+        </div>
+    </section>
+
+    <!-- CHAPTER 6: THE BOUNDARY -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 6</span>
+        <h2 class="chapter-title">The Limit: Where Galileo Breaks Down</h2>
+        <div class="chapter-prose">
+            <p>
+                Galilean relativity works perfectly for things we see in everyday life. But what happens when objects move close to the speed of light \(c\)?
+            </p>
+            <p>
+                In Galilean physics, if you run forward at \(20\,\text{m/s}\) inside a train moving at \(90\,\text{m/s}\), your speed relative to the ground is simply \(20 + 90 = 110\,\text{m/s}\). Under this rule, if you shine a flashlight, the light should travel at \(c + u\)—exceeding the universal speed limit!
+            </p>
+            <p>
+                To resolve this, Einstein formulated <strong>Special Relativity</strong>. Galilean velocity transformations are only an approximation. The true relativistic velocity addition formula is:
+            </p>
+            <p style="text-align: center;">
+                \[v_{\text{ground}} = \frac{v' + u}{1 + \frac{u v'}{c^2}}\]
+            </p>
+            <p>
+                Drag the train's speed \(u = \) <span class="scrubbable-number" id="scrub-ch6-u" data-var="ch6_u" data-min="0" data-max="90">40</span> m/s, 
+                and the runner's speed inside the train \(v' = \) <span class="scrubbable-number" id="scrub-ch6-v" data-var="ch6_v" data-min="10" data-max="90">70</span> m/s. 
+                Observe the race below between the runner (colored circle) and a light pulse (yellow circle) traveling at \(c = 100\,\text{m/s}\):
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Diagram 6.1 — Galilean vs. Relativistic Race (c = 100 m/s)</span>
+                <span>drag u and v' values above</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas id="canvas-ch6" class="diagram-canvas" height="240"></canvas>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- MathJax for rendering equations -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.body.classList.add('space-theme-body');
+
+        // State declarations
+        let ch1_u = 5;
+        let ch2_u = 12;
+        let ch2_v = 20;
+        let ch2_t = 0.0;
+        let ch3_u = 10;
+        let ch4_frame = "lab"; // "lab" or "train"
+        let ch4_t = 0.0;
+        let ch5_frame = "earth"; // "earth" or "rocket"
+        let ch5_t = 0.0;
+        let ch6_u = 40;
+        let ch6_v = 70; // runner speed inside train
+        let ch6_t = 0.0;
+        const c_light = 100.0;
+
+        // Constants
+        const COLOR_CYAN = "#00f2fe";
+        const COLOR_MAGENTA = "#ff00dd";
+        const COLOR_AMBER = "#f59e0b";
+        const COLOR_WHITE = "#ffffff";
+        const COLOR_GRID = "rgba(255, 255, 255, 0.15)";
+        const COLOR_TRACK = "rgba(255, 255, 255, 0.28)";
+        const COLOR_ZERO = "rgba(255, 255, 255, 0.45)";
+
+        // Canvases
+        const c1 = document.getElementById("canvas-ch1");
+        const c2g = document.getElementById("canvas-ch2-ground");
+        const c2t = document.getElementById("canvas-ch2-train");
+        const c4 = document.getElementById("canvas-ch4");
+        const c5 = document.getElementById("canvas-ch5");
+        const c6 = document.getElementById("canvas-ch6");
+
+        // Contexts
+        const ctx1 = c1.getContext("2d");
+        const ctx2g = c2g.getContext("2d");
+        const ctx2t = c2t.getContext("2d");
+        const ctx4 = c4.getContext("2d");
+        const ctx5 = c5.getContext("2d");
+        const ctx6 = c6.getContext("2d");
+
+        function scaleCanvasForDPI(canvas, context, width, height) {
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + "px";
+            canvas.style.height = height + "px";
+            context.scale(dpr, dpr);
+        }
+
+        function resizeCanvases() {
+            const w = document.querySelector(".diagram-card").clientWidth - 48;
+            scaleCanvasForDPI(c1, ctx1, w, 150);
+            scaleCanvasForDPI(c2g, ctx2g, w / 2 - 4, 200);
+            scaleCanvasForDPI(c2t, ctx2t, w / 2 - 4, 200);
+            scaleCanvasForDPI(c4, ctx4, w, 180);
+            scaleCanvasForDPI(c5, ctx5, w, 240);
+            scaleCanvasForDPI(c6, ctx6, w, 240);
+        }
+
+        resizeCanvases();
+        window.addEventListener("resize", resizeCanvases);
+
+        // Drawing Functions
+        function drawCh1() {
+            const w = c1.width / (window.devicePixelRatio || 1);
+            const h = c1.height / (window.devicePixelRatio || 1);
+            ctx1.fillStyle = "#020205";
+            ctx1.fillRect(0, 0, w, h);
+
+            const cX = w / 2;
+            const y1 = 45;
+            const y2 = 105;
+
+            // Coordinate line S (Ground)
+            ctx1.beginPath();
+            ctx1.moveTo(20, y1);
+            ctx1.lineTo(w - 20, y1);
+            ctx1.strokeStyle = COLOR_TRACK;
+            ctx1.lineWidth = 3;
+            ctx1.stroke();
+
+            // Zero line S
+            ctx1.beginPath();
+            ctx1.moveTo(cX, y1 - 8);
+            ctx1.lineTo(cX, y1 + 8);
+            ctx1.strokeStyle = COLOR_ZERO;
+            ctx1.lineWidth = 1.5;
+            ctx1.stroke();
+
+            // Labels S
+            ctx1.fillStyle = COLOR_WHITE;
+            ctx1.font = "bold 9px monospace";
+            ctx1.fillText("Ground Observer S", 20, y1 - 15);
+            ctx1.textAlign = "center";
+            ctx1.fillText("x = 0", cX, y1 + 20);
+
+            // Coordinate line S' (Train)
+            ctx1.beginPath();
+            ctx1.moveTo(20, y2);
+            ctx1.lineTo(w - 20, y2);
+            ctx1.strokeStyle = COLOR_TRACK;
+            ctx1.lineWidth = 3;
+            ctx1.stroke();
+
+            // Zero line S' (shifted by -ut, let's represent t = 2s)
+            const shift = ch1_u * 6; // visual scale factor
+            const zeroPrimeX = cX + shift;
+
+            ctx1.beginPath();
+            ctx1.moveTo(zeroPrimeX, y2 - 8);
+            ctx1.lineTo(zeroPrimeX, y2 + 8);
+            ctx1.strokeStyle = COLOR_ZERO;
+            ctx1.lineWidth = 1.5;
+            ctx1.stroke();
+
+            ctx1.fillStyle = COLOR_WHITE;
+            ctx1.textAlign = "left";
+            ctx1.fillText("Train Observer S' (moving at u)", 20, y2 - 15);
+            ctx1.textAlign = "center";
+            ctx1.fillText("x' = 0", zeroPrimeX, y2 + 20);
+
+            // Draw cyan observer S
+            ctx1.fillStyle = COLOR_CYAN;
+            ctx1.beginPath();
+            ctx1.arc(cX, y1, 6, 0, Math.PI * 2);
+            ctx1.fill();
+
+            // Draw magenta observer S'
+            ctx1.fillStyle = COLOR_MAGENTA;
+            ctx1.beginPath();
+            ctx1.arc(zeroPrimeX, y2, 6, 0, Math.PI * 2);
+            ctx1.fill();
+        }
+
+        function drawCh2() {
+            // Ground canvas
+            const wg = c2g.width / (window.devicePixelRatio || 1);
+            const hg = c2g.height / (window.devicePixelRatio || 1);
+            ctx2g.fillStyle = "#020205";
+            ctx2g.fillRect(0, 0, wg, hg);
+
+            ctx2g.fillStyle = COLOR_WHITE;
+            ctx2g.font = "bold 9px monospace";
+            ctx2g.fillText("Ground Frame S (Parabolic)", 10, 20);
+
+            // Ground floor
+            ctx2g.beginPath();
+            ctx2g.moveTo(10, hg - 30);
+            ctx2g.lineTo(wg - 10, hg - 30);
+            ctx2g.strokeStyle = COLOR_TRACK;
+            ctx2g.lineWidth = 3;
+            ctx2g.stroke();
+
+            // Parabolic trajectory path
+            ctx2g.beginPath();
+            ctx2g.strokeStyle = "rgba(0, 242, 254, 0.25)";
+            ctx2g.lineWidth = 1.5;
+            for (let t = 0; t <= 3.5; t += 0.05) {
+                const px = 20 + ch2_u * t * 3.5;
+                const py = hg - 30 - (ch2_v * t - 0.5 * 9.8 * t * t) * 3.5;
+                if (px < wg - 10 && py < hg) {
+                    if (t === 0) ctx2g.moveTo(px, py);
+                    else ctx2g.lineTo(px, py);
+                }
+            }
+            ctx2g.stroke();
+
+            // Current ball coordinate in Ground Frame
+            const px_g = 20 + ch2_u * ch2_t * 3.5;
+            const py_g = hg - 30 - (ch2_v * ch2_t - 0.5 * 9.8 * ch2_t * ch2_t) * 3.5;
+            if (px_g < wg - 10 && py_g < hg) {
+                ctx2g.fillStyle = COLOR_CYAN;
+                ctx2g.beginPath();
+                ctx2g.arc(px_g, py_g, 6, 0, Math.PI * 2);
+                ctx2g.fill();
+            }
+
+            // Train canvas
+            const wt = c2t.width / (window.devicePixelRatio || 1);
+            const ht = c2t.height / (window.devicePixelRatio || 1);
+            ctx2t.fillStyle = "#020205";
+            ctx2t.fillRect(0, 0, wt, ht);
+
+            ctx2t.fillStyle = COLOR_WHITE;
+            ctx2t.font = "bold 9px monospace";
+            ctx2t.fillText("Train Frame S' (Vertical)", 10, 20);
+
+            // Train floor
+            ctx2t.beginPath();
+            ctx2t.moveTo(10, ht - 30);
+            ctx2t.lineTo(wt - 10, ht - 30);
+            ctx2t.strokeStyle = COLOR_TRACK;
+            ctx2t.lineWidth = 3;
+            ctx2t.stroke();
+
+            // Vertical trajectory path
+            ctx2t.beginPath();
+            ctx2t.strokeStyle = "rgba(255, 0, 221, 0.25)";
+            ctx2t.lineWidth = 1.5;
+            ctx2t.moveTo(wt / 2, ht - 30);
+            ctx2t.lineTo(wt / 2, ht - 30 - (ch2_v * (ch2_v / 9.8) - 0.5 * 9.8 * (ch2_v / 9.8) * (ch2_v / 9.8)) * 3.5);
+            ctx2t.stroke();
+
+            // Current ball coordinate in Train Frame
+            const py_t = ht - 30 - (ch2_v * ch2_t - 0.5 * 9.8 * ch2_t * ch2_t) * 3.5;
+            if (py_t < ht) {
+                ctx2t.fillStyle = COLOR_MAGENTA;
+                ctx2t.beginPath();
+                ctx2t.arc(wt / 2, py_t, 6, 0, Math.PI * 2);
+                ctx2t.fill();
+            }
+        }
+
+        function drawCh4() {
+            const w = c4.width / (window.devicePixelRatio || 1);
+            const h = c4.height / (window.devicePixelRatio || 1);
+            ctx4.fillStyle = "#020205";
+            ctx4.fillRect(0, 0, w, h);
+
+            const cX = w / 2;
+            const centerY = h / 2 + 10;
+
+            // Track
+            ctx4.beginPath();
+            ctx4.moveTo(20, centerY);
+            ctx4.lineTo(w - 20, centerY);
+            ctx4.strokeStyle = COLOR_TRACK;
+            ctx4.lineWidth = 3;
+            ctx4.stroke();
+
+            // Zero point reference line
+            ctx4.beginPath();
+            ctx4.moveTo(cX, centerY - 15);
+            ctx4.lineTo(cX, centerY + 15);
+            ctx4.strokeStyle = COLOR_ZERO;
+            ctx4.lineWidth = 1.5;
+            ctx4.stroke();
+
+            // Oscillation values
+            const amp = 45;
+            const omega = 2.5;
+            const massX_relative = amp * Math.cos(omega * ch4_t);
+
+            // If we are looking from the moving train frame S', coordinate shifts by -ut
+            const speed_u = 25; // speed of train
+            let massX = massX_relative;
+            if (ch4_frame === "train") {
+                massX = massX_relative - speed_u * (ch4_t - 4.0);
+            }
+
+            const drawX = (ch4_frame === "lab") ? cX + massX_relative : cX + massX;
+            const anchorX = (ch4_frame === "lab") ? cX : cX - speed_u * (ch4_t - 4.0);
+
+            // Draw spring coils from center anchor to mass
+            ctx4.beginPath();
+            ctx4.strokeStyle = "rgba(255, 255, 255, 0.4)";
+            ctx4.lineWidth = 2;
+            const coils = 16;
+            for (let i = 0; i <= coils; i++) {
+                const tCoil = i / coils;
+                const cx_coil = anchorX + (drawX - anchorX) * tCoil;
+                const cy_coil = centerY + (i % 2 === 0 ? -12 : 12) * (tCoil < 1.0 && tCoil > 0.0 ? 1 : 0);
+                ctx4.lineTo(cx_coil, cy_coil);
+            }
+            ctx4.stroke();
+
+            // Draw mass particle
+            ctx4.fillStyle = ch4_frame === "lab" ? COLOR_CYAN : COLOR_MAGENTA;
+            ctx4.shadowBlur = 10;
+            ctx4.shadowColor = ch4_frame === "lab" ? "rgba(0, 242, 254, 0.5)" : "rgba(255, 0, 221, 0.5)";
+            ctx4.beginPath();
+            ctx4.arc(drawX, centerY, 8, 0, Math.PI * 2);
+            ctx4.fill();
+            ctx4.shadowBlur = 0;
+
+            // Label coordinate value
+            ctx4.fillStyle = COLOR_WHITE;
+            ctx4.font = "bold 10px monospace";
+            ctx4.textAlign = "center";
+            ctx4.fillText(`Position: ${massX.toFixed(1)} m`, drawX, centerY - 20);
+        }
+
+        function drawCh5() {
+            const w = c5.width / (window.devicePixelRatio || 1);
+            const h = c5.height / (window.devicePixelRatio || 1);
+            ctx5.fillStyle = "#020205";
+            ctx5.fillRect(0, 0, w, h);
+
+            const cX = w / 2;
+            const cY = h / 2;
+
+            // Grid lines
+            ctx5.strokeStyle = "rgba(255,255,255,0.04)";
+            ctx5.lineWidth = 1;
+            const gridSpacing = 40;
+            const offset = (ch5_frame === "earth") ? 0 : -(22 * ch5_t) % gridSpacing; // Grid slides if in moving rocket frame
+            
+            for (let x = offset; x < w; x += gridSpacing) {
+                ctx5.beginPath();
+                ctx5.moveTo(x, 0); ctx5.lineTo(x, h);
+                ctx5.stroke();
+            }
+            for (let y = 0; y < h; y += gridSpacing) {
+                ctx5.beginPath();
+                ctx5.moveTo(0, y); ctx5.lineTo(w, y);
+                ctx5.stroke();
+            }
+
+            // Reference Frame Title overlay
+            ctx5.fillStyle = COLOR_WHITE;
+            ctx5.font = "bold 10px monospace";
+            ctx5.textAlign = "left";
+            ctx5.fillText(ch5_frame === "earth" ? "Observing from Solar System (Earth at center)" : "Observing from Rocket Frame (Rocket at center)", 15, 25);
+
+            let earthX = cX - 120;
+            let rocketX = cX + (22 * ch5_t - 50);
+            let astX = cX + (35 * ch5_t - 10);
+
+            if (ch5_frame === "rocket") {
+                // Shift all positions relative to rocket: x' = x - v_rocket * t
+                const shift = 22 * ch5_t - 50;
+                earthX -= shift;
+                rocketX = cX;
+                astX -= shift;
+            }
+
+            // Earth anchor
+            ctx5.fillStyle = "rgba(59, 130, 246, 0.4)";
+            ctx5.beginPath();
+            ctx5.arc(earthX, cY, 14, 0, Math.PI * 2);
+            ctx5.fill();
+            ctx5.fillStyle = COLOR_WHITE;
+            ctx5.font = "8px monospace";
+            ctx5.textAlign = "center";
+            ctx5.fillText("Earth", earthX, cY + 25);
+
+            // Rocket (Cyan)
+            ctx5.fillStyle = COLOR_CYAN;
+            ctx5.beginPath();
+            ctx5.moveTo(rocketX + 12, cY);
+            ctx5.lineTo(rocketX - 8, cY - 8);
+            ctx5.lineTo(rocketX - 4, cY);
+            ctx5.lineTo(rocketX - 8, cY + 8);
+            ctx5.closePath();
+            ctx5.fill();
+            ctx5.font = "8px monospace";
+            ctx5.fillText("Rocket", rocketX, cY - 14);
+
+            // Asteroid (Magenta)
+            ctx5.fillStyle = COLOR_MAGENTA;
+            ctx5.beginPath();
+            ctx5.arc(astX, cY, 7, 0, Math.PI * 2);
+            ctx5.fill();
+            ctx5.fillStyle = COLOR_WHITE;
+            ctx5.fillText("Asteroid", astX, cY + 18);
+
+            // Velocities HUD text
+            ctx5.textAlign = "left";
+            ctx5.font = "9px monospace";
+            if (ch5_frame === "earth") {
+                ctx5.fillStyle = COLOR_CYAN;
+                ctx5.fillText("v_rocket = 22 m/s", 15, h - 35);
+                ctx5.fillStyle = COLOR_MAGENTA;
+                ctx5.fillText("v_asteroid = 35 m/s", 15, h - 20);
+            } else {
+                ctx5.fillStyle = COLOR_CYAN;
+                ctx5.fillText("v'_rocket = 0 m/s", 15, h - 35);
+                ctx5.fillStyle = COLOR_MAGENTA;
+                ctx5.fillText("v'_asteroid = ?? m/s", 15, h - 20);
+            }
+        }
+
+        function drawCh6() {
+            const w = c6.width / (window.devicePixelRatio || 1);
+            const h = c6.height / (window.devicePixelRatio || 1);
+            ctx6.fillStyle = "#020205";
+            ctx6.fillRect(0, 0, w, h);
+
+            const cX = w / 2;
+            const y1 = 60; // Galilean track
+            const y2 = 160; // Relativistic track
+
+            const c_light = 100.0;
+            const v_gal = ch6_u + ch6_v; // ground speed Galilean
+            const v_ein = (ch6_u + ch6_v) / (1 + (ch6_u * ch6_v) / (c_light * c_light)); // ground speed Einsteinian
+
+            // 1. Draw Galilean Universe Track
+            ctx6.beginPath();
+            ctx6.moveTo(20, y1); ctx6.lineTo(w - 20, y1);
+            ctx6.strokeStyle = COLOR_TRACK;
+            ctx6.lineWidth = 3;
+            ctx6.stroke();
+
+            // 2. Draw Einsteinian Universe Track
+            ctx6.beginPath();
+            ctx6.moveTo(20, y2); ctx6.lineTo(w - 20, y2);
+            ctx6.strokeStyle = COLOR_TRACK;
+            ctx6.lineWidth = 3;
+            ctx6.stroke();
+
+            // Track Labels
+            ctx6.fillStyle = COLOR_WHITE;
+            ctx6.font = "bold 9px monospace";
+            ctx6.textAlign = "left";
+            ctx6.fillText(`GALILEAN UNIVERSE (v = u + v' = ${v_gal.toFixed(0)} m/s)`, 20, y1 - 22);
+            ctx6.fillText(`EINSTEINIAN UNIVERSE (v = (u + v')/(1 + uv/c²) = ${v_ein.toFixed(1)} m/s)`, 20, y2 - 22);
+
+            // Start offset
+            const startX = 40;
+            const endX = w - 40;
+            const length = endX - startX;
+            const max_t = 3.0; // reset at 3.0 seconds
+
+            // Draw Train cars (represent u)
+            const trainWidth = 80;
+            const trainHeight = 18;
+            
+            const trainX_gal = startX + (ch6_u * ch6_t) * (length / (c_light * max_t));
+            const trainX_ein = startX + (ch6_u * ch6_t) * (length / (c_light * max_t));
+
+            // Galilean train
+            ctx6.fillStyle = "rgba(255,255,255,0.06)";
+            ctx6.strokeStyle = "rgba(255,255,255,0.15)";
+            ctx6.fillRect(trainX_gal - trainWidth/2, y1 - 9, trainWidth, trainHeight);
+            ctx6.strokeRect(trainX_gal - trainWidth/2, y1 - 9, trainWidth, trainHeight);
+
+            // Einsteinian train
+            ctx6.fillRect(trainX_ein - trainWidth/2, y2 - 9, trainWidth, trainHeight);
+            ctx6.strokeRect(trainX_ein - trainWidth/2, y2 - 9, trainWidth, trainHeight);
+
+            // Light pulses (v = c = 100 m/s)
+            const lightX = startX + (c_light * ch6_t) * (length / (c_light * max_t));
+            
+            // Draw light pulse S (amber circle)
+            ctx6.fillStyle = COLOR_AMBER;
+            ctx6.beginPath();
+            ctx6.arc(lightX, y1, 5, 0, Math.PI * 2);
+            ctx6.fill();
+            ctx6.beginPath();
+            ctx6.arc(lightX, y2, 5, 0, Math.PI * 2);
+            ctx6.fill();
+
+            // Label Light pulse
+            ctx6.font = "bold 8px monospace";
+            ctx6.textAlign = "center";
+            ctx6.fillStyle = COLOR_AMBER;
+            ctx6.fillText("Light (c = 100 m/s)", lightX, y1 - 18);
+            ctx6.fillText("Light (c = 100 m/s)", lightX, y2 - 18);
+
+            // Galilean Runner (v = v_gal)
+            const runnerX_gal = startX + (v_gal * ch6_t) * (length / (c_light * max_t));
+            ctx6.fillStyle = COLOR_MAGENTA;
+            ctx6.beginPath();
+            ctx6.arc(runnerX_gal, y1, 7, 0, Math.PI * 2);
+            ctx6.fill();
+            ctx6.fillStyle = COLOR_WHITE;
+            ctx6.fillText("Runner", runnerX_gal, y1 + 15);
+
+            // Einsteinian Runner (v = v_ein)
+            const runnerX_ein = startX + (v_ein * ch6_t) * (length / (c_light * max_t));
+            ctx6.fillStyle = COLOR_CYAN;
+            ctx6.beginPath();
+            ctx6.arc(runnerX_ein, y2, 7, 0, Math.PI * 2);
+            ctx6.fill();
+            ctx6.fillStyle = COLOR_WHITE;
+            ctx6.fillText("Runner", runnerX_ein, y2 + 15);
+
+            // Speed warnings
+            if (v_gal > c_light) {
+                ctx6.fillStyle = COLOR_AMBER;
+                ctx6.font = "bold 8px monospace";
+                ctx6.fillText("💥 EXCEEDS c!", runnerX_gal, y1 - 10);
+            }
+        }
+
+        // Ch4 Perspective Buttons
+        document.querySelectorAll(".btn-ch4-frame").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".btn-ch4-frame").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                ch4_frame = btn.getAttribute("data-frame");
+            });
+        });
+
+        // Ch5 Perspective Buttons
+        document.querySelectorAll(".btn-ch5-frame").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".btn-ch5-frame").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                ch5_frame = btn.getAttribute("data-frame");
+            });
+        });
+
+        // Ch5 Challenge Verification
+        const verifyBtn = document.getElementById("btn-ch5-verify");
+        const feedbackCh5 = document.getElementById("feedback-ch5");
+        verifyBtn.addEventListener("click", () => {
+            const ans = parseFloat(document.getElementById("game-ch5-ans").value);
+            if (ans === 13) {
+                feedbackCh5.innerHTML = "<strong>Correct!</strong> In the rocket's frame, the rocket is stationary. The asteroid approaches it at a relative velocity of \(35 - 22 = 13\,\text{m/s}\).";
+                feedbackCh5.className = "feedback-banner success";
+                feedbackCh5.style.display = "block";
+            } else {
+                feedbackCh5.innerHTML = "<strong>Incorrect.</strong> Hint: subtract the velocity of the rocket S' observer frame (\(22\,\text{m/s}\)) from the asteroid's velocity (\(35\,\text{m/s}\)).";
+                feedbackCh5.className = "feedback-banner error";
+                feedbackCh5.style.display = "block";
+            }
+        });
+
+        // Ch3 Quiz Concept check
+        document.querySelectorAll(".quiz-option").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const ans = btn.getAttribute("data-ans");
+                const fb = document.getElementById("feedback-ch3");
+                
+                // Reset classes
+                document.querySelectorAll(".quiz-option").forEach(b => {
+                    b.classList.remove("correct", "incorrect");
+                });
+
+                if (ans === "B") {
+                    btn.classList.add("correct");
+                    fb.innerHTML = "<strong>Correct!</strong> An accelerating train creates fictitious/inertial forces (like pushing you back in your seat). This violates inertial observer equivalence, meaning Galilean invariance holds only for constant velocity (inertial) frames.";
+                    fb.className = "feedback-banner success";
+                    fb.style.display = "block";
+                } else {
+                    btn.classList.add("incorrect");
+                    fb.innerHTML = "<strong>Incorrect.</strong> Hint: Galilean boosts assume observers travel at a <em>constant</em> relative velocity. Acceleration triggers inertial forces, changing the coordinate physics.";
+                    fb.className = "feedback-banner error";
+                    fb.style.display = "block";
+                }
+            });
+        });
+
+        // Scrubbable values handling
+        function initScrubbableEngine() {
+            document.querySelectorAll(".scrubbable-number").forEach(num => {
+                let startX = 0;
+                let startVal = 0;
+
+                num.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    startX = e.clientX;
+                    const vName = num.getAttribute("data-var");
+                    if (vName === "ch1_u") startVal = ch1_u;
+                    else if (vName === "ch2_u") startVal = ch2_u;
+                    else if (vName === "ch2_v") startVal = ch2_v;
+                    else if (vName === "ch3_u") startVal = ch3_u;
+                    else if (vName === "ch6_u") startVal = ch6_u;
+                    else if (vName === "ch6_v") startVal = ch6_v;
+
+                    const onMouseMove = (mEv) => {
+                        const dx = mEv.clientX - startX;
+                        const min = parseFloat(num.getAttribute("data-min"));
+                        const max = parseFloat(num.getAttribute("data-max"));
+                        let newVal = startVal + dx;
+
+                        if (vName === "ch1_u") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch1_u = newVal;
+                            num.textContent = ch1_u.toFixed(0);
+                        } else if (vName === "ch2_u") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch2_u = newVal;
+                            num.textContent = ch2_u.toFixed(0);
+                        } else if (vName === "ch2_v") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch2_v = newVal;
+                            num.textContent = ch2_v.toFixed(0);
+                        } else if (vName === "ch3_u") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch3_u = newVal;
+                            num.textContent = ch3_u.toFixed(0);
+                            
+                            // update active calculations
+                            document.getElementById("val-ch3-xprime").textContent = (50.0 - ch3_u * 1.0).toFixed(1);
+                            document.getElementById("val-ch3-vprime").textContent = (25.0 - ch3_u).toFixed(1);
+                        } else if (vName === "ch6_u") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch6_u = newVal;
+                            num.textContent = ch6_u.toFixed(0);
+                        } else if (vName === "ch6_v") {
+                            newVal = Math.max(min, Math.min(max, newVal));
+                            ch6_v = newVal;
+                            num.textContent = ch6_v.toFixed(0);
+                        }
+                    };
+
+                    const onMouseUp = () => {
+                        document.removeEventListener("mousemove", onMouseMove);
+                        document.removeEventListener("mouseup", onMouseUp);
+                    };
+
+                    document.addEventListener("mousemove", onMouseMove);
+                    document.addEventListener("mouseup", onMouseUp);
+                });
+            });
+        }
+
+        initScrubbableEngine();
+
+        // 60fps Animation Loop
+        function tick() {
+            // Chapter 2 parabolic ball loops
+            ch2_t += 0.018;
+            if (ch2_t > 3.0) ch2_t = 0.0;
+
+            // Chapter 4 spring oscillator loops
+            ch4_t += 0.016;
+            if (ch4_t > 8.0) ch4_t = 0.0;
+
+            // Chapter 5 solar system motion loops
+            ch5_t += 0.015;
+            if (ch5_t > 6.0) ch5_t = 0.0;
+
+            // Chapter 6 relativity racing loops
+            ch6_t += 0.012;
+            if (ch6_t > 3.0) ch6_t = 0.0;
+
+            // Draw canvases
+            drawCh1();
+            drawCh2();
+            drawCh4();
+            drawCh5();
+            drawCh6();
+
+            requestAnimationFrame(tick);
+        }
+        tick();
+    });
+</script>
+{% endblock %}
