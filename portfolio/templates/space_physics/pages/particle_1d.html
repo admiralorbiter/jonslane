@@ -220,6 +220,107 @@
         text-align: center;
         border: 1px solid rgba(255, 255, 255, 0.02);
     }
+
+    /* Collapsible Model Card */
+    .model-card-details {
+        background: rgba(255, 255, 255, 0.015);
+        border: 1px dashed rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        margin-bottom: 2.5rem;
+        transition: all 0.2s ease;
+    }
+    .model-card-details[open] {
+        background: rgba(14, 16, 23, 0.45);
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+    .model-card-summary {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.78rem;
+        color: var(--neon-amber);
+        padding: 0.65rem 0.95rem;
+        cursor: pointer;
+        user-select: none;
+        outline: none;
+    }
+    .model-card-summary:hover {
+        color: #ffffff;
+    }
+    .model-card-content {
+        padding: 0 0.95rem 0.95rem 0.95rem;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+    }
+    .model-card-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.25rem;
+    }
+    .model-card-table td {
+        padding: 0.35rem 0.45rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .model-card-table tr:last-child td {
+        border-bottom: none;
+    }
+    .model-card-table td:first-child {
+        font-weight: bold;
+        color: rgba(255, 255, 255, 0.5);
+        width: 30%;
+    }
+
+    /* Core Completed Banner */
+    .core-completed-banner {
+        background: rgba(16, 185, 129, 0.04);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 4.5rem 0;
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.05);
+        text-align: center;
+    }
+    .core-completed-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .core-completed-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        color: var(--neon-emerald);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        background: rgba(16, 185, 129, 0.1);
+        padding: 0.25rem 0.75rem;
+        border-radius: 99px;
+    }
+    .core-completed-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.5rem;
+        font-style: italic;
+        color: #ffffff;
+    }
+    .core-completed-text {
+        font-size: 0.92rem;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto 1.5rem auto;
+        line-height: 1.6;
+    }
+    .core-completed-arrow {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        letter-spacing: 0.1em;
+        animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(4px); }
+    }
 </style>
 {% endblock %}
 
@@ -239,6 +340,46 @@
             What information must we know about a physical system right now in order to predict what it will do next?
         </p>
     </header>
+
+    <details class="model-card-details">
+        <summary class="model-card-summary">⚙️ System Model Specification</summary>
+        <div class="model-card-content">
+            <table class="model-card-table">
+                <tr>
+                    <td>System</td>
+                    <td>One point particle</td>
+                </tr>
+                <tr>
+                    <td>Dimensions</td>
+                    <td>One spatial dimension (1D)</td>
+                </tr>
+                <tr>
+                    <td>State</td>
+                    <td>(x, v) where position and velocity are independent variables</td>
+                </tr>
+                <tr>
+                    <td>Parameters</td>
+                    <td>Mass (m), Spring constant (k), Viscous damping (b)</td>
+                </tr>
+                <tr>
+                    <td>Evolution Law</td>
+                    <td>dx/dt = v, &nbsp; dv/dt = F/m (coupled first-order ODEs)</td>
+                </tr>
+                <tr>
+                    <td>Reference Frame</td>
+                    <td>Single stationary inertial frame</td>
+                </tr>
+                <tr>
+                    <td>Assumptions</td>
+                    <td>Constant mass, Newtonian speeds (v &lt;&lt; c)</td>
+                </tr>
+                <tr>
+                    <td>Solver Options</td>
+                    <td>Exact Analytical, Forward Euler (unstable), or Euler-Cromer (symplectic)</td>
+                </tr>
+            </table>
+        </div>
+    </details>
 
     <!-- CHAPTER 1: POSITION -->
     <section class="scrolly-chapter">
@@ -301,7 +442,7 @@
     <!-- CHAPTER 3: VELOCITY COMPLETES THE STATE -->
     <section class="scrolly-chapter">
         <span class="chapter-num">Chapter 3</span>
-        <h2 class="chapter-title">Velocity Completes the State</h2>
+        <h2 class="chapter-title">Position and Velocity Complete the State for This Model</h2>
         <div class="chapter-prose">
             <p>
                 The missing piece is the rate of change of position over time, which we call <strong>velocity</strong> (\(v = dx/dt\)). 
@@ -311,7 +452,7 @@
                 $$\mathbf{S}(t) = \begin{bmatrix} x(t) \\ v(t) \end{bmatrix}$$
             </p>
             <p>
-                If you know both numbers, you know the complete "state" of the system at this moment. 
+                For this specific model—a one-dimensional, constant-mass Newtonian point particle—position and velocity form a complete instantaneous state. More complex physical systems may require additional variables, such as orientation, internal degrees of freedom, field values, or explicitly tracked environmental variables.
             </p>
             <p>
                 Try dragging the particle below to set the initial position \(x_0\) = 
@@ -343,11 +484,14 @@
                 Position changes because of velocity. But what changes velocity? That requires <strong>acceleration</strong> (\(a = dv/dt\)), which is caused by forces: \(F = ma\).
             </p>
             <p>
-                According to Newton, we can describe the movement of any physical system as a set of coupled differential equations:
+                For this Newtonian particle model, the evolution can be written as a pair of coupled first-order differential equations:
             </p>
             <div class="math-display-box" id="ch4-equation-display">
                 $$\frac{dx}{dt} = v, \quad \frac{dv}{dt} = \frac{F(x,v,t)}{m}$$
             </div>
+            <p>
+                (Other physical systems, such as quantum wavefunctions, fields, relativistic systems, or stochastic processes, require fundamentally different mathematical frameworks.)
+            </p>
             <p>
                 By changing the force law \(F\), we change how the velocity evolves. Select different <strong>Force Laws</strong> below to watch how the particle accelerates and decelerates under different physical rules:
             </p>
@@ -370,19 +514,32 @@
         </div>
     </section>
 
+    <!-- CORE PATHWAY COMPLETED CHECKPOINT BANNER -->
+    <div class="core-completed-banner">
+        <div class="core-completed-header">
+            <span class="core-completed-badge">✓ Core Path Complete</span>
+            <span class="core-completed-title">You've mastered the basics!</span>
+        </div>
+        <p class="core-completed-text">
+            You now understand position, velocity, forces, and the state vector. 
+            Scroll down to enter the <strong>Advanced Exploration Path</strong>, where we dive into phase space, numerical integration, solver stability, and reference frames.
+        </p>
+        <div class="core-completed-arrow">↓ Scroll for Advanced Deep Dive ↓</div>
+    </div>
+
     <!-- CHAPTER 5: PHASE SPACE -->
     <section class="scrolly-chapter">
         <span class="chapter-num">Chapter 5</span>
-        <h2 class="chapter-title">Phase Space: State as a Point</h2>
+        <h2 class="chapter-title">State Space: Trajectory as a Point</h2>
         <div class="chapter-prose">
             <p>
-                Instead of tracking position and velocity separately over time, we can plot them directly against each other on a 2D coordinate grid called <strong>Phase Space</strong>.
+                Instead of tracking position and velocity separately over time, we can plot them directly against each other on a 2D coordinate grid called a <strong>State-Space diagram</strong> (often referred to as <strong>Phase Space</strong>).
             </p>
             <p>
-                At any instant, the complete state of the particle is represented by a <strong>single dot</strong> \((x, v)\). As the particle moves, this dot traces out a path.
+                At any instant, the complete state of the particle is represented by a <strong>single dot</strong> \((x, v)\). As the particle moves, this dot traces out a path. (In Hamiltonian mechanics, canonical phase space is conventionally expressed as position and momentum \((x, p)\), where \(p = mv\). Since mass is constant here, the two differ only by a scaling factor.)
             </p>
             <p>
-                Select a force law below to watch the orbit unfold. Under a <strong>Spring Force</strong>, the state vector traces a closed circle (energy conservation). Under <strong>Viscous Drag</strong>, it spirals inward as energy decays.
+                Select a force law below to watch the orbit unfold. Under a <strong>Spring Force</strong>, the state traces a closed ellipse (which can be represented as a circle in normalized coordinates). Under <strong>Viscous Drag</strong>, it spirals inward as damping removes mechanical energy.
             </p>
         </div>
 
@@ -415,7 +572,7 @@
                     </label>
                     <label class="lab-question-option" id="opt-ch5-2" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer;">
                         <input type="radio" name="ch5-quiz" value="B" style="margin-top: 0.2rem;">
-                        <span><strong>B)</strong> Friction drains kinetic energy from the system, shrinking both velocity and position.</span>
+                        <span><strong>B)</strong> Damping removes mechanical energy. The oscillation amplitude decreases, so the maximum magnitudes of both position and velocity shrink over time.</span>
                     </label>
                     <label class="lab-question-option" id="opt-ch5-3" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer;">
                         <input type="radio" name="ch5-quiz" value="C" style="margin-top: 0.2rem;">
@@ -436,10 +593,10 @@
         <h2 class="chapter-title">Different Solvers, Different Futures</h2>
         <div class="chapter-prose">
             <p>
-                In the real world, computers cannot solve differential equations exactly. They approximate the next step using a time step size: \(\Delta t\).
+                Some differential equations have exact analytical solutions. Many realistic equations do not, so computers approximate their solutions numerically using a fixed time step size: \(\Delta t\).
             </p>
             <p>
-                The choice of algorithm is critical. <strong>Forward Euler</strong> (magenta) is simple, but it is unstable—it continuously artificially adds energy to the spring, causing it to spiral outward. <strong>Euler-Cromer</strong> (cyan) is a symplectic solver that preserves phase space volume and oscillates stably.
+                The choice of algorithm is critical. <strong>Forward Euler</strong> (magenta) is unstable for an undamped harmonic oscillator for any positive fixed step size—it artificially adds energy, causing the trajectory to spiral outward. <strong>Euler-Cromer</strong> (cyan), or semi-implicit Euler, is stable only when the step size satisfies a condition related to the oscillator frequency. (The critical value \(\Delta t_{\text{crit}} = 2.00\) s shown below is specific to the current system parameters, not a universal threshold.)
             </p>
             <p>
                 Adjust the simulation step size \(\Delta t\) = 
@@ -454,11 +611,12 @@
 
         <div class="diagram-card">
             <div class="diagram-header">
-                <span>Diagram 6.1 — Solver Comparison in Phase Space</span>
+                <span>Diagram 6.1 — Solver Orbit & Energy over Time</span>
                 <span>drag dt value above</span>
             </div>
-            <div class="diagram-canvas-wrapper">
-                <canvas id="canvas-ch6-phase" class="diagram-canvas" height="400"></canvas>
+            <div class="diagram-canvas-wrapper" style="display: flex; flex-direction: column; gap: 0.5rem; background: #020205;">
+                <canvas id="canvas-ch6-phase" class="diagram-canvas" height="260"></canvas>
+                <canvas id="canvas-ch6-energy" class="diagram-canvas" height="140"></canvas>
             </div>
         </div>
     </section>
@@ -550,9 +708,10 @@
         const c3 = document.getElementById("canvas-ch3");
         const c3g = document.getElementById("canvas-ch3-graph");
         const c4 = document.getElementById("canvas-ch4");
-                const c5p = document.getElementById("canvas-ch5-phys");
+        const c5p = document.getElementById("canvas-ch5-phys");
         const c5ph = document.getElementById("canvas-ch5-phase");
         const c6ph = document.getElementById("canvas-ch6-phase");
+        const c6en = document.getElementById("canvas-ch6-energy");
         const c7l = document.getElementById("canvas-ch7-lab");
         const c7m = document.getElementById("canvas-ch7-moving");
         const c7a = document.getElementById("canvas-ch7-acc");
@@ -566,6 +725,7 @@
         const ctx5p = c5p.getContext("2d");
         const ctx5ph = c5ph.getContext("2d");
         const ctx6ph = c6ph.getContext("2d");
+        const ctx6en = c6en.getContext("2d");
         const ctx7l = c7l.getContext("2d");
         const ctx7m = c7m.getContext("2d");
         const ctx7a = c7a.getContext("2d");
@@ -591,7 +751,8 @@
             scaleCanvasForDPI(c4, ctx4, w, 90);
             scaleCanvasForDPI(c5p, ctx5p, w, 90);
             scaleCanvasForDPI(c5ph, ctx5ph, w, 240);
-            scaleCanvasForDPI(c6ph, ctx6ph, w, 400);
+            scaleCanvasForDPI(c6ph, ctx6ph, w, 260);
+            scaleCanvasForDPI(c6en, ctx6en, w, 140);
             scaleCanvasForDPI(c7l, ctx7l, w, 70);
             scaleCanvasForDPI(c7m, ctx7m, w, 70);
             scaleCanvasForDPI(c7a, ctx7a, w, 100);
@@ -760,17 +921,22 @@
             ctx1.lineWidth = 3;
             ctx1.stroke();
 
-            // Zero line
-            ctx1.beginPath();
-            ctx1.moveTo(centerX, centerY - 10);
-            ctx1.lineTo(centerX, centerY + 10);
-            ctx1.strokeStyle = COLOR_ZERO;
-            ctx1.lineWidth = 1.5;
-            ctx1.stroke();
+            // Tick marks & labels
+            const ticks = [-100, -50, 0, 50, 100];
+            ticks.forEach(tick => {
+                const tx = centerX + tick;
+                ctx1.beginPath();
+                ctx1.moveTo(tx, centerY - 5);
+                ctx1.lineTo(tx, centerY + 5);
+                ctx1.strokeStyle = COLOR_ZERO;
+                ctx1.lineWidth = 1;
+                ctx1.stroke();
 
-            ctx1.fillStyle = COLOR_WHITE;
-            ctx1.font = "bold 10px monospace";
-            ctx1.fillText("x = 0", centerX - 12, centerY - 15);
+                ctx1.fillStyle = COLOR_TEXT_MUTED;
+                ctx1.font = "8px monospace";
+                ctx1.textAlign = "center";
+                ctx1.fillText(`${tick}m`, tx, centerY + 16);
+            });
 
             // Particle
             ctx1.fillStyle = COLOR_CYAN;
@@ -798,6 +964,23 @@
             ctx2.strokeStyle = COLOR_TRACK;
             ctx2.lineWidth = 3;
             ctx2.stroke();
+
+            // Tick marks & labels
+            const ticks = [-100, -50, 0, 50, 100];
+            ticks.forEach(tick => {
+                const tx = centerX + tick;
+                ctx2.beginPath();
+                ctx2.moveTo(tx, centerY - 5);
+                ctx2.lineTo(tx, centerY + 5);
+                ctx2.strokeStyle = COLOR_ZERO;
+                ctx2.lineWidth = 1;
+                ctx2.stroke();
+
+                ctx2.fillStyle = COLOR_TEXT_MUTED;
+                ctx2.font = "8px monospace";
+                ctx2.textAlign = "center";
+                ctx2.fillText(`${tick}m`, tx, centerY + 16);
+            });
 
             // Particle A (cyan, moving right)
             const xa = centerX + 4.0 * ch2_t * 22;
@@ -841,6 +1024,23 @@
             ctx3.strokeStyle = COLOR_TRACK;
             ctx3.lineWidth = 3;
             ctx3.stroke();
+
+            // Tick marks & labels
+            const ticks = [-100, -50, 0, 50, 100];
+            ticks.forEach(tick => {
+                const tx = centerX + tick;
+                ctx3.beginPath();
+                ctx3.moveTo(tx, centerY - 5);
+                ctx3.lineTo(tx, centerY + 5);
+                ctx3.strokeStyle = COLOR_ZERO;
+                ctx3.lineWidth = 1;
+                ctx3.stroke();
+
+                ctx3.fillStyle = COLOR_TEXT_MUTED;
+                ctx3.font = "8px monospace";
+                ctx3.textAlign = "center";
+                ctx3.fillText(`${tick}m`, tx, centerY + 16);
+            });
 
             const px = centerX + ch3_x;
 
@@ -899,10 +1099,22 @@
             ctx3g.strokeStyle = "rgba(255, 255, 255, 0.08)";
             ctx3g.stroke();
 
-            // Label
+            // Label & Axis ticks
             ctx3g.fillStyle = COLOR_WHITE;
             ctx3g.font = "bold 10px monospace";
             ctx3g.fillText("Position x(t)", 45, 26);
+
+            ctx3g.fillStyle = COLOR_TEXT_MUTED;
+            ctx3g.font = "8px monospace";
+            ctx3g.textAlign = "right";
+            ctx3g.fillText("150m", 35, 20);
+            ctx3g.fillText("0m", 35, gCenterY + 3);
+            ctx3g.fillText("-150m", 35, hg - 18);
+
+            ctx3g.textAlign = "center";
+            ctx3g.fillText("0s", 40, hg - 5);
+            ctx3g.fillText("2s", 40 + (wg - 50) / 2, hg - 5);
+            ctx3g.fillText("4s", wg - 10, hg - 5);
 
             // Curve
             if (ch3_history.length > 0) {
@@ -935,6 +1147,23 @@
             ctx4.strokeStyle = COLOR_TRACK;
             ctx4.lineWidth = 3;
             ctx4.stroke();
+
+            // Tick marks & labels
+            const ticks = [-100, -50, 0, 50, 100];
+            ticks.forEach(tick => {
+                const tx = centerX + tick * 1.5;
+                ctx4.beginPath();
+                ctx4.moveTo(tx, centerY - 5);
+                ctx4.lineTo(tx, centerY + 5);
+                ctx4.strokeStyle = COLOR_ZERO;
+                ctx4.lineWidth = 1;
+                ctx4.stroke();
+
+                ctx4.fillStyle = COLOR_TEXT_MUTED;
+                ctx4.font = "8px monospace";
+                ctx4.textAlign = "center";
+                ctx4.fillText(`${tick}m`, tx, centerY + 16);
+            });
 
             // Look up loop frame
             if (ch4_history.length > 0) {
@@ -1237,6 +1466,119 @@
             ctx6ph.fillText("Euler-Cromer (Symplectic)", 20, 37);
             ctx6ph.fillStyle = COLOR_MAGENTA;
             ctx6ph.fillText("Forward Euler (Explicit)", 20, 49);
+
+            // Call energy plotter
+            drawCh6Energy();
+        }
+
+        function drawCh6Energy() {
+            const w = c6en.width / (window.devicePixelRatio || 1);
+            const h = c6en.height / (window.devicePixelRatio || 1);
+            ctx6en.fillStyle = "#020205";
+            ctx6en.fillRect(0, 0, w, h);
+
+            // Draw axis lines
+            ctx6en.strokeStyle = COLOR_GRID;
+            ctx6en.lineWidth = 1.5;
+            ctx6en.beginPath();
+            ctx6en.moveTo(40, h - 20); ctx6en.lineTo(w - 20, h - 20); // time axis
+            ctx6en.moveTo(40, 10); ctx6en.lineTo(40, h - 20); // energy axis
+            ctx6en.stroke();
+
+            // Ticks on Time Axis
+            const timeTicks = [0, 5, 10, 15, 20];
+            timeTicks.forEach(tTick => {
+                const tx = 40 + (tTick / 20.0) * (w - 60);
+                ctx6en.beginPath();
+                ctx6en.moveTo(tx, h - 20);
+                ctx6en.lineTo(tx, h - 15);
+                ctx6en.stroke();
+
+                ctx6en.fillStyle = COLOR_TEXT_MUTED;
+                ctx6en.font = "8px monospace";
+                ctx6en.textAlign = "center";
+                ctx6en.fillText(`${tTick}s`, tx, h - 5);
+            });
+
+            // Labels
+            ctx6en.fillStyle = COLOR_WHITE;
+            ctx6en.font = "bold 9px monospace";
+            ctx6en.textAlign = "right";
+            ctx6en.fillText("Energy E", 35, 15);
+            ctx6en.textAlign = "center";
+            ctx6en.fillText("Time t", w - 20, h - 5);
+
+            const E_initial = 3200; // 0.5 * 80^2
+            let E_max = 8000;
+            
+            // Find max energy in histories to scale dynamically if FE explodes
+            ch6_history_euler.forEach(pt => {
+                const E = 0.5 * pt.v * pt.v + 0.5 * pt.x * pt.x;
+                if (E > E_max) E_max = E;
+            });
+            if (E_max > 50000) E_max = 50000; // cap scaling so exact/EC don't look flat too early
+
+            // Draw initial energy reference level (dashed)
+            ctx6en.save();
+            ctx6en.setLineDash([2, 4]);
+            ctx6en.strokeStyle = "rgba(255, 255, 255, 0.2)";
+            ctx6en.beginPath();
+            const y_init = (h - 20) - (E_initial / E_max) * (h - 30);
+            ctx6en.moveTo(40, y_init);
+            ctx6en.lineTo(w - 20, y_init);
+            ctx6en.stroke();
+            ctx6en.restore();
+
+            // 1. Plot Exact Energy (should be perfectly flat white line)
+            if (ch6_history_exact.length > 0) {
+                ctx6en.beginPath();
+                const step = 20.0 / (ch6_history_exact.length - 1);
+                ch6_history_exact.forEach((pt, idx) => {
+                    const t = idx * step;
+                    const E = 0.5 * pt.v * pt.v + 0.5 * pt.x * pt.x;
+                    const px = 40 + (t / 20.0) * (w - 60);
+                    const py = (h - 20) - (E / E_max) * (h - 30);
+                    if (idx === 0) ctx6en.moveTo(px, py);
+                    else ctx6en.lineTo(px, py);
+                });
+                ctx6en.strokeStyle = COLOR_WHITE;
+                ctx6en.lineWidth = 1.5;
+                ctx6en.stroke();
+            }
+
+            // 2. Plot Euler-Cromer Energy (should fluctuate around flat cyan line)
+            if (ch6_history_ec.length > 0) {
+                ctx6en.beginPath();
+                const step = 20.0 / (ch6_history_ec.length - 1);
+                ch6_history_ec.forEach((pt, idx) => {
+                    const t = idx * step;
+                    const E = 0.5 * pt.v * pt.v + 0.5 * pt.x * pt.x;
+                    const px = 40 + (t / 20.0) * (w - 60);
+                    const py = (h - 20) - (E / E_max) * (h - 30);
+                    if (idx === 0) ctx6en.moveTo(px, py);
+                    else ctx6en.lineTo(px, py);
+                });
+                ctx6en.strokeStyle = COLOR_CYAN;
+                ctx6en.lineWidth = 1.5;
+                ctx6en.stroke();
+            }
+
+            // 3. Plot Forward Euler Energy (should spiral/grow exponentially, magenta line)
+            if (ch6_history_euler.length > 0) {
+                ctx6en.beginPath();
+                const step = 20.0 / (ch6_history_euler.length - 1);
+                ch6_history_euler.forEach((pt, idx) => {
+                    const t = idx * step;
+                    const E = 0.5 * pt.v * pt.v + 0.5 * pt.x * pt.x;
+                    const px = 40 + (t / 20.0) * (w - 60);
+                    const py = (h - 20) - (E / E_max) * (h - 30);
+                    if (idx === 0) ctx6en.moveTo(px, py);
+                    else ctx6en.lineTo(px, py);
+                });
+                ctx6en.strokeStyle = COLOR_MAGENTA;
+                ctx6en.lineWidth = 1.5;
+                ctx6en.stroke();
+            }
         }
 
         function drawCh7() {

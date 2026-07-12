@@ -281,6 +281,55 @@
     .game-btn:hover {
         opacity: 0.9;
     }
+
+    /* Collapsible Model Card */
+    .model-card-details {
+        background: rgba(255, 255, 255, 0.015);
+        border: 1px dashed rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        margin-bottom: 2.5rem;
+        transition: all 0.2s ease;
+    }
+    .model-card-details[open] {
+        background: rgba(14, 16, 23, 0.45);
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+    .model-card-summary {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.78rem;
+        color: var(--neon-amber);
+        padding: 0.65rem 0.95rem;
+        cursor: pointer;
+        user-select: none;
+        outline: none;
+    }
+    .model-card-summary:hover {
+        color: #ffffff;
+    }
+    .model-card-content {
+        padding: 0 0.95rem 0.95rem 0.95rem;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+    }
+    .model-card-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.25rem;
+    }
+    .model-card-table td {
+        padding: 0.35rem 0.45rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .model-card-table tr:last-child td {
+        border-bottom: none;
+    }
+    .model-card-table td:first-child {
+        font-weight: bold;
+        color: rgba(255, 255, 255, 0.5);
+        width: 30%;
+    }
 </style>
 {% endblock %}
 
@@ -298,16 +347,52 @@
         </p>
     </header>
 
+    <details class="model-card-details">
+        <summary class="model-card-summary">⚙️ System Model Specification</summary>
+        <div class="model-card-content">
+            <table class="model-card-table">
+                <tr>
+                    <td>Frames</td>
+                    <td>Stationary lab frame (S), moving train frame (S')</td>
+                </tr>
+                <tr>
+                    <td>Relative Velocity</td>
+                    <td>Constant uniform translation speed (u) along x-axis</td>
+                </tr>
+                <tr>
+                    <td>Time Invariance</td>
+                    <td>t' = t (absolute universal time coordinate)</td>
+                </tr>
+                <tr>
+                    <td>Dimensions</td>
+                    <td>One spatial dimension (Ch 1, 3, 4) and two dimensions (Ch 2, 5, 6)</td>
+                </tr>
+                <tr>
+                    <td>Evolution Law</td>
+                    <td>x' = x - ut, &nbsp; v' = v - u, &nbsp; a' = a, &nbsp; t' = t</td>
+                </tr>
+                <tr>
+                    <td>Assumptions</td>
+                    <td>Non-rotating inertial axes; flat spacetime</td>
+                </tr>
+                <tr>
+                    <td>Relativistic Limit</td>
+                    <td>Toy speed of light limit c = 100 m/s for visualization</td>
+                </tr>
+            </table>
+        </div>
+    </details>
+
     <!-- CHAPTER 1: WHO'S WATCHING? -->
     <section class="scrolly-chapter">
         <span class="chapter-num">Chapter 1</span>
         <h2 class="chapter-title">Who's Watching?</h2>
         <div class="chapter-prose">
             <p>
-                In classical physics, there is no absolute "center" to space. To define the position of a particle, we must first choose a <strong>reference frame</strong>—a set of coordinates anchored to an observer.
+                In classical physics, there is no absolute "center" to space. To define the position of a particle, we must first choose a <strong>reference frame</strong>—which consists of an origin, spatial axes, a method of measuring distances, and synchronized clocks.
             </p>
             <p>
-                Imagine a stationary observer, \(S\) (cyan), standing on the ground, and a second observer, \(S'\) (magenta), riding in a train car moving at a relative speed \(u\).
+                Imagine a stationary observer, \(S\) (cyan), standing on the ground, and a second observer, \(S'\) (magenta), riding in a train car moving at a relative speed \(u\). Nonrotating inertial observers moving at a constant relative velocity relative to one another agree about acceleration, but will measure different positions and velocities.
             </p>
             <p>
                 Drag the observer's relative speed \(u = \) <span class="scrubbable-number" id="scrub-ch1-u" data-var="ch1_u" data-min="-20" data-max="20">5</span> m/s. 
@@ -364,10 +449,10 @@
         <div class="chapter-prose">
             <p>
                 We can write down exactly how the coordinates shift using the <strong>Galilean coordinate transformations</strong>. 
-                If the moving frame travels along the x-axis at speed \(u\), the position \(x'\), velocity \(v'\), and acceleration \(a'\) relate to the ground measurements as:
+                If the moving frame travels along the x-axis at speed \(u\), the position \(x'\), time \(t'\), velocity \(v'\), and acceleration \(a'\) relate to the ground measurements as:
             </p>
             <p style="text-align: center;">
-                \[x' = x - ut, \quad v' = v - u, \quad a' = a\]
+                \[x' = x - ut, \quad t' = t, \quad v' = v - u, \quad a' = a\]
             </p>
             <p>
                 Observe how the numbers shift by scrubbing the relative frame speed \(u = \) <span class="scrubbable-number" id="scrub-ch3-u" data-var="ch3_u" data-min="-30" data-max="30">10</span> m/s:
@@ -376,6 +461,8 @@
                 Let a particle have position \(x = 50\,\text{m}\), velocity \(v = 25\,\text{m/s}\), and acceleration \(a = 3.5\,\text{m/s}^2\). In the moving frame \(S'\), its state transforms to:
                 <br>
                 <strong>Position:</strong> \(x' = 50 - (\text{u} \times t)\) &rarr; <span id="val-ch3-xprime" style="color: var(--neon-magenta); font-family: monospace; font-weight: bold;">50.0</span> m (at \(t = 1\,\text{s}\))
+                <br>
+                <strong>Time:</strong> \(t' = t\) &rarr; <span style="color: var(--neon-cyan); font-family: monospace; font-weight: bold;">1.0</span> s (universal Newtonian time)
                 <br>
                 <strong>Velocity:</strong> \(v' = 25 - u\) &rarr; <span id="val-ch3-vprime" style="color: var(--neon-magenta); font-family: monospace; font-weight: bold;">15.0</span> m/s
                 <br>
@@ -387,7 +474,7 @@
             <div class="quiz-question">Concept Check: What happens if the train accelerates?</div>
             <div class="quiz-options">
                 <button class="quiz-option" data-ans="A">Option A: Acceleration remains invariant (\(a' = a\)).</button>
-                <button class="quiz-option" data-ans="B">Option B: The frame S' becomes non-inertial, and Galilean invariance breaks.</button>
+                <button class="quiz-option" data-ans="B">Option B: The frame S' becomes non-inertial, requiring an apparent force to be introduced.</button>
                 <button class="quiz-option" data-ans="C">Option C: The particle's mass increases to compensate.</button>
             </div>
             <div id="feedback-ch3" class="feedback-banner"></div>
@@ -532,6 +619,7 @@
         const COLOR_GRID = "rgba(255, 255, 255, 0.15)";
         const COLOR_TRACK = "rgba(255, 255, 255, 0.28)";
         const COLOR_ZERO = "rgba(255, 255, 255, 0.45)";
+        const COLOR_TEXT_MUTED = "rgba(255, 255, 255, 0.65)";
 
         // Canvases
         const c1 = document.getElementById("canvas-ch1");
@@ -590,20 +678,29 @@
             ctx1.lineWidth = 3;
             ctx1.stroke();
 
-            // Zero line S
-            ctx1.beginPath();
-            ctx1.moveTo(cX, y1 - 8);
-            ctx1.lineTo(cX, y1 + 8);
-            ctx1.strokeStyle = COLOR_ZERO;
-            ctx1.lineWidth = 1.5;
-            ctx1.stroke();
+            // Ticks S (Ground)
+            const ticks = [-100, -50, 0, 50, 100];
+            ticks.forEach(tick => {
+                const tx = cX + tick * 1.5;
+                if (tx > 15 && tx < w - 15) {
+                    ctx1.beginPath();
+                    ctx1.moveTo(tx, y1 - 4); ctx1.lineTo(tx, y1 + 4);
+                    ctx1.strokeStyle = COLOR_ZERO;
+                    ctx1.lineWidth = 1;
+                    ctx1.stroke();
+
+                    ctx1.fillStyle = COLOR_TEXT_MUTED;
+                    ctx1.font = "7px monospace";
+                    ctx1.textAlign = "center";
+                    ctx1.fillText(`${tick}m`, tx, y1 + 14);
+                }
+            });
 
             // Labels S
             ctx1.fillStyle = COLOR_WHITE;
             ctx1.font = "bold 9px monospace";
+            ctx1.textAlign = "left";
             ctx1.fillText("Ground Observer S", 20, y1 - 15);
-            ctx1.textAlign = "center";
-            ctx1.fillText("x = 0", cX, y1 + 20);
 
             // Coordinate line S' (Train)
             ctx1.beginPath();
@@ -617,18 +714,26 @@
             const shift = ch1_u * 6; // visual scale factor
             const zeroPrimeX = cX + shift;
 
-            ctx1.beginPath();
-            ctx1.moveTo(zeroPrimeX, y2 - 8);
-            ctx1.lineTo(zeroPrimeX, y2 + 8);
-            ctx1.strokeStyle = COLOR_ZERO;
-            ctx1.lineWidth = 1.5;
-            ctx1.stroke();
+            // Ticks S' (Train)
+            ticks.forEach(tick => {
+                const tx = zeroPrimeX + tick * 1.5;
+                if (tx > 15 && tx < w - 15) {
+                    ctx1.beginPath();
+                    ctx1.moveTo(tx, y2 - 4); ctx1.lineTo(tx, y2 + 4);
+                    ctx1.strokeStyle = COLOR_ZERO;
+                    ctx1.lineWidth = 1;
+                    ctx1.stroke();
+
+                    ctx1.fillStyle = COLOR_TEXT_MUTED;
+                    ctx1.font = "7px monospace";
+                    ctx1.textAlign = "center";
+                    ctx1.fillText(`${tick}m`, tx, y2 + 14);
+                }
+            });
 
             ctx1.fillStyle = COLOR_WHITE;
             ctx1.textAlign = "left";
             ctx1.fillText("Train Observer S' (moving at u)", 20, y2 - 15);
-            ctx1.textAlign = "center";
-            ctx1.fillText("x' = 0", zeroPrimeX, y2 + 20);
 
             // Draw cyan observer S
             ctx1.fillStyle = COLOR_CYAN;
@@ -661,6 +766,24 @@
             ctx2g.strokeStyle = COLOR_TRACK;
             ctx2g.lineWidth = 3;
             ctx2g.stroke();
+
+            // Ticks Ground
+            const ticks_ch2 = [0, 50, 100, 150, 200];
+            ticks_ch2.forEach(tick => {
+                const tx = 20 + tick * 3.5;
+                if (tx < wg - 10) {
+                    ctx2g.beginPath();
+                    ctx2g.moveTo(tx, hg - 30); ctx2g.lineTo(tx, hg - 25);
+                    ctx2g.strokeStyle = COLOR_ZERO;
+                    ctx2g.lineWidth = 1;
+                    ctx2g.stroke();
+
+                    ctx2g.fillStyle = "rgba(255, 255, 255, 0.65)";
+                    ctx2g.font = "7px monospace";
+                    ctx2g.textAlign = "center";
+                    ctx2g.fillText(`${tick}m`, tx, hg - 14);
+                }
+            });
 
             // Parabolic trajectory path
             ctx2g.beginPath();
@@ -704,6 +827,22 @@
             ctx2t.lineWidth = 3;
             ctx2t.stroke();
 
+            // Ticks Train
+            const ticks_train = [-50, 0, 50];
+            ticks_train.forEach(tick => {
+                const tx = wt / 2 + tick * 3.5;
+                ctx2t.beginPath();
+                ctx2t.moveTo(tx, ht - 30); ctx2t.lineTo(tx, ht - 25);
+                ctx2t.strokeStyle = COLOR_ZERO;
+                ctx2t.lineWidth = 1;
+                ctx2t.stroke();
+
+                ctx2t.fillStyle = "rgba(255, 255, 255, 0.65)";
+                ctx2t.font = "7px monospace";
+                ctx2t.textAlign = "center";
+                ctx2t.fillText(`${tick}m`, tx, ht - 14);
+            });
+
             // Vertical trajectory path
             ctx2t.beginPath();
             ctx2t.strokeStyle = "rgba(255, 0, 221, 0.25)";
@@ -739,13 +878,23 @@
             ctx4.lineWidth = 3;
             ctx4.stroke();
 
-            // Zero point reference line
-            ctx4.beginPath();
-            ctx4.moveTo(cX, centerY - 15);
-            ctx4.lineTo(cX, centerY + 15);
-            ctx4.strokeStyle = COLOR_ZERO;
-            ctx4.lineWidth = 1.5;
-            ctx4.stroke();
+            // Ticks S (Ground frame coordinate references)
+            const ticks_ch4 = [-100, -50, 0, 50, 100];
+            ticks_ch4.forEach(tick => {
+                const tx = cX + tick * 1.5; // matching Ch1 visual scale
+                if (tx > 15 && tx < w - 15) {
+                    ctx4.beginPath();
+                    ctx4.moveTo(tx, centerY - 5); ctx4.lineTo(tx, centerY + 5);
+                    ctx4.strokeStyle = COLOR_ZERO;
+                    ctx4.lineWidth = 1;
+                    ctx4.stroke();
+
+                    ctx4.fillStyle = "rgba(255, 255, 255, 0.65)";
+                    ctx4.font = "7px monospace";
+                    ctx4.textAlign = "center";
+                    ctx4.fillText(`${tick}m`, tx, centerY + 16);
+                }
+            });
 
             // Oscillation values
             const amp = 45;
@@ -761,6 +910,14 @@
 
             const drawX = (ch4_frame === "lab") ? cX + massX_relative : cX + massX;
             const anchorX = (ch4_frame === "lab") ? cX : cX - speed_u * (ch4_t - 4.0);
+
+            // Draw spring anchor wall bracket
+            ctx4.fillStyle = "rgba(255, 255, 255, 0.35)";
+            ctx4.fillRect(anchorX - 3, centerY - 15, 6, 30);
+            ctx4.fillStyle = COLOR_WHITE;
+            ctx4.font = "8px monospace";
+            ctx4.textAlign = "center";
+            ctx4.fillText("Anchor", anchorX, centerY - 18);
 
             // Draw spring coils from center anchor to mass
             ctx4.beginPath();
@@ -834,6 +991,43 @@
                 rocketX = cX;
                 astX -= shift;
             }
+
+            // Positive direction sign convention arrow
+            ctx5.strokeStyle = COLOR_WHITE;
+            ctx5.lineWidth = 1.5;
+            ctx5.beginPath();
+            ctx5.moveTo(w - 100, 25);
+            ctx5.lineTo(w - 30, 25);
+            ctx5.stroke();
+            ctx5.beginPath();
+            ctx5.moveTo(w - 30, 25);
+            ctx5.lineTo(w - 35, 21);
+            ctx5.lineTo(w - 35, 29);
+            ctx5.closePath();
+            ctx5.fillStyle = COLOR_WHITE;
+            ctx5.fill();
+            ctx5.font = "8px monospace";
+            ctx5.textAlign = "right";
+            ctx5.fillText("+x direction", w - 105, 28);
+
+            // Tick marks & labels relative to Earth
+            const tickPositions = [-100, 0, 100, 200, 300, 400];
+            tickPositions.forEach(tick => {
+                const tx = earthX + tick;
+                if (tx > 10 && tx < w - 10) {
+                    ctx5.beginPath();
+                    ctx5.moveTo(tx, cY - 4);
+                    ctx5.lineTo(tx, cY + 4);
+                    ctx5.strokeStyle = COLOR_ZERO;
+                    ctx5.lineWidth = 1;
+                    ctx5.stroke();
+
+                    ctx5.fillStyle = COLOR_TEXT_MUTED;
+                    ctx5.font = "7px monospace";
+                    ctx5.textAlign = "center";
+                    ctx5.fillText(`${tick}m`, tx, cY + 14);
+                }
+            });
 
             // Earth anchor
             ctx5.fillStyle = "rgba(59, 130, 246, 0.4)";
@@ -909,18 +1103,41 @@
             ctx6.lineWidth = 3;
             ctx6.stroke();
 
+            // Start offset
+            const startX = 40;
+            const endX = w - 40;
+            const length = endX - startX;
+            const max_t = 3.0; // reset at 3.0 seconds
+
+            // Tick marks & labels for Tracks
+            const trackTicks = [0, 25, 50, 75, 100];
+            trackTicks.forEach(tick => {
+                const tx = startX + (tick / 100.0) * length;
+                ctx6.beginPath();
+                ctx6.moveTo(tx, y1 - 4); ctx6.lineTo(tx, y1 + 4);
+                ctx6.strokeStyle = COLOR_ZERO;
+                ctx6.lineWidth = 1;
+                ctx6.stroke();
+
+                ctx6.beginPath();
+                ctx6.moveTo(tx, y2 - 4); ctx6.lineTo(tx, y2 + 4);
+                ctx6.strokeStyle = COLOR_ZERO;
+                ctx6.lineWidth = 1;
+                ctx6.stroke();
+
+                ctx6.fillStyle = COLOR_TEXT_MUTED;
+                ctx6.font = "7px monospace";
+                ctx6.textAlign = "center";
+                ctx6.fillText(`${tick}m`, tx, y1 + 14);
+                ctx6.fillText(`${tick}m`, tx, y2 + 14);
+            });
+
             // Track Labels
             ctx6.fillStyle = COLOR_WHITE;
             ctx6.font = "bold 9px monospace";
             ctx6.textAlign = "left";
             ctx6.fillText(`GALILEAN UNIVERSE (v = u + v' = ${v_gal.toFixed(0)} m/s)`, 20, y1 - 22);
             ctx6.fillText(`EINSTEINIAN UNIVERSE (v = (u + v')/(1 + uv/c²) = ${v_ein.toFixed(1)} m/s)`, 20, y2 - 22);
-
-            // Start offset
-            const startX = 40;
-            const endX = w - 40;
-            const length = endX - startX;
-            const max_t = 3.0; // reset at 3.0 seconds
 
             // Draw Train cars (represent u)
             const trainWidth = 80;
@@ -982,6 +1199,12 @@
                 ctx6.font = "bold 8px monospace";
                 ctx6.fillText("💥 EXCEEDS c!", runnerX_gal, y1 - 10);
             }
+
+            // Toy Universe warning overlay
+            ctx6.fillStyle = COLOR_AMBER;
+            ctx6.font = "bold 8px monospace";
+            ctx6.textAlign = "center";
+            ctx6.fillText("⚠️ TOY UNIVERSE: Speed of light c is scaled to 100 m/s for visual clarity.", cX, h - 15);
         }
 
         // Ch4 Perspective Buttons
@@ -1031,12 +1254,12 @@
 
                 if (ans === "B") {
                     btn.classList.add("correct");
-                    fb.innerHTML = "<strong>Correct!</strong> An accelerating train creates fictitious/inertial forces (like pushing you back in your seat). This violates inertial observer equivalence, meaning Galilean invariance holds only for constant velocity (inertial) frames.";
+                    fb.innerHTML = "<strong>Correct!</strong> The train frame becomes non-inertial. An apparent (fictitious) force \\(F_{\\text{apparent}} = -mA_{\\text{frame}}\\) must be introduced to preserve the form of Newton's second law in that frame.";
                     fb.className = "feedback-banner success";
                     fb.style.display = "block";
                 } else {
                     btn.classList.add("incorrect");
-                    fb.innerHTML = "<strong>Incorrect.</strong> Hint: Galilean boosts assume observers travel at a <em>constant</em> relative velocity. Acceleration triggers inertial forces, changing the coordinate physics.";
+                    fb.innerHTML = "<strong>Incorrect.</strong> Hint: Galilean transformations apply between <em>constant-velocity</em> inertial frames. When a frame accelerates, it becomes non-inertial, and fictitious forces arise.";
                     fb.className = "feedback-banner error";
                     fb.style.display = "block";
                 }
