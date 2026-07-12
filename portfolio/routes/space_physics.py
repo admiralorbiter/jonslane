@@ -36,6 +36,13 @@ PHYSICS_METADATA = {
         "icon": "🌌",
         "status": "active",
     },
+    "redshift-cmb": {
+        "title": "Redshift & CMB",
+        "category": "Cosmology",
+        "description": "How does light propagate through expanding space? Discover cosmological redshift, recombination, and the Cosmic Microwave Background.",
+        "icon": "📡",
+        "status": "active",
+    },
     "spacetime-fabric": {
         "title": "Fabric of Spacetime",
         "category": "Relativity",

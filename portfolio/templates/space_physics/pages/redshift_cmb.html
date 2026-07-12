@@ -1,0 +1,1515 @@
+{% extends "base.html" %}
+
+{% block title %}Redshift & CMB | Space & Physics{% endblock %}
+{% block meta_description %}Learn how light propagates through expanding space. Explore cosmological redshift, the Surface of Last Scattering, the Cosmic Microwave Background, standard candles, and cosmic horizons.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<style>
+    /* Scrollytelling Centered Column Design */
+    .scrolly-container {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem 6rem 1.5rem;
+        font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+        color: var(--text-primary);
+        line-height: 1.625;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+        margin-bottom: 2.5rem;
+    }
+    .back-link:hover {
+        color: var(--neon-cyan);
+    }
+
+    .header-group {
+        margin-bottom: 4rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 2rem;
+    }
+
+    .subtitle-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-amber);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .page-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 2.5rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .page-intro {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+    }
+
+    /* Chapter layout */
+    .scrolly-chapter {
+        margin-bottom: 5.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding-bottom: 5rem;
+    }
+    .scrolly-chapter:last-of-type {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .chapter-num {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .chapter-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.75rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .chapter-prose {
+        color: #d1d5db;
+        font-size: 1.05rem;
+        margin-bottom: 2rem;
+    }
+    .chapter-prose p {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Canvas styling */
+    .visualizer-container {
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin: 2rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .visualizer-canvas {
+        background: #020205;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 4px;
+        width: 100%;
+        display: block;
+        box-sizing: border-box;
+    }
+
+    .control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1rem;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .scrubbable-container {
+        font-family: var(--font-sans), sans-serif;
+        font-size: 0.95rem;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .scrubbable-number {
+        font-family: var(--font-mono), monospace;
+        font-weight: 700;
+        color: var(--neon-amber);
+        border-bottom: 1px dashed var(--neon-amber);
+        cursor: ew-resize;
+        padding: 0 0.2rem;
+        user-select: none;
+    }
+
+    /* Custom model card */
+    .model-spec-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 2rem 0 3.5rem 0;
+    }
+    .model-spec-card h3 {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.2rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-top: 0;
+        margin-bottom: 0.75rem;
+    }
+    .model-spec-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    .model-spec-table th, .model-spec-table td {
+        padding: 0.5rem 0;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .model-spec-table th {
+        color: var(--text-muted);
+        font-weight: normal;
+        width: 40%;
+    }
+    .model-spec-table td {
+        color: #ffffff;
+        font-family: var(--font-mono), monospace;
+    }
+
+    /* Misconception cards */
+    .misconception-card {
+        background: rgba(245, 158, 11, 0.02);
+        border: 1px solid rgba(245, 158, 11, 0.12);
+        border-left: 4px solid var(--neon-amber);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin: 2rem 0;
+    }
+    .misconception-card h4 {
+        color: var(--neon-amber);
+        font-family: var(--font-mono), monospace;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.05em;
+    }
+    .misconception-card p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    /* Quiz elements */
+    .quiz-card {
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+    }
+    .quiz-question {
+        font-family: var(--font-sans), sans-serif;
+        font-size: 0.95rem;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .quiz-option-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        color: var(--text-muted);
+        text-align: left;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .quiz-option-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffffff;
+    }
+    .quiz-option-btn.selected {
+        background: rgba(0, 242, 254, 0.1);
+        border-color: var(--neon-cyan);
+        color: #ffffff;
+    }
+    .quiz-option-btn.wrong-select {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+        color: #ffffff;
+    }
+    .quiz-feedback {
+        margin-top: 1rem;
+        padding: 0.85rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        display: none;
+    }
+    .quiz-feedback.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        color: #34d399;
+    }
+    .quiz-feedback.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+
+    /* Summary pillars */
+    .pillars-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    @media (min-width: 600px) {
+        .pillars-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    .pillar-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        padding: 1.25rem;
+        transition: border-color 0.2s ease;
+    }
+    .pillar-card:hover {
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+    .pillar-card h4 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.1rem;
+        color: #ffffff;
+    }
+    .pillar-card p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    /* Toggle Switches */
+    .toggle-group {
+        display: flex;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 0.25rem;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .toggle-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        font-family: var(--font-mono), monospace;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    .toggle-btn.active {
+        background: rgba(0, 242, 254, 0.12);
+        color: var(--neon-cyan);
+    }
+
+    /* Core completion style */
+    .checkpoint-banner {
+        background: rgba(16, 185, 129, 0.03);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 4rem 0;
+        text-align: center;
+    }
+    .checkpoint-title {
+        color: #34d399;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.8rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    .checkpoint-text {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="scrolly-container">
+    <a href="{{ url_for('space_physics.index') }}" class="back-link">&larr; Back to Space &amp; Physics</a>
+
+    <div class="header-group">
+        <span class="subtitle-badge">Cosmology &bull; Module 2</span>
+        <h1 class="page-title">How Can Light Reveal Expansion?</h1>
+        <p class="page-intro">
+            How do we verify coordinate stretching from our isolated vantage point on Earth? This module builds an explorable explanation of light propagation, redshift parameters, standard candles, and the limits of our cosmic horizons.
+        </p>
+    </div>
+
+    <!-- Collapsible Model Specification Card -->
+    <details class="model-spec-card" style="cursor: pointer; outline: none; margin-bottom: 3.5rem;">
+        <summary style="font-family: var(--font-serif), Georgia, serif; font-size: 1.25rem; font-style: italic; color: #ffffff; list-style: none; display: flex; align-items: center; gap: 0.5rem; user-select: none;">
+            <span>Model Specification &amp; Assumptions</span>
+            <span style="font-size: 0.75rem; font-family: var(--font-mono), monospace; color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 0.1rem 0.4rem; border-radius: 4px;">Click to expand</span>
+        </summary>
+        <div style="margin-top: 1rem; cursor: default;" onclick="event.stopPropagation();">
+            <table class="model-spec-table">
+                <tr>
+                    <th>Background Geometry</th>
+                    <td>Spatially Flat Robertson-Walker (\(\Omega_k = 0\))</td>
+                </tr>
+                <tr>
+                    <th>Tracked Observables</th>
+                    <td>Wavelength \(\lambda\), Redshift \(z\), Background Temperature \(T_{\text{CMB}}\), Apparent Flux \(F\)</td>
+                </tr>
+                <tr>
+                    <th>Cosmological Parameters</th>
+                    <td>\(H_0 = 67.4\,\text{km/s/Mpc}\), \(\Omega_m = 0.315\), \(\Omega_r = 9.24 \times 10^{-5}\), \(\Omega_{\Lambda} = 0.685\)</td>
+                </tr>
+                <tr>
+                    <th>Light Propagation</th>
+                    <td>Null geodesics (\(ds^2 = 0\))</td>
+                </tr>
+                <tr>
+                    <th>Large-Scale Assumptions</th>
+                    <td>Homogeneous and Isotropic Space</td>
+                </tr>
+                <tr>
+                    <th>Local Complications</th>
+                    <td>Peculiar velocity, gravitational redshift, calibration uncertainty</td>
+                </tr>
+            </table>
+        </div>
+    </details>
+
+    <!-- Prologue: What Is a Spectral Line? -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Prologue</span>
+        <h2 class="chapter-title">What Is a Spectral Line?</h2>
+        <div class="chapter-prose">
+            <p>
+                Every atom acts like a tiny tuning fork. When heated, its electrons undergo quantum leaps, emitting light at extremely precise wavelengths. These distinct emissions appear as sharp lines—spectral fingerprints.
+            </p>
+            <p>
+                By measuring these fingerprints in a laboratory, we establish reference points. If an astronomical source moves, or if the space it occupies expands, the fingerprint shifts. Drag the spectrum below to see how shifts map to values of \(z\).
+            </p>
+        </div>
+
+        <div class="visualizer-container">
+            <canvas id="prologueCanvas" class="visualizer-canvas" height="120"></canvas>
+            <div class="control-row">
+                <div class="scrubbable-container">
+                    <span>Observed \(z\):</span>
+                    <span id="prologue_z_scrub" class="scrubbable-number" data-var="prologue_z" data-min="-0.1" data-max="0.8">0.00</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono), monospace;">
+                    H\(\alpha\) Wavelength: <span id="prologue_wave" style="color: #ffffff; font-weight: bold;">656</span> nm
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chapter 1: Two Sources of Redshift Important Here -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 1</span>
+        <h2 class="chapter-title">Two Sources of Redshift Important Here</h2>
+        <div class="chapter-prose">
+            <p>
+                Wavelength shifts can be produced by several physical mechanisms. While gravity can shift light (gravitational redshift), there are two main sources important here:
+            </p>
+            <ul>
+                <li>
+                    <strong>Radial relativistic Doppler shift:</strong> Caused by a source moving locally <em>through</em> space relative to an observer at velocity \(v\):
+                    \[1 + z = \sqrt{\frac{1 + \beta}{1 - \beta}} \qquad \text{where } \beta = \frac{v}{c}\]
+                    At low velocities (\(v \ll c\)), this reduces to the familiar linear approximation: \(z \approx \frac{v}{c}\).
+                </li>
+                <li>
+                    <strong>Cosmological redshift:</strong> Caused by comoving emission and observation in an expanding FLRW model:
+                    \[1 + z = \frac{a(t_{\text{observed}})}{a(t_{\text{emitted}})}\]
+                </li>
+            </ul>
+            <p>
+                For real astronomical observations, these different effects combine approximately multiplicatively:
+                \[1 + z_{\text{observed}} = (1 + z_{\text{cos}})(1 + z_{\text{pec}})(1 + z_{\text{grav}})\]
+            </p>
+            <p>
+                Explore the difference between local peculiar velocity and metric scale factor changes side-by-side:
+            </p>
+        </div>
+
+        <div class="visualizer-container">
+            <canvas id="ch1Canvas" class="visualizer-canvas" height="240"></canvas>
+            <div class="control-row">
+                <div class="scrubbable-container" id="ch1_doppler_control">
+                    <span>Peculiar Velocity \(v_{\text{pec}}\):</span>
+                    <span id="ch1_vpec_scrub" class="scrubbable-number" data-var="ch1_vpec" data-min="-150" data-max="150">0.0</span> km/s
+                </div>
+                <div class="scrubbable-container" id="ch1_cosmo_control" style="display: none;">
+                    <span>Scale Factor \(a(t)\):</span>
+                    <span id="ch1_scale_scrub" class="scrubbable-number" data-var="ch1_scale" data-min="0.5" data-max="1.5">1.0</span>
+                </div>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="ch1_mode_doppler">Doppler</button>
+                    <button class="toggle-btn" id="ch1_mode_cosmo">Cosmological</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="misconception-card">
+            <h4>⚠️ Common Misconception: Are galaxies moving through space?</h4>
+            <p>
+                In cosmological redshift, galaxies are not rushing away from us through static empty space. Successive comoving observers measure the photon's wavelength to increase as the scale factor grows during its journey.
+            </p>
+        </div>
+
+        <!-- Concept check: Andromeda approaches -->
+        <div class="quiz-card" id="quizCh1">
+            <div class="quiz-question">
+                Andromeda is currently approaching us. If the space between us is expanding, how is this possible?
+            </div>
+            <div class="quiz-options">
+                <button class="quiz-option-btn" data-correct="false" data-index="0">The cosmological expansion rate is negative near Andromeda.</button>
+                <button class="quiz-option-btn" data-correct="true" data-index="1">Andromeda has a peculiar velocity toward the Milky Way produced by the gravitational dynamics of the Local Group. The large-scale Hubble-flow model is not directly applicable to the Local Group as though its galaxies were independent comoving markers.</button>
+                <button class="quiz-option-btn" data-correct="false" data-index="2">General relativity does not apply to galaxies inside our Local Group.</button>
+            </div>
+            <div class="quiz-feedback success" id="quizCh1_success">
+                Correct! Andromeda's inward peculiar velocity (\(v_{\text{pec}} \approx -120\,\text{km/s}\)) easily overcomes the local expansion rate (\(H_0 D \approx 54\,\text{km/s}\)). The Local Group is a gravitationally bound system, meaning the homogeneous, isotropic FLRW metric is not the correct local model.
+            </div>
+            <div class="quiz-feedback error" id="quizCh1_error">
+                Incorrect. Note that:
+                <ul>
+                    <li>Option 1 is not the correct interpretation; the expansion rate remains positive, but is locally overwhelmed by gravity.</li>
+                    <li>Option 3 is false; General Relativity still applies, but the homogeneous FLRW approximation is not the right model for bound structures.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chapter 2: The Redshift Parameter z -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 2</span>
+        <h2 class="chapter-title">The Redshift Parameter z</h2>
+        <div class="chapter-prose">
+            <p>
+                The parameter \(z\) quantifies the amount of wavelength stretching. After correcting for local motion and other effects, cosmological redshift relates the observed and emitted scale factors through:
+                \[a_{\text{emitted}} = \frac{a_0}{1 + z}\]
+                With the normalization \(a_0 = 1\) (today), this simplifies to:
+                \[a_{\text{emitted}} = \frac{1}{1 + z}\]
+                Thus, for \(z=1\), the scale factor when light was emitted was exactly \(a = \frac{1}{2}\)—the universe was half its current size.
+            </p>
+            <p>
+                Because lookback time depends on the densities of matter, radiation, and dark energy, we solve the Friedmann equations dynamically to map \(z\) to physical cosmic time.
+            </p>
+            <details style="margin: 1rem 0; font-size: 0.9rem; background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: 6px; border: 1px dashed rgba(255,255,255,0.1);">
+                <summary style="cursor: pointer; color: var(--neon-cyan); font-weight: 500;">Show Mathematical Derivation for Lookback Time</summary>
+                <p style="margin-top: 0.5rem; color: var(--text-muted);">
+                    To map redshift to lookback time, we integrate the expansion rate over the photon's path:
+                    \[t_{\text{lookback}}(z) = \int_0^z \frac{dz'}{(1+z') H(z')}\]
+                    where the Hubble parameter \(H(z')\) is defined in flat \(\Lambda\)CDM as:
+                    \[H(z') = H_0 \sqrt{\Omega_m(1+z')^3 + \Omega_r(1+z')^4 + \Omega_{\Lambda}}\]
+                    This makes it explicit why the conversion of redshift to time is model-dependent, relying directly on the density parameters.
+                </p>
+            </details>
+            <p>
+                Scrub the redshift parameter below to trace this timeline:
+            </p>
+        </div>
+
+        <div class="visualizer-container">
+            <canvas id="ch2Canvas" class="visualizer-canvas" height="150"></canvas>
+            <div class="control-row">
+                <div class="scrubbable-container">
+                    <span>Redshift \(z\):</span>
+                    <span id="ch2_z_scrub" class="scrubbable-number" data-var="ch2_z" data-min="0.0" data-max="1089.0">0.0</span>
+                </div>
+                <div style="font-size: 0.9rem; color: var(--text-muted); font-family: var(--font-mono), monospace; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    <span>Scale Factor \(a\): <strong id="ch2_scale_val" style="color: #ffffff;">1.0000</strong></span>
+                    <span>Lookback Time: <strong id="ch2_lookback_val" style="color: #ffffff;">0.00 Gyr</strong></span>
+                    <span>Cosmic Age at Emission: <strong id="ch2_age_val" style="color: #ffffff;">13.80 Gyr</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="misconception-card">
+            <h4>⚠️ Common Misconception: Does z=1 mean velocity is c?</h4>
+            <p>
+                No. Conflating redshift directly with relative velocity via \(v = cz\) is only valid in the nearby universe (\(z \ll 1\)). A redshift of \(z=1\) simply means that light was emitted when the universe was exactly half its current size, causing its wavelength to double during transit.
+            </p>
+        </div>
+    </section>
+
+    <!-- Chapter 3: The Surface of Last Scattering -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 3</span>
+        <h2 class="chapter-title">The Surface of Last Scattering</h2>
+        <div class="chapter-prose">
+            <p>
+                If we look far enough back in time, we eventually reach an era when the universe was so hot that neutral hydrogen could not exist. The entire cosmos was a dense, ionized plasma of free electrons and protons.
+            </p>
+            <p>
+                Photons could not travel freely because they scattered continuously off the free electrons. As the universe cooled, the fraction of free electrons fell rapidly as electrons became bound in neutral atoms. The photon mean free path increased, and radiation decoupled from matter over a finite period rather than at one perfectly sharp moment. The universe became increasingly transparent, allowing photons to begin free-streaming over cosmological distances. Drag the slider to watch this transition:
+            </p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+                Note: Recombination, photon decoupling, and last scattering are closely related but not perfectly identical events. In the baseline Planck cosmology, photon decoupling occurs near \(z \approx 1090\); the familiar values of roughly 3000 K and 380,000 years are appropriate introductory approximations.
+            </p>
+        </div>
+
+        <div class="visualizer-container">
+            <canvas id="ch3Canvas" class="visualizer-canvas" height="240"></canvas>
+            <div class="control-row">
+                <div class="scrubbable-container">
+                    <span>Temperature \(T\):</span>
+                    <span id="ch3_t_scrub" class="scrubbable-number" data-var="ch3_t" data-min="1000" data-max="6000">3000</span> K
+                </div>
+                <div style="font-size: 0.9rem; color: var(--text-muted); font-family: var(--font-mono), monospace;">
+                    State: <span id="ch3_state" style="color: #ffffff; font-weight: bold;">Recombination (Transparent)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="misconception-card">
+            <h4>⚠️ Common Misconception: Are we seeing the Big Bang?</h4>
+            <p>
+                The Cosmic Microwave Background (CMB) is often called the relic of the Big Bang, but it does not let us see the origin itself. It is the boundary of our electromagnetic vision—the surface of last scattering. Prior to this, electromagnetic radiation could not propagate freely to us. Other possible messengers, such as primordial neutrinos or gravitational waves, are not subject to the same electromagnetic opacity.
+            </p>
+        </div>
+    </section>
+
+    <!-- Chapter 4: Reading the CMB -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 4</span>
+        <h2 class="chapter-title">Reading the CMB</h2>
+        <div class="chapter-prose">
+            <p>
+                Because temperature scales inversely with the scale factor (\(T \propto 1/a(t)\)), the original \(3000\,\text{K}\) thermal spectrum has been stretched by a factor of 1090, cooling to a microwave temperature of \(T \approx 2.7255\,\text{K}\) today.
+            </p>
+            <p>
+                The CMB is isotropic to 1 part in 100,000. Tiny temperature and density variations trace primordial perturbations that later grew, through gravity, into galaxies and the large-scale cosmic web. Drag the slider to amplify these fluctuations:
+            </p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+                Note: The CMB map displayed below is a synthetic conceptual patch exhibiting correlated noise on characteristic angular scales.
+            </p>
+        </div>
+
+        <div class="visualizer-container">
+            <canvas id="ch4Canvas" class="visualizer-canvas" height="240"></canvas>
+            <div class="control-row">
+                <div class="scrubbable-container">
+                    <span>Amplification:</span>
+                    <span id="ch4_amp_scrub" class="scrubbable-number" data-var="ch4_amp" data-min="1" data-max="10000">1</span>&times;
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono), monospace;">
+                    True primordial perturbation \(\Delta T\): <span style="color: #ffffff; font-weight: bold;">~27 \(\mu\)K</span> &nbsp;|&nbsp;
+                    Display Gain: <span id="ch4_gain" style="color: #ffffff; font-weight: bold;">1&times;</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chapter 5: Standardizable Candles -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 5</span>
+        <h2 class="chapter-title">Standardizable Candles</h2>
+        <div class="chapter-prose">
+            <p>
+                To measure how the expansion rate changes over time, astronomers use <strong>standardizable candles</strong>—specifically Type Ia supernovae. These thermonuclear white dwarf explosions do not all have exactly the same raw intrinsic luminosity. However, observations of their light curves (how fast they brighten and fade) and colors allow astronomers to infer a corrected, standardized intrinsic luminosity \(L\).
+            </p>
+            <p>
+                By comparing the observed apparent flux \(F\) against this standardized luminosity \(L\), we calculate the <strong>luminosity distance</strong> \(D_L\):
+                \[F = \frac{L}{4\pi D_L^2}\]
+            </p>
+            <p>
+                Drag the slider to adjust the luminosity distance of a standardizable supernova. Observe how its apparent flux decays according to the inverse-square law while the source itself remains an unresolved geometric point:
+            </p>
+        </div>
+
+        <div class="visualizer-container">
+            <canvas id="ch5Canvas" class="visualizer-canvas" height="240"></canvas>
+            <div class="control-row">
+                <div class="scrubbable-container">
+                    <span>Luminosity Distance \(D_L\):</span>
+                    <span id="ch5_d_scrub" class="scrubbable-number" data-var="ch5_d" data-min="10" data-max="100">50</span> Mpc
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono), monospace;">
+                    Apparent Flux \(F\): <span id="ch5_flux" style="color: #ffffff; font-weight: bold;">1.000</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chapter 6: The Four Pillars -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 6</span>
+        <h2 class="chapter-title">The Four Pillars of Evidence</h2>
+        <div class="chapter-prose">
+            <p>
+                The Hot Big Bang model does not stand on a single observation. It is supported by four independent pillars of empirical evidence:
+            </p>
+        </div>
+
+        <div class="pillars-grid">
+            <div class="pillar-card">
+                <h4>1. Cosmic Expansion</h4>
+                <p>
+                    Galaxy spectra display systematic redshifts that correlate with distance, supporting large-scale cosmic expansion.
+                </p>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem;">
+                    <strong>Open Issue:</strong> The Hubble tension is an unresolved discrepancy in the \(4\text{--}6\sigma\) range between local distance ladder and early-universe CMB parameters.
+                </div>
+            </div>
+            <div class="pillar-card">
+                <h4>2. Relic CMB Radiation</h4>
+                <p>
+                    The Cosmic Microwave Background is a nearly perfect blackbody spectrum, a central prediction of a hot, dense early universe and one of its strongest confirmations.
+                </p>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem;">
+                    <strong>Observation:</strong> COBE's FIRAS instrument measured deviations from a perfect blackbody to be less than 50 parts per million.
+                </div>
+            </div>
+            <div class="pillar-card">
+                <h4>3. Primordial Elements</h4>
+                <p>
+                    Big Bang Nucleosynthesis successfully accounts for the primordial abundances of deuterium and Helium-4 within the cosmological model. Helium-4 comprises roughly one quarter of primordial baryonic mass.
+                </p>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem;">
+                    <strong>Open Issue:</strong> Lithium-7 remains discrepant by approximately a factor of three (the Lithium problem).
+                </div>
+            </div>
+            <div class="pillar-card">
+                <h4>4. Growth of Structure</h4>
+                <p>
+                    The statistics of CMB fluctuations and the later galaxy distribution are consistent with gravitational growth from small primordial perturbations.
+                </p>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem;">
+                    <strong>Inference:</strong> These variations trace primordial perturbations that later grew, through gravity, into the large-scale cosmic web.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core completed checkpoint -->
+    <div class="checkpoint-banner">
+        <h3 class="checkpoint-title">Checkpoint: Observational Evidence Complete</h3>
+        <p class="checkpoint-text">
+            You have explored the major observational pillars. Next, we look at the boundaries expansion places on the future of our universe.
+        </p>
+    </div>
+
+    <!-- Chapter 7: Cosmic Horizons -->
+    <section class="scrolly-chapter">
+        <span class="chapter-num">Chapter 7</span>
+        <h2 class="chapter-title">Cosmic Horizons</h2>
+        <div class="chapter-prose">
+            <p>
+                In an accelerating universe, there is a limit to how far light can travel to reach us. A <strong>particle horizon</strong> defines the edge of the observable universe, while an <strong>event horizon</strong> defines the limit of what we can ever influence.
+            </p>
+            <p>
+                Toggle the cosmological model to see how dark energy changes these boundaries:
+            </p>
+        </div>
+
+        <div class="visualizer-container">
+            <canvas id="ch7Canvas" class="visualizer-canvas" height="300"></canvas>
+            <div class="control-row">
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono), monospace;">
+                    Hover/Look: <span id="ch7_legend" style="color: #ffffff; font-weight: bold;">Observable universe: 46.5 Gly</span>
+                </div>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="ch7_model_lcdm">Flat Lambda-CDM</button>
+                    <button class="toggle-btn" id="ch7_model_matter">Matter-Only</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="misconception-card">
+            <h4>⚠️ Common Misconception: Is everything observable reachable?</h4>
+            <p>
+                No. In our accelerating universe, the event horizon is currently only ~16.5 billion light-years away, while the observable universe stretches to 46.5 billion light-years. Much of the currently observable universe lies beyond the region that signals sent today could ever reach in the standard \(\Lambda\)CDM model. The exact fraction of observable galaxies is not captured by simply comparing horizon radii.
+            </p>
+        </div>
+
+        <!-- Quiz: Horizons -->
+        <div class="quiz-card" id="quizCh7">
+            <div class="quiz-question">
+                What would happen to the cosmic event horizon if dark energy disappeared and the universe became matter-dominated?
+            </div>
+            <div class="quiz-options">
+                <button class="quiz-option-btn" data-correct="true" data-index="0">The event horizon would grow to infinity, meaning any signal sent today would eventually reach any coordinate given enough time.</button>
+                <button class="quiz-option-btn" data-correct="false" data-index="1">The event horizon would contract to the Hubble radius.</button>
+                <button class="quiz-option-btn" data-correct="false" data-index="2">The observable universe would shrink immediately to zero.</button>
+            </div>
+            <div class="quiz-feedback success" id="quizCh7_success">
+                Correct! Decelerating universes have no event horizons. Without dark energy driving exponential expansion, signals sent today could eventually traverse any comoving coordinate separation.
+            </div>
+            <div class="quiz-feedback error" id="quizCh7_error">
+                Incorrect. Remember that the event horizon only exists because of accelerating expansion.
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include MathJax for LaTeX processing -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.body.classList.add('space-theme-body');
+
+        // Global color scheme matching specs
+        const COLOR_COMOVING = "#00f2fe"; // cyan
+        const COLOR_PROPER = "#ff00dd";   // magenta
+        const COLOR_SCALE = "#f59e0b";    // amber
+        const COLOR_WHITE = "#ffffff";
+        const COLOR_VIOLET = "#7c3aed";
+        const COLOR_CMB_HOT = "#ff4444";
+        const COLOR_CMB_COLD = "#4444ff";
+        const COLOR_GRID = "rgba(255, 255, 255, 0.08)";
+
+        // Cosmological parameter table (Planck 2018 parameters)
+        const H0 = 67.4; // km/s/Mpc
+        const H0_per_sec = (H0 / 3.086e19) * 3.154e16; // in Gyr^-1
+        const Omega_m = 0.315;
+        const Omega_r = 9.24e-5;
+        const Omega_L = 0.685;
+
+        // PRECOMPUTED LOOKUP TABLE IN LOG-REDSHIFT SPACE
+        const N_STEPS = 2000;
+        const u_max = Math.log(1 + 1100);
+        const z_table = [];
+        const tL_table = [];
+        const chi_table = [];
+
+        let current_tL = 0;
+        let current_chi = 0;
+        const c_light = 3.0e5; // km/s
+
+        // Integrate at page load using log substitution: du = dz/(1+z) -> dz = (1+z) du
+        for (let i = 0; i <= N_STEPS; i++) {
+            const u = (i / N_STEPS) * u_max;
+            const z = Math.exp(u) - 1;
+            z_table.push(z);
+
+            if (i === 0) {
+                tL_table.push(0);
+                chi_table.push(0);
+            } else {
+                const prev_u = ((i - 1) / N_STEPS) * u_max;
+                const prev_z = Math.exp(prev_u) - 1;
+
+                // Midpoint rule evaluation
+                const mid_z = 0.5 * (z + prev_z);
+                const Hz = H0_per_sec * Math.sqrt(
+                    Omega_m * Math.pow(1 + mid_z, 3) +
+                    Omega_r * Math.pow(1 + mid_z, 4) +
+                    Omega_L
+                );
+
+                const du = u - prev_u;
+                // dtL = dz / ((1+z) * H(z)) = du / H(z)
+                current_tL += du / Hz;
+                // dchi = c * dz / H(z) = c * (1+z) * du / H(z)
+                current_chi += (c_light * (1 + mid_z) * du) / Hz;
+
+                tL_table.push(current_tL);
+                chi_table.push(current_chi);
+            }
+        }
+
+        const totalAge = tL_table[N_STEPS] + 0.00038;
+
+        function formatCosmicTime(valGyr) {
+            if (valGyr >= 1.0) {
+                return valGyr.toFixed(2) + " Gyr";
+            } else if (valGyr >= 0.001) {
+                return (valGyr * 1000).toFixed(1) + " Myr";
+            } else {
+                return (valGyr * 1e6).toFixed(0) + " kyr";
+            }
+        }
+
+        // Binary search lookup helper
+        function lookupCosmology(z) {
+            let low = 0;
+            let high = z_table.length - 1;
+            if (z <= z_table[low]) return { z: 0, tL: 0, chi: 0 };
+            if (z >= z_table[high]) return { z: z_table[high], tL: tL_table[high], chi: chi_table[high] };
+
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                if (z_table[mid] === z) {
+                    return { z: z_table[mid], tL: tL_table[mid], chi: chi_table[mid] };
+                } else if (z_table[mid] < z) {
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            // Interpolate
+            const idx = low;
+            const z0 = z_table[idx - 1];
+            const z1 = z_table[idx];
+            const t0 = tL_table[idx - 1];
+            const t1 = tL_table[idx];
+            const c0 = chi_table[idx - 1];
+            const c1 = chi_table[idx];
+
+            const frac = (z - z0) / (z1 - z0);
+            return {
+                z: z,
+                tL: t0 + frac * (t1 - t0),
+                chi: c0 + frac * (c1 - c0)
+            };
+        }
+
+        // Active variables
+        let prologue_z = 0.0;
+        let ch1_vpec = 0.0;
+        let ch1_scale = 1.0;
+        let ch1_mode = "doppler"; // 'doppler' or 'cosmo'
+        let ch2_z = 0.0;
+        let ch3_t = 3000;
+        let ch4_amp = 1.0;
+        let ch5_d = 50.0;
+        let ch7_model = "lcdm"; // 'lcdm' or 'matter'
+
+        // --- PROLOGUE VISUALIZER ---
+        const pc = document.getElementById("prologueCanvas");
+        const pctx = pc.getContext("2d");
+        function drawPrologue() {
+            const w = pc.width = pc.clientWidth * (window.devicePixelRatio || 1);
+            const h = pc.height = pc.clientHeight * (window.devicePixelRatio || 1);
+            pctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            const sw = w / (window.devicePixelRatio || 1);
+            const sh = h / (window.devicePixelRatio || 1);
+
+            pctx.clearRect(0, 0, sw, sh);
+
+            // Draw visible spectrum background bar
+            const barY = 20;
+            const barH = 40;
+            const gradient = pctx.createLinearGradient(10, 0, sw - 10, 0);
+            gradient.addColorStop(0, "#7c00ff");  // violet (380nm)
+            gradient.addColorStop(0.2, "#0040ff"); // blue
+            gradient.addColorStop(0.4, "#00ffff"); // cyan
+            gradient.addColorStop(0.6, "#00ff00"); // green
+            gradient.addColorStop(0.8, "#ffff00"); // yellow
+            gradient.addColorStop(1, "#ff0000");    // red (700nm)
+
+            pctx.fillStyle = "rgba(255,255,255,0.03)";
+            pctx.fillRect(10, barY, sw - 20, barH);
+
+            pctx.fillStyle = gradient;
+            pctx.fillRect(10, barY, sw - 20, barH);
+
+            // Hydrogen alpha line at rest is 656nm (near red, say 85% along the bar)
+            const restPos = 10 + (sw - 20) * 0.86;
+            const shiftPos = restPos + (prologue_z * (sw - 20) * 0.2); // simple visual displacement
+
+            // Draw reference line
+            pctx.strokeStyle = "rgba(255,255,255,0.2)";
+            pctx.lineWidth = 1;
+            pctx.setLineDash([4, 4]);
+            pctx.beginPath();
+            pctx.moveTo(restPos, barY - 10);
+            pctx.lineTo(restPos, barY + barH + 10);
+            pctx.stroke();
+            pctx.setLineDash([]);
+
+            // Draw shifted Hα line
+            pctx.strokeStyle = COLOR_WHITE;
+            pctx.lineWidth = 3;
+            pctx.beginPath();
+            pctx.moveTo(shiftPos, barY - 5);
+            pctx.lineTo(shiftPos, barY + barH + 5);
+            pctx.stroke();
+
+            // Label shifted wavelength
+            const shiftedWave = Math.round(656.3 * (1 + prologue_z));
+            document.getElementById("prologue_wave").textContent = shiftedWave;
+
+            pctx.fillStyle = "#ffffff";
+            pctx.font = "bold 10px monospace";
+            pctx.textAlign = "center";
+            pctx.fillText("Hα (" + shiftedWave + " nm)", shiftPos, barY + barH + 18);
+        }
+
+        // --- CHAPTER 1 VISUALIZER ---
+        const c1 = document.getElementById("ch1Canvas");
+        const ctx1 = c1.getContext("2d");
+        let waveOffset = 0;
+
+        function drawCh1() {
+            const w = c1.width = c1.clientWidth * (window.devicePixelRatio || 1);
+            const h = c1.height = c1.clientHeight * (window.devicePixelRatio || 1);
+            ctx1.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            const sw = w / (window.devicePixelRatio || 1);
+            const sh = h / (window.devicePixelRatio || 1);
+
+            ctx1.clearRect(0, 0, sw, sh);
+
+            // Draw track line
+            ctx1.strokeStyle = COLOR_GRID;
+            ctx1.lineWidth = 2;
+            ctx1.beginPath();
+            ctx1.moveTo(30, sh / 2);
+            ctx1.lineTo(sw - 30, sh / 2);
+            ctx1.stroke();
+
+            // Draw observer at right
+            ctx1.fillStyle = COLOR_COMOVING;
+            ctx1.beginPath();
+            ctx1.arc(sw - 50, sh / 2, 8, 0, Math.PI * 2);
+            ctx1.fill();
+            ctx1.fillStyle = "#ffffff";
+            ctx1.font = "bold 10px monospace";
+            ctx1.fillText("OBSERVER", sw - 80, sh / 2 - 15);
+
+            // Draw source galaxy
+            let galaxyX = 100;
+            let wavelength = 20;
+
+            if (ch1_mode === "doppler") {
+                // Galaxy moves physically
+                galaxyX = 150 + ch1_vpec * 0.5;
+                // Doppler stretches wavelength
+                wavelength = 20 * (1 + ch1_vpec / 300);
+            } else {
+                // Cosmo mode: galaxy is stationary on grid, but scale factor changes metric
+                galaxyX = 120;
+                wavelength = 20 * ch1_scale;
+            }
+
+            // Draw source galaxy
+            ctx1.fillStyle = COLOR_PROPER;
+            ctx1.beginPath();
+            ctx1.arc(galaxyX, sh / 2, 8, 0, Math.PI * 2);
+            ctx1.fill();
+            ctx1.fillStyle = "#ffffff";
+            ctx1.fillText("SOURCE GALAXY", galaxyX - 45, sh / 2 - 15);
+
+            // Draw propagating photon wave
+            ctx1.strokeStyle = COLOR_SCALE;
+            ctx1.lineWidth = 2.5;
+            ctx1.beginPath();
+            waveOffset = (waveOffset + 0.5) % (wavelength * 2);
+
+            for (let x = galaxyX + 10; x < sw - 60; x++) {
+                const waveY = sh / 2 + Math.sin((x - waveOffset) * (Math.PI * 2 / wavelength)) * 15;
+                if (x === galaxyX + 10) ctx1.moveTo(x, waveY);
+                else ctx1.lineTo(x, waveY);
+            }
+            ctx1.stroke();
+        }
+
+        // --- CHAPTER 2 VISUALIZER ---
+        const c2 = document.getElementById("ch2Canvas");
+        const ctx2 = c2.getContext("2d");
+        function drawCh2() {
+            const w = c2.width = c2.clientWidth * (window.devicePixelRatio || 1);
+            const h = c2.height = c2.clientHeight * (window.devicePixelRatio || 1);
+            ctx2.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            const sw = w / (window.devicePixelRatio || 1);
+            const sh = h / (window.devicePixelRatio || 1);
+
+            ctx2.clearRect(0, 0, sw, sh);
+
+            // Draw timeline background bar
+            const barY = sh / 2 - 10;
+            const barH = 20;
+            ctx2.fillStyle = "rgba(255,255,255,0.03)";
+            ctx2.fillRect(30, barY, sw - 60, barH);
+            ctx2.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx2.strokeRect(30, barY, sw - 60, barH);
+
+            // Draw landmarks
+            const landmarks = [
+                { z: 0, label: "Today" },
+                { z: 1, label: "z=1" },
+                { z: 6, label: "Reionization" },
+                { z: 1089, label: "CMB" }
+            ];
+
+            landmarks.forEach(lm => {
+                const frac = Math.log(1 + lm.z) / Math.log(1 + 1089);
+                const x = 30 + frac * (sw - 60);
+
+                ctx2.strokeStyle = "rgba(255,255,255,0.2)";
+                ctx2.beginPath();
+                ctx2.moveTo(x, barY);
+                ctx2.lineTo(x, barY + barH);
+                ctx2.stroke();
+
+                ctx2.fillStyle = varColorTextMuted();
+                ctx2.font = "9px monospace";
+                ctx2.textAlign = "center";
+                ctx2.fillText(lm.label, x, barY - 6);
+            });
+
+            // Draw current z position
+            const currentFrac = Math.log(1 + ch2_z) / Math.log(1 + 1089);
+            const markerX = 30 + currentFrac * (sw - 60);
+
+            ctx2.fillStyle = COLOR_SCALE;
+            ctx2.beginPath();
+            ctx2.moveTo(markerX, barY - 2);
+            ctx2.lineTo(markerX - 6, barY - 10);
+            ctx2.lineTo(markerX + 6, barY - 10);
+            ctx2.closePath();
+            ctx2.fill();
+
+            // Perform cosmology lookup
+            const info = lookupCosmology(ch2_z);
+            const scaleVal = 1 / (1 + ch2_z);
+            const ageVal = Math.max(0, totalAge - info.tL);
+            document.getElementById("ch2_scale_val").textContent = scaleVal.toFixed(4);
+            document.getElementById("ch2_lookback_val").textContent = formatCosmicTime(info.tL);
+            document.getElementById("ch2_age_val").textContent = formatCosmicTime(ageVal);
+        }
+
+        function varColorTextMuted() {
+            return "rgba(255, 255, 255, 0.4)";
+        }
+
+        // --- CHAPTER 3 VISUALIZER (Photon Lottery) ---
+        const c3 = document.getElementById("ch3Canvas");
+        const ctx3 = c3.getContext("2d");
+        const particles_ch3 = [];
+        for (let i = 0; i < 40; i++) {
+            particles_ch3.push({
+                x: Math.random() * 600,
+                y: Math.random() * 200,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2
+            });
+        }
+        let photon_ch3 = { x: 50, y: 100, vx: 4, vy: 1 };
+
+        function drawCh3() {
+            const w = c3.width = c3.clientWidth * (window.devicePixelRatio || 1);
+            const h = c3.height = c3.clientHeight * (window.devicePixelRatio || 1);
+            ctx3.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            const sw = w / (window.devicePixelRatio || 1);
+            const sh = h / (window.devicePixelRatio || 1);
+
+            ctx3.clearRect(0, 0, sw, sh);
+
+            // Determine state text
+            const stateEl = document.getElementById("ch3_state");
+            if (ch3_t > 3200) {
+                stateEl.textContent = "Ionized Plasma (Opaque)";
+                stateEl.style.color = COLOR_CMB_HOT;
+            } else if (ch3_t < 2800) {
+                stateEl.textContent = "Recombination Complete (Transparent)";
+                stateEl.style.color = COLOR_COMOVING;
+            } else {
+                stateEl.textContent = "Recombination Transition";
+                stateEl.style.color = COLOR_SCALE;
+            }
+
+            // Move particles
+            particles_ch3.forEach(p => {
+                p.x = (p.x + p.vx + sw) % sw;
+                p.y = (p.y + p.vy + sh) % sh;
+
+                ctx3.fillStyle = ch3_t > 3000 ? COLOR_PROPER : "rgba(255,255,255,0.3)";
+                ctx3.beginPath();
+                ctx3.arc(p.x, p.y, ch3_t > 3000 ? 3 : 5, 0, Math.PI * 2);
+                ctx3.fill();
+            });
+
+            // Move photon
+            photon_ch3.x += photon_ch3.vx;
+            photon_ch3.y += photon_ch3.vy;
+
+            // Check boundaries
+            if (photon_ch3.x < 0 || photon_ch3.x > sw) {
+                photon_ch3.x = 20;
+                photon_ch3.y = Math.random() * sh;
+                photon_ch3.vx = 4;
+                photon_ch3.vy = (Math.random() - 0.5) * 2;
+            }
+            if (photon_ch3.y < 0 || photon_ch3.y > sh) {
+                photon_ch3.vy *= -1;
+            }
+
+            // Scatter check based on temperature
+            const scatterProb = 1 / (1 + Math.exp(-(ch3_t - 3000) / 200));
+            if (Math.random() < scatterProb * 0.2) {
+                const angle = Math.random() * Math.PI * 2;
+                photon_ch3.vx = Math.cos(angle) * 4;
+                photon_ch3.vy = Math.sin(angle) * 4;
+            }
+
+            // Draw photon path
+            ctx3.strokeStyle = COLOR_WHITE;
+            ctx3.lineWidth = 3;
+            ctx3.shadowBlur = 10;
+            ctx3.shadowColor = COLOR_WHITE;
+            ctx3.beginPath();
+            ctx3.arc(photon_ch3.x, photon_ch3.y, 4, 0, Math.PI * 2);
+            ctx3.stroke();
+            ctx3.shadowBlur = 0; // reset
+        }
+
+        // --- CHAPTER 4 VISUALIZER (CMB fluctuations) ---
+        const c4 = document.getElementById("ch4Canvas");
+        const ctx4 = c4.getContext("2d");
+
+        // Generate static Gaussian random field with structured noise on load
+        const grf = [];
+        const grfSize = 64;
+        for (let y = 0; y < grfSize; y++) {
+            const row = [];
+            for (let x = 0; x < grfSize; x++) {
+                row.push(Math.sin(x * 0.15) * Math.cos(y * 0.15) * 0.3 + (Math.random() - 0.5) * 0.7);
+            }
+            grf.push(row);
+        }
+
+        function drawCh4() {
+            const w = c4.width = c4.clientWidth * (window.devicePixelRatio || 1);
+            const h = c4.height = c4.clientHeight * (window.devicePixelRatio || 1);
+            ctx4.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            const sw = w / (window.devicePixelRatio || 1);
+            const sh = h / (window.devicePixelRatio || 1);
+
+            ctx4.clearRect(0, 0, sw, sh);
+
+            const cellW = sw / grfSize;
+            const cellH = sh / grfSize;
+
+            document.getElementById("ch4_gain").textContent = ch4_amp + "x";
+
+            for (let y = 0; y < grfSize; y++) {
+                for (let x = 0; x < grfSize; x++) {
+                    const val = grf[y][x] * (ch4_amp * 0.005); // scale fluctuation weight
+                    let color = "rgb(15,15,35)"; // baseline uniform
+                    if (val > 0.05) {
+                        const intensity = Math.min(255, Math.floor(val * 400));
+                        color = `rgb(${15 + intensity}, 15, 35)`;
+                    } else if (val < -0.05) {
+                        const intensity = Math.min(255, Math.floor(Math.abs(val) * 400));
+                        color = `rgb(15, 15, ${35 + intensity})`;
+                    }
+                    ctx4.fillStyle = color;
+                    ctx4.fillRect(x * cellW, y * cellH, cellW + 0.5, cellH + 0.5);
+                }
+            }
+        }
+
+        // --- CHAPTER 5 VISUALIZER (Standard Candles) ---
+        const c5 = document.getElementById("ch5Canvas");
+        const ctx5 = c5.getContext("2d");
+        function drawCh5() {
+            const w = c5.width = c5.clientWidth * (window.devicePixelRatio || 1);
+            const h = c5.height = c5.clientHeight * (window.devicePixelRatio || 1);
+            ctx5.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            const sw = w / (window.devicePixelRatio || 1);
+            const sh = h / (window.devicePixelRatio || 1);
+
+            ctx5.clearRect(0, 0, sw, sh);
+
+            // Draw distance indicators
+            ctx5.strokeStyle = COLOR_GRID;
+            ctx5.lineWidth = 1;
+            for (let d = 20; d <= 100; d += 20) {
+                const x = 50 + (d / 100) * (sw - 100);
+                ctx5.beginPath();
+                ctx5.moveTo(x, 20);
+                ctx5.lineTo(x, sh - 40);
+                ctx5.stroke();
+
+                ctx5.fillStyle = varColorTextMuted();
+                ctx5.font = "8px monospace";
+                ctx5.fillText(d + " Mpc", x - 15, sh - 25);
+            }
+
+            // Draw our telescope at left
+            ctx5.fillStyle = COLOR_COMOVING;
+            ctx5.beginPath();
+            ctx5.arc(50, sh / 2, 8, 0, Math.PI * 2);
+            ctx5.fill();
+
+            // Calculate current distance position
+            const candleX = 50 + (ch5_d / 100) * (sw - 100);
+            const flux = 1000 / (ch5_d * ch5_d);
+            document.getElementById("ch5_flux").textContent = flux.toFixed(4);
+
+            // Draw glowing supernova dot as an unresolved point source (constant radius, variable glow)
+            const glowIntensity = Math.min(30, flux * 15);
+            ctx5.fillStyle = COLOR_SCALE;
+            ctx5.shadowBlur = glowIntensity;
+            ctx5.shadowColor = COLOR_SCALE;
+            ctx5.beginPath();
+            ctx5.arc(candleX, sh / 2, 3, 0, Math.PI * 2);
+            ctx5.fill();
+            ctx5.shadowBlur = 0; // reset
+        }
+
+        // --- CHAPTER 7 VISUALIZER (Cosmic Horizons) ---
+        const c7 = document.getElementById("ch7Canvas");
+        const ctx7 = c7.getContext("2d");
+        let horizonHover = "Observable universe: 46.5 Gly";
+
+        function drawCh7() {
+            const w = c7.width = c7.clientWidth * (window.devicePixelRatio || 1);
+            const h = c7.height = c7.clientHeight * (window.devicePixelRatio || 1);
+            ctx7.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            const sw = w / (window.devicePixelRatio || 1);
+            const sh = h / (window.devicePixelRatio || 1);
+
+            ctx7.clearRect(0, 0, sw, sh);
+
+            const cX = sw / 2;
+            const cY = sh / 2;
+
+            // Draw center observer
+            ctx7.fillStyle = COLOR_WHITE;
+            ctx7.beginPath();
+            ctx7.arc(cX, cY, 4, 0, Math.PI * 2);
+            ctx7.fill();
+
+            // Hubble Sphere circle (r = 14.4 Gly)
+            const rHubble = (14.4 / 50) * (sw / 2 - 20);
+            ctx7.strokeStyle = COLOR_WHITE;
+            ctx7.lineWidth = 1.5;
+            ctx7.beginPath();
+            ctx7.arc(cX, cY, rHubble, 0, Math.PI * 2);
+            ctx7.stroke();
+
+            // Particle Horizon circle (r = 46.5 Gly)
+            const rParticle = (46.5 / 50) * (sw / 2 - 20);
+            ctx7.strokeStyle = COLOR_COMOVING;
+            ctx7.lineWidth = 2;
+            ctx7.setLineDash([6, 4]);
+            ctx7.beginPath();
+            ctx7.arc(cX, cY, rParticle, 0, Math.PI * 2);
+            ctx7.stroke();
+            ctx7.setLineDash([]);
+
+            // Event Horizon circle (r = 16.5 Gly only in LCDM)
+            if (ch7_model === "lcdm") {
+                const rEvent = (16.5 / 50) * (sw / 2 - 20);
+                ctx7.strokeStyle = COLOR_SCALE;
+                ctx7.lineWidth = 2;
+                ctx7.setLineDash([3, 3]);
+                ctx7.beginPath();
+                ctx7.arc(cX, cY, rEvent, 0, Math.PI * 2);
+                ctx7.stroke();
+                ctx7.setLineDash([]);
+            }
+
+            // Write labels dynamically inside the canvas
+            ctx7.fillStyle = COLOR_WHITE;
+            ctx7.font = "9px monospace";
+            ctx7.fillText("Hubble Sphere (14.4 Gly)", cX + 5, cY - rHubble - 5);
+            ctx7.fillStyle = COLOR_COMOVING;
+            ctx7.fillText("Particle Horizon (46.5 Gly)", cX + 5, cY - rParticle + 12);
+
+            if (ch7_model === "lcdm") {
+                ctx7.fillStyle = COLOR_SCALE;
+                const rEvent = (16.5 / 50) * (sw / 2 - 20);
+                ctx7.fillText("Event Horizon (16.5 Gly)", cX + 5, cY - rEvent - 5);
+            }
+        }
+
+        // --- SCRUBBABLE VALUE ENGINE ---
+        function initScrubbableEngine() {
+            document.querySelectorAll(".scrubbable-number").forEach(num => {
+                let startX = 0;
+                let startVal = 0;
+
+                const onDragStart = (clientX) => {
+                    startX = clientX;
+                    const vName = num.getAttribute("data-var");
+                    if (vName === "prologue_z") startVal = prologue_z;
+                    else if (vName === "ch1_vpec") startVal = ch1_vpec;
+                    else if (vName === "ch1_scale") startVal = ch1_scale;
+                    else if (vName === "ch2_z") startVal = ch2_z;
+                    else if (vName === "ch3_t") startVal = ch3_t;
+                    else if (vName === "ch4_amp") startVal = ch4_amp;
+                    else if (vName === "ch5_d") startVal = ch5_d;
+                };
+
+                const onDragMove = (clientX) => {
+                    const dx = clientX - startX;
+                    const min = parseFloat(num.getAttribute("data-min"));
+                    const max = parseFloat(num.getAttribute("data-max"));
+                    const vName = num.getAttribute("data-var");
+
+                    let sensitivity = 0.01;
+                    if (vName === "ch1_vpec") sensitivity = 1.0;
+                    if (vName === "ch2_z") sensitivity = 2.0;
+                    if (vName === "ch3_t") sensitivity = 10.0;
+                    if (vName === "ch4_amp") sensitivity = 20.0;
+                    if (vName === "ch5_d") sensitivity = 0.5;
+
+                    let newVal = startVal + dx * sensitivity;
+                    newVal = Math.max(min, Math.min(max, newVal));
+
+                    if (vName === "prologue_z") {
+                        prologue_z = newVal;
+                        num.textContent = prologue_z.toFixed(2);
+                        drawPrologue();
+                    } else if (vName === "ch1_vpec") {
+                        ch1_vpec = newVal;
+                        num.textContent = ch1_vpec.toFixed(1);
+                    } else if (vName === "ch1_scale") {
+                        ch1_scale = newVal;
+                        num.textContent = ch1_scale.toFixed(2);
+                    } else if (vName === "ch2_z") {
+                        ch2_z = newVal;
+                        num.textContent = ch2_z.toFixed(1);
+                        drawCh2();
+                    } else if (vName === "ch3_t") {
+                        ch3_t = Math.round(newVal);
+                        num.textContent = ch3_t;
+                        drawCh3();
+                    } else if (vName === "ch4_amp") {
+                        ch4_amp = Math.round(newVal);
+                        num.textContent = ch4_amp;
+                        drawCh4();
+                    } else if (vName === "ch5_d") {
+                        ch5_d = newVal;
+                        num.textContent = ch5_d.toFixed(1);
+                        drawCh5();
+                    }
+                };
+
+                // Mouse support
+                num.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    onDragStart(e.clientX);
+
+                    const onMouseMove = (mEv) => {
+                        onDragMove(mEv.clientX);
+                    };
+                    const onMouseUp = () => {
+                        document.removeEventListener("mousemove", onMouseMove);
+                        document.removeEventListener("mouseup", onMouseUp);
+                    };
+                    document.addEventListener("mousemove", onMouseMove);
+                    document.addEventListener("mouseup", onMouseUp);
+                });
+
+                // Pointer support
+                num.addEventListener("pointerdown", (e) => {
+                    e.preventDefault();
+                    num.setPointerCapture(e.pointerId);
+                    onDragStart(e.clientX);
+
+                    const onPointerMove = (pEv) => {
+                        onDragMove(pEv.clientX);
+                    };
+                    const onPointerUp = () => {
+                        num.releasePointerCapture(e.pointerId);
+                        num.removeEventListener("pointermove", onPointerMove);
+                        num.removeEventListener("pointerup", onPointerUp);
+                    };
+                    num.addEventListener("pointermove", onPointerMove);
+                    num.addEventListener("pointerup", onPointerUp);
+                });
+            });
+        }
+
+        // --- QUIZ COMPONENT ENGINE ---
+        function initQuizzes() {
+            document.querySelectorAll(".quiz-card").forEach(quiz => {
+                const btns = quiz.querySelectorAll(".quiz-option-btn");
+                const successMsg = quiz.querySelector(".quiz-feedback.success");
+                const errorMsg = quiz.querySelector(".quiz-feedback.error");
+
+                btns.forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        // Reset statuses
+                        btns.forEach(b => b.classList.remove("selected", "wrong-select"));
+                        successMsg.style.display = "none";
+                        errorMsg.style.display = "none";
+
+                        const isCorrect = btn.getAttribute("data-correct") === "true";
+                        if (isCorrect) {
+                            btn.classList.add("selected");
+                            successMsg.style.display = "block";
+                        } else {
+                            btn.classList.add("wrong-select");
+                            errorMsg.style.display = "block";
+                        }
+                    });
+                });
+            });
+        }
+
+        // Toggles
+        document.getElementById("ch1_mode_doppler").addEventListener("click", (e) => {
+            document.getElementById("ch1_mode_doppler").classList.add("active");
+            document.getElementById("ch1_mode_cosmo").classList.remove("active");
+            document.getElementById("ch1_doppler_control").style.display = "flex";
+            document.getElementById("ch1_cosmo_control").style.display = "none";
+            ch1_mode = "doppler";
+        });
+        document.getElementById("ch1_mode_cosmo").addEventListener("click", (e) => {
+            document.getElementById("ch1_mode_cosmo").classList.add("active");
+            document.getElementById("ch1_mode_doppler").classList.remove("active");
+            document.getElementById("ch1_cosmo_control").style.display = "flex";
+            document.getElementById("ch1_doppler_control").style.display = "none";
+            ch1_mode = "cosmo";
+        });
+
+        document.getElementById("ch7_model_lcdm").addEventListener("click", (e) => {
+            document.getElementById("ch7_model_lcdm").classList.add("active");
+            document.getElementById("ch7_model_matter").classList.remove("active");
+            ch7_model = "lcdm";
+            drawCh7();
+        });
+        document.getElementById("ch7_model_matter").addEventListener("click", (e) => {
+            document.getElementById("ch7_model_matter").classList.add("active");
+            document.getElementById("ch7_model_lcdm").classList.remove("active");
+            ch7_model = "matter";
+            drawCh7();
+        });
+
+        // Loop ticks
+        function tick() {
+            drawPrologue();
+            drawCh1();
+            drawCh2();
+            drawCh3();
+            drawCh4();
+            drawCh5();
+            drawCh7();
+
+            requestAnimationFrame(tick);
+        }
+
+        initScrubbableEngine();
+        initQuizzes();
+        tick();
+    });
+</script>
+{% endblock %}

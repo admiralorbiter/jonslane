@@ -84,3 +84,8 @@ For the Milky Way and Andromeda galaxy pair:
 *   **Peculiar velocity vector:** points inward/outward (orange).
 *   **Net velocity vector:** sum of both (white).
 *   If $v_{\text{observed}} < 0$, the system is currently approaching (peculiar motion overcomes Hubble flow). Since this is a purely kinematic model, we do not infer permanent dynamical boundness solely from the sign of the relative velocity.
+
+---
+
+## 5. Next Module Connection
+For the continuation of this cosmological model to light propagation, redshift, standard candles, and horizons, see [Redshift & CMB Cosmology Spec](file:///c:/Users/admir/Github/jonslane/docs/space_physics/redshift_cmb.md).
