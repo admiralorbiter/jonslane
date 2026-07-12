@@ -1,0 +1,377 @@
+/* ==========================================================================
+   Special Relativity Interactive Lab CSS Stylesheet
+   ========================================================================== */
+
+/* Scrollytelling Container Centering */
+.scrolly-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem 1.5rem;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text-primary);
+    line-height: 1.625;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+    margin-bottom: 2.5rem;
+}
+.back-link:hover {
+    color: var(--neon-cyan);
+}
+
+.header-group {
+    margin-bottom: 4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 2rem;
+}
+
+.subtitle-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--neon-amber);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.page-title {
+    font-family: var(--font-heading), 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 2.5rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.page-intro {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+
+/* Vertical Chapter Setup */
+.scrolly-chapter {
+    margin-bottom: 6rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 5.5rem;
+    scroll-margin-top: 100px;
+}
+.scrolly-chapter:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.chapter-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--neon-cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.chapter-title {
+    font-family: var(--font-heading), 'Inter', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1.25rem;
+}
+
+.chapter-prose {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+.chapter-prose p {
+    margin-bottom: 1.25rem;
+}
+
+/* Interactive Simulation Card Layout */
+.diagram-card {
+    background: rgba(10, 11, 20, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.55);
+    margin: 2.5rem 0;
+}
+
+.diagram-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    padding-bottom: 0.5rem;
+}
+
+.diagram-canvas-wrapper {
+    position: relative;
+    background: #020205;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    margin-bottom: 1.25rem;
+}
+
+.diagram-canvas {
+    display: block;
+    width: 100%;
+    background: #020205;
+    touch-action: none;
+}
+
+/* Control Hub Layout inside cards */
+.diagram-control-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+@media (max-width: 650px) {
+    .diagram-control-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dial Interactive wrapper */
+.dial-box-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.01);
+    border-radius: 10px;
+}
+
+.dial-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--neon-amber);
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+}
+
+/* Readouts Panel */
+.hud-readout-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.hud-readout-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.03);
+    padding-bottom: 0.45rem;
+}
+.hud-readout-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.hud-readout-label {
+    color: var(--text-muted);
+}
+
+.hud-readout-value {
+    color: var(--neon-cyan);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Action button design */
+.hud-action-btn-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.hud-action-btn {
+    flex-grow: 1;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    padding: 0.65rem 1.25rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.hud-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.hud-action-btn.active {
+    background: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+    color: black;
+    box-shadow: 0 0 10px var(--neon-cyan-glow);
+}
+.hud-action-btn-primary {
+    background: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+    color: black;
+    box-shadow: 0 0 10px var(--neon-cyan-glow);
+}
+.hud-action-btn-primary:hover {
+    background: hsl(174, 100%, 60%);
+    border-color: hsl(174, 100%, 60%);
+    box-shadow: 0 0 15px var(--neon-cyan-glow);
+}
+
+/* Collapsible Details Panel */
+.math-panel {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    transition: all 0.2s ease;
+}
+.math-panel[open] {
+    background: rgba(14, 16, 23, 0.35);
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+.math-panel-summary {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--neon-amber);
+    padding: 0.65rem 0.95rem;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+}
+.math-panel-summary:hover {
+    color: #ffffff;
+}
+.math-panel-content {
+    padding: 0 0.95rem 0.95rem 0.95rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.math-display-box {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+/* Banner alerts */
+.feedback-banner {
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.85rem;
+    margin-top: 1.25rem;
+    line-height: 1.5;
+    display: none;
+}
+.feedback-banner.success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #a7f3d0;
+}
+.feedback-banner.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+/* Concept Quizzes */
+.quiz-options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.lab-question-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.lab-question-option:hover {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.lab-question-option input {
+    margin-top: 0.25rem;
+}
+.lab-question-option.correct {
+    background: rgba(16, 185, 129, 0.08) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    color: #a7f3d0;
+}
+.lab-question-option.incorrect {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #fca5a5;
+}
+
+/* Tabular inputs and text slider wrappers */
+.scrubbable-number {
+    color: var(--neon-cyan);
+    border-bottom: 1px dashed var(--neon-cyan);
+    padding: 0 0.15rem;
+    font-weight: bold;
+    cursor: ew-resize;
+    user-select: none;
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+}
+.scrubbable-number:hover {
+    background: rgba(0, 242, 254, 0.1);
+    border-bottom-style: solid;
+}
+
+/* Chapter 7 s2 value glow pulse animation */
+@keyframes s2Pulse {
+    0%   { text-shadow: none; }
+    40%  { text-shadow: 0 0 12px var(--neon-amber), 0 0 24px var(--neon-amber-glow); }
+    100% { text-shadow: none; }
+}
+.s2-pulse {
+    animation: s2Pulse 0.5s ease-out forwards;
+}

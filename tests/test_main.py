@@ -102,7 +102,13 @@ def test_space_physics_hub(client):
 
 def test_space_physics_subpages(client):
     """Verify all active space & physics subpages render successfully."""
-    for page in ["particle-1d", "galilean-relativity", "expanding-universe", "redshift-cmb"]:
+    for page in [
+        "particle-1d",
+        "galilean-relativity",
+        "special-relativity",
+        "expanding-universe",
+        "redshift-cmb",
+    ]:
         response = client.get(f"/space-physics/{page}")
         assert response.status_code == 200, f"Expected page {page} to load successfully"
         assert b"Space &amp; Physics" in response.data or b"Space & Physics" in response.data

@@ -1,10 +1,10 @@
 # Special Relativity: Interactive Lab — Technical Specification
 
-**Module:** Space & Physics → Special Relativity  
-**File:** `lab_special_relativity.js` (canvas engine) + Jinja2 template  
-**Spec Version:** 1.0  
-**Date:** 2026-07-12  
-**Status:** Pre-implementation reference  
+**Module:** Space & Physics → Special Relativity
+**File:** `lab_special_relativity.js` (canvas engine) + Jinja2 template
+**Spec Version:** 1.0
+**Date:** 2026-07-12
+**Status:** Pre-implementation reference
 
 ---
 
@@ -392,7 +392,7 @@ Three cases:
 | $s^2 = 0$ | **Lightlike (null)** | Only light can connect $A$ and $B$ |
 | $s^2 < 0$ | **Spacelike** | No causal connection possible; some frame exists where $A$ and $B$ are simultaneous |
 
-**Implementation:** Chapter 7 computes and displays $s^2$ live for any two user-placed events on the Minkowski diagram, with colour coding (green = timelike, yellow = null, red = spacelike).
+**Implementation:** Chapter 7 computes and displays $s^2$ live for any two user-placed events on the Minkowski diagram, with colour coding (emerald green = timelike, amber = null/lightlike, magenta = spacelike).
 
 #### 2.7.2 Proper Time from Spacetime Interval
 
@@ -740,19 +740,28 @@ $$\Delta\tau = 11.28\,\text{years}$$
 
 ### Chapter 7: Spacetime Diagram (Minkowski)
 
-**Learning Goal:** Understand worldlines, light cones, and simultaneity hypersurfaces geometrically.
+**Learning Goal:** Understand worldlines, light cones, and simultaneity hypersurfaces geometrically. Observe how the spacetime interval $s^2$ is invariant under all Lorentz boosts.
 
 **Setup:**
 - Full-canvas Minkowski diagram: $x$-axis horizontal, $ct$-axis vertical.
-- Light cone always shown at the origin.
-- User can place events by clicking; events are labelled $A, B, C, \ldots$
-- Worldlines of Alice, Bob, and a light pulse are drawn as the simulation runs.
+- Light cone (45-degree lines) always shown.
+- Sparse ticks at coordinate values $\pm 4$ and $\pm 2$ on both axes.
+- Pre-loaded events on load:
+  - Event A: $(0,0)$ "Rocket launch" (stays fixed at the origin under boosts)
+  - Event B: $(0,4)$ "Engine cutoff" (timelike relative to A, $s^2 = +16.00$)
+  - Event C: $(2,2)$ "Light signal arrives" (lightlike relative to A, $s^2 = 0.00$)
+  - Event D: $(4,1)$ "Distant explosion" (spacelike relative to A, $s^2 = -15.00$)
+- Events A and B are auto-selected on initial load.
+- Background curves: timelike and spacelike invariant hyperbolas ($s^2 = \pm 1, \pm 4, \pm 9$) color-coded using HSL emerald green/magenta tokens. Both upper/lower and left/right branches are drawn.
 
 **Interaction:**
-- "Add Event" click mode: left-click anywhere on the diagram to place an event.
-- Selecting two events displays: $\Delta x$, $\Delta t$, $s^2$, and a label (timelike/spacelike/null).
-- "Boost Frame" slider: rotates the diagram coordinates according to a Lorentz boost. The $x'$ and $ct'$ axes tilt toward the 45-degree light cone (hyperbolic rotation).
-- Simultaneity lines (horizontal in $S$, tilted in $S'$) are drawn for the current $\beta$.
+- **Proximity Selection:** Click or touch within 14px of any event dot to select or deselect it.
+- **Adding Events:** Click or touch on empty canvas space (or click "+ Add Event" button) to place a new event at that coordinate (up to 6 total).
+- **Boost Frame Slider:** Rapidly transforms diagram coordinates by rapidity $\phi = \text{arctanh}(\beta)$. Prime axes tilt toward light lines, and events slide along highlighted hyperbola trace curves.
+- **Trace Highlights:** Selected events have their individual Rapidity path curves rendered as bright Path2D cached curves (with an early-exit guard for light-cone and origin events).
+- **Dashed Connector Lines:** Drawn between the two selected events, color-coded by causal type (emerald green for timelike, magenta for spacelike, amber for lightlike). A centered, clear-backed midpoint text label displays $s^2$.
+- **Restructured HUD:** Restructured layout placing invariant $s^2$ at the top in large bold amber with an "↑ Invariant under all boosts" description and color-coded type pill badge. Coordinate values $\Delta x$ and $\Delta t$ are muted and labeled "(frame-dependent)". Trigger a pulse animation on $s^2$ change.
+- **Clear Sandbox:** Resets the board back to the pre-loaded 4-event state (A, B, C, D).
 
 **Lorentz boost as hyperbolic rotation:**
 

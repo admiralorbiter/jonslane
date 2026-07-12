@@ -1,0 +1,902 @@
+{% extends "base.html" %}
+
+{% block title %}Special Relativity | Space & Physics{% endblock %}
+{% block meta_description %}An interactive scrollytelling explorable of Einstein's special relativity: time dilation, length contraction, simultaneity, and twin paradox.%{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lab_special_relativity.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<div class="scrolly-container">
+    <header class="header-group">
+        <a href="/space-physics/" class="back-link">&larr; Back to Physics Directory</a>
+        <span class="subtitle-badge">Interactive Exploration Series</span>
+        <h1 class="page-title">Special Relativity</h1>
+        <p class="page-intro">
+            Eight progressive simulations demonstrating the unification of space and time. Drag the speed dials, fire light pulses, measure length contractions, and warp the coordinate grid.
+        </p>
+    </header>
+
+    <!-- Chapter 1: The Speed of Light is Constant -->
+    <section class="scrolly-chapter" id="chapter-ch1" data-chapter="1">
+        <span class="chapter-num">Chapter 1</span>
+        <h2 class="chapter-title">The Constant Speed of Light</h2>
+        <div class="chapter-prose">
+            <p>
+                In classical physics, velocities add together linearly. If you run at \(10\text{ mph}\) inside a train moving at \(60\text{ mph}\), an observer on the ground sees you moving at \(70\text{ mph}\).
+            </p>
+            <p>
+                However, Einstein's first postulate of Special Relativity states that the speed of light, \(c\), is <strong>exactly the same for all observers</strong>, regardless of their relative motion. Drag the speed dial below to accelerate Bob, then fire a light pulse. Notice that both Alice (at rest) and Bob (moving) measure the incoming photon at exactly \(1.00c\).
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Interactive Experiment: Constant Speed of Light</span>
+                <span>Ch. 1</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas class="diagram-canvas" id="canvas-ch1"></canvas>
+            </div>
+
+            <div class="diagram-control-grid">
+                <div class="dial-box-wrapper">
+                    <canvas id="dial-ch1" width="120" height="120"></canvas>
+                    <span class="dial-label">Velocity dial (&beta;)</span>
+                </div>
+                <div class="hud-readout-card">
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Bob's Speed (&beta;)</span>
+                        <span class="hud-readout-value" id="val-ch1-beta">0.0000 c</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Lorentz Factor (&gamma;)</span>
+                        <span class="hud-readout-value" id="val-ch1-gamma">1.0000</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Alice Measures Pulse</span>
+                        <span class="hud-readout-value" id="val-ch1-alice-pulse">1.000 c</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Bob Measures Pulse</span>
+                        <span class="hud-readout-value" id="val-ch1-bob-pulse">1.000 c</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Newtonian (Wrong) Speed</span>
+                        <span class="hud-readout-value" id="val-ch1-newton-pulse" style="color: var(--text-muted);">1.000 c</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-action-btn-row">
+                <button class="hud-action-btn hud-action-btn-primary" id="btn-ch1-fire">Fire Light Pulses</button>
+                <button class="hud-action-btn" id="btn-ch1-mode">Universe: Relativistic (Reality)</button>
+            </div>
+        </div>
+
+        <!-- Inline Quiz -->
+        <div class="quiz-options-group" id="quiz-form-ch1">
+            <h4 style="margin-bottom: 0.5rem; color: #ffffff;">Concept Check:</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                If a star moves toward Earth at \(0.5c\) and emits a photon toward Earth, what is the speed of the photon when it reaches Earth?
+            </p>
+            <label class="lab-question-option" id="opt-ch1-1">
+                <input type="radio" name="ch1-quiz" value="A">
+                <span><strong>A)</strong> \(1.5c\) (photon velocity adds to star velocity)</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch1-2">
+                <input type="radio" name="ch1-quiz" value="B">
+                <span><strong>B)</strong> \(1.0c\) (the speed of light is invariant)</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch1-3">
+                <input type="radio" name="ch1-quiz" value="C">
+                <span><strong>C)</strong> \(0.5c\) (photon speed relative to the moving star)</span>
+            </label>
+            <button class="hud-action-btn" id="btn-submit-q-ch1" style="max-width: 150px; margin-top: 0.5rem;">Submit</button>
+            <div class="feedback-banner" id="feedback-ch1"></div>
+        </div>
+
+        <details class="math-panel">
+            <summary class="math-panel-summary">Show the math &#9654;</summary>
+            <div class="math-panel-content">
+                <p>Einstein's velocities are composed using the relativistic formula instead of vector addition:</p>
+                <div class="math-display-box">
+                    $$u = \frac{u' + v}{1 + \frac{u' v}{c^2}}$$
+                </div>
+                <p>If we set the incoming light speed \(u' = -c\) (natural units \(u' = -1\)) and the rocket velocity \(v = \beta\), we get:</p>
+                <div class="math-display-box">
+                    $$u = \frac{-1 + \beta}{1 - \beta} = -1 \quad \Rightarrow \quad |u| = 1 = c$$
+                </div>
+                <p>No matter what relative speed \(\beta\) you choose, the output is always \(c\).</p>
+            </div>
+        </details>
+    </section>
+
+    <!-- Chapter 2: Simultaneity Breaks -->
+    <section class="scrolly-chapter" id="chapter-ch2" data-chapter="2">
+        <span class="chapter-num">Chapter 2</span>
+        <h2 class="chapter-title">The Relativity of Simultaneity</h2>
+        <div class="chapter-prose">
+            <p>
+                Because the speed of light is constant for all observers, <strong>simultaneity itself fails</strong>. Two events that are simultaneous in one frame occur at different times in another frame.
+            </p>
+            <p>
+                In the rest frame (\(S\)), two explosions go off at the same time at positions \(x_L = -5\) and \(x_R = +5\) (orange flashes). But for Bob, riding in a spaceship moving to the right, the explosions do *not* occur simultaneously. Turn on the wavefront toggle to watch how coordinate time differs from the visual reception delay.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Interactive Experiment: Simultaneity Disruption</span>
+                <span>Ch. 2</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas class="diagram-canvas" id="canvas-ch2"></canvas>
+            </div>
+
+            <div class="diagram-control-grid">
+                <div class="dial-box-wrapper">
+                    <canvas id="dial-ch2" width="120" height="120"></canvas>
+                    <span class="dial-label">Velocity dial (&beta;)</span>
+                </div>
+                <div class="hud-readout-card">
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Spaceship Speed (&beta;)</span>
+                        <span class="hud-readout-value" id="val-ch2-beta">0.0000 c</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Lorentz Factor (&gamma;)</span>
+                        <span class="hud-readout-value" id="val-ch2-gamma">1.0000</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Ground Time Gap (&Delta;t)</span>
+                        <span class="hud-readout-value" style="color: var(--neon-cyan);">0.00 s</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Ship Time Gap (&Delta;t')</span>
+                        <span class="hud-readout-value" id="val-ch2-gap">0.00 s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-action-btn-row">
+                <button class="hud-action-btn active" id="btn-ch2-frame-alice">Alice's Frame (Ground - Rest)</button>
+                <button class="hud-action-btn" id="btn-ch2-frame-bob">Bob's Frame (Rocket - Moving)</button>
+            </div>
+            <div class="hud-action-btn-row" style="margin-top: 0.5rem;">
+                <button class="hud-action-btn hud-action-btn-primary" id="btn-ch2-fire">Simulate Explosions</button>
+            </div>
+        </div>
+
+        <div class="quiz-options-group" id="quiz-form-ch2">
+            <h4 style="margin-bottom: 0.5rem; color: #ffffff;">Concept Check:</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                If Bob sits exactly at the midpoint between the two explosions in his moving spaceship and subtracts the time it took light waves to propagate from each flash to his eyes, will he find that they occurred at the same time?
+            </p>
+            <label class="lab-question-option" id="opt-ch2-1">
+                <input type="radio" name="ch2-quiz" value="A">
+                <span><strong>A)</strong> Yes, subtracting the travel delay restores absolute simultaneity.</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch2-2">
+                <input type="radio" name="ch2-quiz" value="B">
+                <span><strong>B)</strong> No, the coordinate emission events remain non-simultaneous in his frame.</span>
+            </label>
+            <button class="hud-action-btn" id="btn-submit-q-ch2" style="max-width: 150px; margin-top: 0.5rem;">Submit</button>
+            <div class="feedback-banner" id="feedback-ch2"></div>
+        </div>
+
+        <details class="math-panel">
+            <summary class="math-panel-summary">Show the math &#9654;</summary>
+            <div class="math-panel-content">
+                <p>Simultaneity shifts are derived from the Lorentz Transformation for time:</p>
+                <div class="math-display-box">
+                    $$t' = \gamma \left( t - \frac{v x}{c^2} \right)$$
+                </div>
+                <p>For two events simultaneous in ground coordinates (\(\Delta t = 0\)) separated by distance \(\Delta x\):</p>
+                <div class="math-display-box">
+                    $$\Delta t' = t'_B - t'_A = -\frac{\gamma \beta \Delta x}{c}$$
+                </div>
+                <p>This time gap is real. Events that are simultaneous in one frame physically occur at different coordinate times in moving frames.</p>
+            </div>
+        </details>
+    </section>
+
+    <!-- Chapter 3: Length Contraction -->
+    <section class="scrolly-chapter" id="chapter-ch3" data-chapter="3">
+        <span class="chapter-num">Chapter 3</span>
+        <h2 class="chapter-title">Length Contraction</h2>
+
+        <!-- Stepwise instruction cards -->
+        <div class="chapter-prose">
+            <div class="ch3-step-prose" id="ch3-prose-step-1">
+                <p>
+                    <strong>Step 1: Establish the Rest Length.</strong> When the train is at rest relative to the ruler, measuring its length is simple: align both ends with the ruler. Here, our train has a rest length of \(L_0 = 200	ext{ m}\).
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                    <em>Prompt:</em> Accelerating the train will introduce length contraction. Click <strong>"Next Step"</strong> below to proceed to the measurement.
+                </p>
+            </div>
+            <div class="ch3-step-prose" id="ch3-prose-step-2" style="display:none;">
+                <p>
+                    <strong>Step 2: Measure from the Platform.</strong> To measure the length of a <em>moving</em> train, you must record the positions of both its front and rear <strong>at the exact same time</strong> in your frame.
+                </p>
+                <p>
+                    Set a speed below, then use the <strong>Time Scrubber</strong> to watch the train cross the detectors. Click <strong>"Take Simultaneous Measurement"</strong> to record the positions. Note the vertical flashes and the cyan/orange marks left behind.
+                </p>
+            </div>
+            <div class="ch3-step-prose" id="ch3-prose-step-3" style="display:none;">
+                <p>
+                    <strong>Step 3: View from the Train.</strong> Toggle the frame view below. Keep the exact same two measurement flashes, but look at them from the train's reference frame (where the train is stationary and the tracks/detectors rush backward).
+                </p>
+                <p>
+                    You will see that the two events are <strong>no longer simultaneous</strong>: the front detector flashed before the rear! Since they occurred at different times, they do not measure the train's length in the train frame.
+                </p>
+            </div>
+            <div class="ch3-step-prose" id="ch3-prose-step-4" style="display:none;">
+                <p>
+                    <strong>Step 4: The Tunnel Paradox.</strong> Now introduce a 200 m tunnel. In the Platform frame, the train is contracted (e.g. 121.6 m) and fits inside the tunnel, allowing both doors to close simultaneously.
+                </p>
+                <p>
+                    In the Train frame, the tunnel is contracted to 121.6 m, so the 200 m train cannot fit. Scrub through time to see how the doors close at different times (front door first, then rear door), resolving the paradox.
+                </p>
+            </div>
+        </div>
+
+        <div class="diagram-card">
+            <!-- Stepper Header -->
+            <div class="ch3-stepper-header">
+                <div class="ch3-step-indicator active" data-step="1">1. Rest</div>
+                <div class="ch3-step-indicator" data-step="2">2. Platform View</div>
+                <div class="ch3-step-indicator" data-step="3">3. Train View</div>
+                <div class="ch3-step-indicator" data-step="4">4. Paradox</div>
+            </div>
+
+            <div class="diagram-header">
+                <span id="ch3-diagram-title">Interactive Experiment: Train at Rest</span>
+                <span>Ch. 3</span>
+            </div>
+            <div class="diagram-canvas-wrapper" style="height: 380px;">
+                <canvas class="diagram-canvas" id="canvas-ch3"></canvas>
+            </div>
+
+            <div class="diagram-control-grid">
+                <!-- Left Column: Sliders -->
+                <div>
+                    <!-- Speed Slider (Hidden in Step 1) -->
+                    <div class="slider-box-wrapper" id="ch3-speed-slider-container" style="display:none; padding: 0.75rem; background: rgba(255,255,255,0.01); border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 0.75rem;">
+                        <label for="slider-ch3-beta" class="dial-label" style="display: flex; justify-content: space-between; color: var(--neon-amber);">
+                            <span>Train Speed (&beta;)</span>
+                            <span id="val-ch3-slider-beta" style="font-weight:bold;">0.794 c</span>
+                        </label>
+                        <input type="range" id="slider-ch3-beta" min="0" max="0.99" step="0.01" value="0.794" style="width: 100%; cursor: pointer; margin-top: 0.5rem;">
+                    </div>
+
+                    <!-- Time Scrubber (Hidden in Step 1) -->
+                    <div class="ch3-scrubber-container" id="ch3-scrubber-container" style="display:none; padding: 0.75rem; background: rgba(0,0,0,0.25); border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
+                        <label for="scrubber-ch3" class="dial-label" style="display: flex; justify-content: space-between; color: var(--neon-cyan);">
+                            <span id="lbl-ch3-time">Platform Time (t)</span>
+                            <span id="val-ch3-time" style="font-weight:bold; font-family: monospace;">0.00 &mu;s</span>
+                        </label>
+                        <input type="range" id="scrubber-ch3" min="0" max="1" step="0.002" value="0.5" style="width: 100%; cursor: pointer; margin-top: 0.5rem; margin-bottom: 0.25rem;">
+
+                        <!-- Scrubber Tick Marks -->
+                        <div class="scrubber-ticks" id="ch3-ticks-container">
+                            <!-- Injected by JS based on step/frame -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: HUD -->
+                <div class="hud-readout-card">
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Rest Length (L<sub>0</sub>)</span>
+                        <span class="hud-readout-value" style="color: #ffffff;">200.0 m</span>
+                    </div>
+                    <div class="hud-readout-row" id="hud-row-gamma" style="display:none;">
+                        <span class="hud-readout-label">Lorentz Factor (&gamma;)</span>
+                        <span class="hud-readout-value" id="val-ch3-gamma">1.644</span>
+                    </div>
+                    <div class="hud-readout-row" id="hud-row-measured" style="display:none;">
+                        <span class="hud-readout-label">Measured Length (L)</span>
+                        <span class="hud-readout-value" id="val-ch3-len">121.6 m</span>
+                    </div>
+                    <div class="hud-readout-row" id="hud-row-gap" style="display:none;">
+                        <span class="hud-readout-label" style="color: var(--neon-pink);">Simultaneity Gap (&Delta;t&prime;)</span>
+                        <span class="hud-readout-value" id="val-ch3-gap" style="color: var(--neon-pink);">0.87 &mu;s</span>
+                    </div>
+
+                    <!-- Collapsible Math -->
+                    <details class="hud-calculations-details" id="ch3-calculations-details" style="display:none; margin-top: 0.5rem;">
+                        <summary style="cursor: pointer; color: var(--neon-cyan); font-size: 0.78rem; outline: none; user-select: none;">Show Calculations</summary>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem; font-family: monospace;">
+                            <div>&gamma; = 1 / &radic;(1 - &beta;<sup>2</sup>) = <span id="calc-ch3-gamma">1.644</span></div>
+                            <div>L = L<sub>0</sub> / &gamma; = <span id="calc-ch3-len">121.6 m</span></div>
+                            <div>&Delta;t&prime; = &gamma;&beta;L<sub>0</sub> / c = <span id="calc-ch3-gap">0.87 &mu;s</span></div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Frame Toggle Row (Hidden in Step 1/2) -->
+            <div class="hud-action-btn-row" id="ch3-frame-toggle-row" style="display:none; margin-top: 1rem;">
+                <button class="hud-action-btn active" id="btn-ch3-frame-platform" style="border-left: 3px solid var(--neon-cyan);">Platform Frame</button>
+                <button class="hud-action-btn" id="btn-ch3-frame-train" style="border-left: 3px solid var(--neon-pink);">Train Frame</button>
+            </div>
+
+            <!-- Measurement Trigger (Only in Step 2/3) -->
+            <div class="hud-action-btn-row" id="ch3-measure-btn-row" style="display:none; margin-top: 0.75rem;">
+                <button class="hud-action-btn hud-action-btn-primary" id="btn-ch3-measure">Take Simultaneous Measurement</button>
+            </div>
+
+            <!-- Stepper Linear Controls -->
+            <div class="hud-action-btn-row" style="justify-content: space-between; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.75rem;">
+                <button class="hud-action-btn" id="btn-ch3-prev" disabled style="flex-grow: 0; min-width: 120px;">&larr; Previous</button>
+                <button class="hud-action-btn hud-action-btn-primary" id="btn-ch3-next" style="flex-grow: 0; min-width: 120px;">Next &rarr;</button>
+            </div>
+        </div>
+
+        <div class="quiz-options-group" id="quiz-form-ch3" style="display:none;">
+            <h4 style="margin-bottom: 0.5rem; color: #ffffff;">Concept Check:</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                In the train's frame (Step 3), the two measurement flashes are not simultaneous. Which flash happens first?
+            </p>
+            <label class="lab-question-option" id="opt-ch3-1">
+                <input type="radio" name="ch3-quiz" value="A">
+                <span><strong>A)</strong> The front flash (orange), because in the train frame the front detector/ruler mark reaches the train nose before the rear detector reaches the tail.</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch3-2">
+                <input type="radio" name="ch3-quiz" value="B">
+                <span><strong>B)</strong> The rear flash (cyan), because light from the rear takes longer to travel.</span>
+            </label>
+            <button class="hud-action-btn" id="btn-submit-q-ch3" style="max-width: 150px; margin-top: 0.5rem;">Submit</button>
+            <div class="feedback-banner" id="feedback-ch3"></div>
+        </div>
+
+        <!-- Embedded chapter styling -->
+        <style>
+            .ch3-stepper-header {
+                display: flex;
+                justify-content: space-between;
+                gap: 0.5rem;
+                margin-bottom: 1.25rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                padding-bottom: 0.75rem;
+            }
+            .ch3-step-indicator {
+                flex: 1;
+                text-align: center;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.7rem;
+                padding: 0.5rem 0.25rem;
+                border-radius: 4px;
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                color: var(--text-muted);
+                cursor: pointer;
+                transition: all 0.2s ease;
+                text-transform: uppercase;
+            }
+            .ch3-step-indicator.active {
+                background: rgba(0, 242, 254, 0.1);
+                border-color: var(--neon-cyan);
+                color: var(--neon-cyan);
+                font-weight: bold;
+                box-shadow: 0 0 8px rgba(0, 242, 254, 0.15);
+            }
+            .ch3-step-indicator.completed {
+                border-color: rgba(16, 185, 129, 0.3);
+                color: #a7f3d0;
+            }
+            .scrubber-ticks {
+                position: relative;
+                height: 16px;
+                margin-top: 2px;
+                margin-bottom: 4px;
+            }
+            .scrubber-tick {
+                position: absolute;
+                top: 0;
+                width: 2px;
+                height: 6px;
+                background: rgba(255, 255, 255, 0.35);
+                transform: translateX(-50%);
+                transition: left 0.15s ease-out;
+            }
+            .scrubber-tick-label {
+                position: absolute;
+                top: 7px;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.62rem;
+                transform: translateX(-50%);
+                white-space: nowrap;
+                transition: left 0.15s ease-out;
+            }
+        </style>
+
+        <details class="math-panel">
+            <summary class="math-panel-summary">Show the math &#9654;</summary>
+            <div class="math-panel-content">
+                <p>Length contraction is derived from setting the measurement interval \(\Delta t = 0\) in the platform frame, yielding:</p>
+                <div class="math-display-box">
+                    $$L = \frac{L_0}{\gamma} = L_0 \sqrt{1 - \beta^2}$$
+                </div>
+                <p>Applying the Lorentz transformation to the two measurement events (where the platform records both at \(t = 0\)):</p>
+                <div class="math-display-box">
+                    $$\Delta t' = t'_B - t'_A = \gamma\left(t_B - \frac{v x_B}{c^2}\right) - \gamma\left(t_A - \frac{v x_A}{c^2}\right)$$
+                </div>
+                <p>Since \(t_A = t_B = 0\) and \(x_B - x_A = L\), the time interval in the train frame is:</p>
+                <div class="math-display-box">
+                    $$\Delta t' = -\frac{\gamma v L}{c^2} = -\frac{\gamma \beta L_0}{\gamma c} = -\frac{\beta L_0}{c}$$
+                </div>
+                <p>This negative time gap means the front event occurs <strong>earlier</strong> than the rear event by \(\Delta t'\). Because the observers did not record the ends of the train simultaneously in its rest frame, the train frame sees this as an invalid measurement, resolving the apparent paradox.</p>
+            </div>
+        </details>
+    </section>
+    <!-- Chapter 4: Time Dilation -->
+    <section class="scrolly-chapter" id="chapter-ch4" data-chapter="4">
+        <span class="chapter-num">Chapter 4</span>
+        <h2 class="chapter-title">Time Dilation</h2>
+        <div class="chapter-prose">
+            <p>
+                Moving clocks run <strong>slow</strong>. Proper time (\(\tau\)), which is measured by a clock at rest relative to itself, is always shorter than the coordinate time (\(t\)) measured by stationary observers.
+            </p>
+            <p>
+                Click "Boost" to accelerate the rocket, then click "Play" to watch both clocks tick in real time. The moving rocket clock falls continuously behind the stationary clock on Earth.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Interactive Experiment: Diverging Clocks</span>
+                <span>Ch. 4</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas class="diagram-canvas" id="canvas-ch4"></canvas>
+            </div>
+
+            <div class="diagram-control-grid">
+                <div class="dial-box-wrapper">
+                    <canvas id="dial-ch4" width="120" height="120"></canvas>
+                    <span class="dial-label">Velocity dial (&beta;)</span>
+                </div>
+                <div class="hud-readout-card">
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Speed (&beta;)</span>
+                        <span class="hud-readout-value" id="val-ch4-beta">0.0000 c</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Lorentz Factor (&gamma;)</span>
+                        <span class="hud-readout-value" id="val-ch4-gamma">1.0000</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Earth Time (t)</span>
+                        <span class="hud-readout-value" id="val-ch4-earth-time">0.000 s</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Rocket Time (&tau;)</span>
+                        <span class="hud-readout-value" id="val-ch4-rocket-time">0.000 s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-action-btn-row">
+                <button class="hud-action-btn hud-action-btn-primary" id="btn-ch4-play">Play</button>
+                <button class="hud-action-btn" id="btn-ch4-boost">Boost Rocket</button>
+                <button class="hud-action-btn" id="btn-ch4-reset">Reset</button>
+            </div>
+        </div>
+
+        <div class="quiz-options-group" id="quiz-form-ch4">
+            <h4 style="margin-bottom: 0.5rem; color: #ffffff;">Concept Check:</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                Why does the rocket clock run slower?
+            </p>
+            <label class="lab-question-option" id="opt-ch4-1">
+                <input type="radio" name="ch4-quiz" value="A">
+                <span><strong>A)</strong> The physical clock mechanism is affected by the acceleration forces.</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch4-2">
+                <input type="radio" name="ch4-quiz" value="B">
+                <span><strong>B)</strong> The clock is fully functional, but it traces a geometrically shorter path through spacetime.</span>
+            </label>
+            <button class="hud-action-btn" id="btn-submit-q-ch4" style="max-width: 150px; margin-top: 0.5rem;">Submit</button>
+            <div class="feedback-banner" id="feedback-ch4"></div>
+        </div>
+
+        <details class="math-panel">
+            <summary class="math-panel-summary">Show the math &#9654;</summary>
+            <div class="math-panel-content">
+                <p>Time dilation is derived by evaluating the coordinate time intervals for tick events occurring at rest in the moving frame (\(\Delta x' = 0\)):</p>
+                <div class="math-display-box">
+                    $$\Delta t = \gamma \Delta\tau = \frac{\Delta\tau}{\sqrt{1 - \beta^2}}$$
+                </div>
+                <p>Because \(\gamma \ge 1\), the coordinate time elapsed on Earth is always greater than the proper time accumulated on the moving clock.</p>
+            </div>
+        </details>
+    </section>
+
+    <!-- Chapter 5: Relativistic Doppler & Aberration -->
+    <section class="scrolly-chapter" id="chapter-ch5" data-chapter="5">
+        <span class="chapter-num">Chapter 5</span>
+        <h2 class="chapter-title">Doppler Effect &amp; Aberration</h2>
+        <div class="chapter-prose">
+            <p>
+                When you move toward or away from a light source, its emitted wavelength shifts. Moving toward the star causes <strong>blueshift</strong> (frequency compression); moving away causes <strong>redshift</strong> (frequency stretching).
+            </p>
+            <p>
+                Furthermore, at relativistic speeds, the angles of incoming light rays are warped. This <strong>relativistic aberration</strong> compresses the entire starfield ahead of you into a narrow, bright cone of light. Drag the dial to set positive (receding) or negative (approaching) velocity, and watch the star color and starfield warp.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Interactive Experiment: Relativistic Visual Warps</span>
+                <span>Ch. 5</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas class="diagram-canvas" id="canvas-ch5"></canvas>
+            </div>
+
+            <div class="diagram-control-grid">
+                <div class="dial-box-wrapper">
+                    <canvas id="dial-ch5" width="120" height="120"></canvas>
+                    <span class="dial-label">Velocity dial (&beta;)</span>
+                </div>
+                <div class="hud-readout-card">
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Speed (&beta;)</span>
+                        <span class="hud-readout-value" id="val-ch5-beta">0.0000 c</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Emitted Wavelength</span>
+                        <span class="hud-readout-value">550 nm</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Observed Wavelength</span>
+                        <span class="hud-readout-value" id="val-ch5-lambda">550 nm</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-action-btn-row">
+                <button class="hud-action-btn" id="btn-ch5-transverse">Toggle Transverse Doppler Mode</button>
+            </div>
+        </div>
+
+        <div class="quiz-options-group" id="quiz-form-ch5">
+            <h4 style="margin-bottom: 0.5rem; color: #ffffff;">Concept Check:</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                In the classical Doppler effect, observing a source at a \(90^\circ\) angle (perpendicular to motion) produces zero frequency shift. What does relativistic Doppler predict at \(90^\circ\) (Transverse Doppler)?
+            </p>
+            <label class="lab-question-option" id="opt-ch5-1">
+                <input type="radio" name="ch5-quiz" value="A">
+                <span><strong>A)</strong> Zero shift, matching classical mechanics.</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch5-2">
+                <input type="radio" name="ch5-quiz" value="B">
+                <span><strong>B)</strong> A redshift (\(f_{\text{obs}} = f_0/\gamma\)) due entirely to time dilation.</span>
+            </label>
+            <button class="hud-action-btn" id="btn-submit-q-ch5" style="max-width: 150px; margin-top: 0.5rem;">Submit</button>
+            <div class="feedback-banner" id="feedback-ch5"></div>
+        </div>
+
+        <details class="math-panel">
+            <summary class="math-panel-summary">Show the math &#9654;</summary>
+            <div class="math-panel-content">
+                <p>The relativistic Doppler equation for radial motion is:</p>
+                <div class="math-display-box">
+                    $$\lambda_{\text{obs}} = \lambda_0 \sqrt{\frac{1 + \beta}{1 - \beta}}$$
+                </div>
+                <p>Relativistic aberration updates angles of incoming light rays via:</p>
+                <div class="math-display-box">
+                    $$\cos\theta' = \frac{\cos\theta - \beta}{1 - \beta\cos\theta}$$
+                </div>
+                <p>As \(\beta \to 1\), \(\theta' \to 0\), compressing the star field in the forward direction.</p>
+            </div>
+        </details>
+    </section>
+
+    <!-- Chapter 6: The Twin Paradox Race -->
+    <section class="scrolly-chapter" id="chapter-ch6" data-chapter="6">
+        <span class="chapter-num">Chapter 6</span>
+        <h2 class="chapter-title">The Twin Paradox</h2>
+        <div class="chapter-prose">
+            <p>
+                If Bob flies away in a rocket and returns, he is younger than Alice who stayed on Earth. Why is the situation asymmetric? Bob must accelerate to turn around and return, which breaks the symmetry of the inertial frames.
+            </p>
+            <p>
+                Configure the speeds for the outbound leg (\(\beta_1\)) and inbound leg (\(\beta_2\)), set the Earth time duration, and launch the rocket. You can pause the simulation at turnaround to inspect how Bob's plane of simultaneity sweeps across Earth's timeline.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Interactive Experiment: Path Integration in Spacetime</span>
+                <span>Ch. 6</span>
+            </div>
+            <div class="diagram-canvas-wrapper" style="height: 500px;">
+                <canvas class="diagram-canvas" id="canvas-ch6"></canvas>
+            </div>
+
+            <div class="diagram-control-grid">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="lab-slider-row">
+                        <span class="lab-slider-label">Outbound (&beta;<sub>1</sub>)</span>
+                        <input type="range" class="hud-slider" id="slide-ch6-beta1" min="0" max="0.99" step="0.01" value="0.80">
+                        <span class="lab-slider-value" id="val-ch6-beta1">0.80c</span>
+                    </div>
+                    <div class="lab-slider-row">
+                        <span class="lab-slider-label">Inbound (&beta;<sub>2</sub>)</span>
+                        <input type="range" class="hud-slider" id="slide-ch6-beta2" min="0" max="0.99" step="0.01" value="0.80">
+                        <span class="lab-slider-value" id="val-ch6-beta2">0.80c</span>
+                    </div>
+                    <div class="lab-slider-row">
+                        <span class="lab-slider-label">Duration (T)</span>
+                        <input type="range" class="hud-slider" id="slide-ch6-dur" min="10" max="100" step="5" value="40">
+                        <span class="lab-slider-value" id="val-ch6-dur">40 yrs</span>
+                    </div>
+                </div>
+                <div class="hud-readout-card">
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Alice's Age (&tau;<sub>Alice</sub>)</span>
+                        <span class="hud-readout-value" id="val-ch6-alice">40.0 yrs</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Bob's Age (&tau;<sub>Bob</sub>)</span>
+                        <span class="hud-readout-value" id="val-ch6-bob">0.0 yrs</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Age Difference</span>
+                        <span class="hud-readout-value" id="val-ch6-diff" style="color: var(--neon-amber);">0.0 yrs</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-action-btn-row">
+                <button class="hud-action-btn hud-action-btn-primary" id="btn-ch6-launch">Launch!</button>
+                <button class="hud-action-btn" id="btn-ch6-freeze">Pause at Turnaround</button>
+                <button class="hud-action-btn" id="btn-ch6-reset">Reset</button>
+            </div>
+        </div>
+
+        <div class="quiz-options-group" id="quiz-form-ch6">
+            <h4 style="margin-bottom: 0.5rem; color: #ffffff;">Concept Check:</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                Does the physical acceleration force at turnaround cause Bob to age slower?
+            </p>
+            <label class="lab-question-option" id="opt-ch6-1">
+                <input type="radio" name="ch6-quiz" value="A">
+                <span><strong>A)</strong> Yes, acceleration forces slow down biological cellular aging processes.</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch6-2">
+                <input type="radio" name="ch6-quiz" value="B">
+                <span><strong>B)</strong> No, Bob accumulates less proper time because his path length through spacetime is shorter.</span>
+            </label>
+            <button class="hud-action-btn" id="btn-submit-q-ch6" style="max-width: 150px; margin-top: 0.5rem;">Submit</button>
+            <div class="feedback-banner" id="feedback-ch6"></div>
+        </div>
+
+        <details class="math-panel">
+            <summary class="math-panel-summary">Show the math &#9654;</summary>
+            <div class="math-panel-content">
+                <p>The proper time accumulated along Bob's path is calculated using the Minkowski metric integral:</p>
+                <div class="math-display-box">
+                    $$\tau = \int_0^T \sqrt{1 - \beta(t)^2}\, dt$$
+                </div>
+                <p>For symmetric outbound and return velocities \(\beta\), this resolves simply to:</p>
+                <div class="math-display-box">
+                    $$\tau_{\text{Bob}} = T \sqrt{1 - \beta^2} = \frac{T}{\gamma} < T = \tau_{\text{Alice}}$$
+                </div>
+                <p>Bob's path is a bent curve in spacetime, which is geometrically shorter than Alice's straight path.</p>
+            </div>
+        </details>
+    </section>
+
+    <!-- Chapter 7: Spacetime Diagram (Minkowski) -->
+    <section class="scrolly-chapter" id="chapter-ch7" data-chapter="7">
+        <span class="chapter-num">Chapter 7</span>
+        <h2 class="chapter-title">The Spacetime Diagram</h2>
+        <div class="chapter-prose">
+            <p>
+                A Minkowski diagram maps position \(x\) horizontally and time \(ct\) vertically. In this geometry, the speed of light represents \(45^\circ\) diagonal lines.
+            </p>
+            <p>
+                Click on the diagram to place events. Once placed, select two events to view their spacetime separation. Drag the boost slider to transform coordinates. Notice how events slide along the gold <strong>hyperbolas of constant interval</strong>, proving that the spacetime interval \(s^2\) is invariant in all frames.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Interactive Experiment: Minkowski Geometry Sandbox</span>
+                <span>Ch. 7</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas class="diagram-canvas" id="canvas-ch7"></canvas>
+            </div>
+            <p id="ch7-first-use-hint" style="text-align: center; font-size: 0.8rem; color: rgba(255, 200, 0, 0.7); margin-top: 0.5rem; transition: opacity 1s ease;">
+                &larr; Drag the &beta; slider &middot; Watch \(s^2\) stay locked as events slide &middot; Event A stays fixed at the origin
+            </p>
+
+            <div class="diagram-control-grid">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="lab-slider-row">
+                        <span class="lab-slider-label">Boost Frame (&beta;)</span>
+                        <input type="range" class="hud-slider" id="slide-ch7-beta" min="-0.85" max="0.85" step="0.01" value="0.00">
+                        <span class="lab-slider-value" id="val-ch7-beta">0.00c</span>
+                    </div>
+                    <div class="hud-action-btn-row" style="margin-top: 0.5rem;">
+                        <button class="hud-action-btn" id="btn-ch7-add-event">+ Add Event</button>
+                    </div>
+                </div>
+                <div class="hud-readout-card">
+                    <!-- Hero Row: Invariant Interval -->
+                    <div class="hud-readout-row" style="flex-direction: column; align-items: flex-start; gap: 0.25rem; margin-bottom: 0.5rem;">
+                        <span class="hud-readout-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Interval (s²)</span>
+                        <div style="display: flex; align-items: baseline; gap: 0.5rem; width: 100%;">
+                            <span class="hud-readout-value" id="val-ch7-s2" style="color: var(--neon-amber); font-size: 1.4rem; font-weight: bold; line-height: 1;">—</span>
+                            <span id="val-ch7-invariant-label" style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 0.05em; display: none;">↑ Invariant under all boosts</span>
+                        </div>
+                    </div>
+
+                    <!-- Separation Type Row with Badge -->
+                    <div class="hud-readout-row" style="align-items: center; margin-bottom: 0.5rem;">
+                        <span class="hud-readout-label" style="font-size: 0.75rem;">Separation Type</span>
+                        <span class="hud-readout-value" id="val-ch7-type" style="font-size: 0.85rem; font-weight: bold; padding: 0.15rem 0.4rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.3rem;">—</span>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); margin: 0.5rem 0; padding-top: 0.5rem;"></div>
+
+                    <!-- Muted Frame-Dependent Rows -->
+                    <div class="hud-readout-row" style="opacity: 0.6;">
+                        <span class="hud-readout-label">Coordinate &Delta;x <span style="font-size: 0.65rem; color: rgba(255,255,255,0.45);">(frame-dependent)</span></span>
+                        <span class="hud-readout-value" id="val-ch7-dx" style="font-size: 0.85rem;">—</span>
+                    </div>
+                    <div class="hud-readout-row" style="opacity: 0.6;">
+                        <span class="hud-readout-label">Coordinate &Delta;t <span style="font-size: 0.65rem; color: rgba(255,255,255,0.45);">(frame-dependent)</span></span>
+                        <span class="hud-readout-value" id="val-ch7-dt" style="font-size: 0.85rem;">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-action-btn-row">
+                <button class="hud-action-btn" id="btn-ch7-clear">Clear Sandbox</button>
+            </div>
+        </div>
+
+        <div class="quiz-options-group" id="quiz-form-ch7">
+            <h4 style="margin-bottom: 0.5rem; color: #ffffff;">Concept Check:</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                If two events have a spacelike separation (\(s^2 < 0\)), what does this mean causally?
+            </p>
+            <label class="lab-question-option" id="opt-ch7-1">
+                <input type="radio" name="ch7-quiz" value="A">
+                <span><strong>A)</strong> They can influence each other since gravity waves travel instantaneously.</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch7-2">
+                <input type="radio" name="ch7-quiz" value="B">
+                <span><strong>B)</strong> They cannot be causally connected; no light signal could connect them.</span>
+            </label>
+            <button class="hud-action-btn" id="btn-submit-q-ch7" style="max-width: 150px; margin-top: 0.5rem;">Submit</button>
+            <div class="feedback-banner" id="feedback-ch7"></div>
+        </div>
+
+        <details class="math-panel">
+            <summary class="math-panel-summary">Show the math &#9654;</summary>
+            <div class="math-panel-content">
+                <p>The spacetime interval $s^2$ between two events is defined as:</p>
+                <div class="math-display-box">
+                    $$s^2 = c^2 \Delta t^2 - \Delta x^2$$
+                </div>
+                <p>Applying a Lorentz boost rotates the coordinates hyperbolically. The coordinates transform, but the metric interval is conserved: $s^2 = s'^2$.</p>
+                <p>Three separation domains exist:</p>
+                <ul>
+                    <li><strong>Timelike (\(s^2 > 0\)):</strong> Causal connection possible. A frame exists where they occur at the same place.</li>
+                    <li><strong>Lightlike (\(s^2 = 0\)):</strong> Connectable only by light.</li>
+                    <li><strong>Spacelike (\(s^2 < 0\)):</strong> No connection possible. A frame exists where they occur simultaneously.</li>
+                </ul>
+            </div>
+        </details>
+    </section>
+
+    <!-- Chapter 8: The Speed Limit -->
+    <section class="scrolly-chapter" id="chapter-ch8" data-chapter="8">
+        <span class="chapter-num">Chapter 8</span>
+        <h2 class="chapter-title">The Cosmic Speed Limit</h2>
+        <div class="chapter-prose">
+            <p>
+                Why can't you accelerate past the speed of light? It is not because of a mechanical block, but because the energy required to accelerate further diverges to infinity as \(v \to c\).
+            </p>
+            <p>
+                Click and hold "Apply Thrust" to apply constant proper acceleration (\(1g\)). Watch the graphs below: coordinate velocity asymptotes to \(1.00c\), coordinate acceleration plummets to zero, and kinetic energy explodes exponentially.
+            </p>
+        </div>
+
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <span>Interactive Experiment: Constant proper thrust</span>
+                <span>Ch. 8</span>
+            </div>
+            <div class="diagram-canvas-wrapper">
+                <canvas class="diagram-canvas" id="canvas-ch8"></canvas>
+            </div>
+
+            <div class="diagram-control-grid">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="hud-action-btn-row">
+                        <button class="hud-action-btn hud-action-btn-primary" id="btn-ch8-thrust" style="height: 60px;">Apply Thrust (Hold)</button>
+                    </div>
+                </div>
+                <div class="hud-readout-card">
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Time Elapsed</span>
+                        <span class="hud-readout-value" id="val-ch8-time">0.00 yrs</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Velocity (v)</span>
+                        <span class="hud-readout-value" id="val-ch8-v">0.000 c</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Coord Accel (a)</span>
+                        <span class="hud-readout-value" id="val-ch8-a">1.00g</span>
+                    </div>
+                    <div class="hud-readout-row">
+                        <span class="hud-readout-label">Kinetic Energy (K)</span>
+                        <span class="hud-readout-value" id="val-ch8-ke" style="color: var(--neon-magenta);">0.0000 J</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-action-btn-row">
+                <button class="hud-action-btn" id="btn-ch8-reset">Reset Mission</button>
+            </div>
+        </div>
+
+        <div class="quiz-options-group" id="quiz-form-ch8">
+            <h4 style="margin-bottom: 0.5rem; color: #ffffff;">Concept Check:</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                Why does coordinate acceleration drop to zero even though proper engine thrust remains constant?
+            </p>
+            <label class="lab-question-option" id="opt-ch8-1">
+                <input type="radio" name="ch8-quiz" value="A">
+                <span><strong>A)</strong> The ship's physical rest mass is increasing.</span>
+            </label>
+            <label class="lab-question-option" id="opt-ch8-2">
+                <input type="radio" name="ch8-quiz" value="B">
+                <span><strong>B)</strong> The coordinate acceleration is suppressed by \(\gamma^3\) relative to proper acceleration.</span>
+            </label>
+            <button class="hud-action-btn" id="btn-submit-q-ch8" style="max-width: 150px; margin-top: 0.5rem;">Submit</button>
+            <div class="feedback-banner" id="feedback-ch8"></div>
+        </div>
+
+        <details class="math-panel">
+            <summary class="math-panel-summary">Show the math &#9654;</summary>
+            <div class="math-panel-content">
+                <p>Applying constant proper acceleration $\alpha$ results in a coordinate velocity profile of:</p>
+                <div class="math-display-box">
+                    $$v(t) = \frac{\alpha t}{\sqrt{1 + \left( \frac{\alpha t}{c} \right)^2}}$$
+                </div>
+                <p>As $t \to \infty$, $v(t) \to c$, showing that the velocity asymptotes but never crosses $c$. The coordinate acceleration falls as:</p>
+                <div class="math-display-box">
+                    $$a(t) = \frac{\alpha}{\gamma^3}$$
+                </div>
+                <p>Kinetic energy diverges exponentially:</p>
+                <div class="math-display-box">
+                    $$K = (\gamma - 1)mc^2$$
+                </div>
+                <p>Because \(\gamma \to \infty\) as \(v \to c\), the energy cost of accelerating further becomes infinite.</p>
+            </div>
+        </details>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include MathJax for LaTeX equations -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+<!-- Consolidated Special Relativity Lab JavaScript Engine -->
+<script src="{{ url_for('static', filename='js/space_physics/special_relativity.js') }}"></script>
+{% endblock %}

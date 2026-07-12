@@ -29,6 +29,13 @@ PHYSICS_METADATA = {
         "icon": "🚄",
         "status": "active",
     },
+    "special-relativity": {
+        "title": "Special Relativity",
+        "category": "Relativity",
+        "description": "How the speed of light breaks classical physics, warps space and time, and bends the geometry of spacetime.",
+        "icon": "⚡",
+        "status": "active",
+    },
     "expanding-universe": {
         "title": "Expanding Universe",
         "category": "Cosmology",
