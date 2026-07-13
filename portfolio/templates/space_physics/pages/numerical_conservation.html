@@ -1,0 +1,822 @@
+{% extends "base.html" %}
+
+{% block title %}{{ metadata.title }} | Space & Physics{% endblock %}
+{% block meta_description %}{{ metadata.description }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<style>
+    /* Split-Pane Sticky Layout */
+    .scrolly-layout {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 3.5rem;
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 6rem 1.5rem;
+    }
+
+    /* Left pane (Sticky visualizer and HUD panels) */
+    .scrolly-visuals {
+        position: sticky;
+        top: 6rem;
+        height: calc(100vh - 10rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        justify-content: center;
+    }
+
+    .canvas-sticky-wrapper {
+        width: 100%;
+        aspect-ratio: 16 / 11;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: #020205;
+        box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.5),
+            inset 0 0 30px rgba(0, 0, 0, 0.9);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+
+    #physics-canvas {
+        height: 52%;
+        width: 100%;
+        display: block;
+        cursor: pointer;
+    }
+
+    #charts-canvas {
+        height: 48%;
+        width: 100%;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: block;
+    }
+
+    /* Instability warning banner overlay */
+    .sim-alert-overlay {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        right: 0.75rem;
+        background: rgba(239, 68, 68, 0.92);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        border-radius: 6px;
+        color: #ffffff;
+        padding: 0.65rem 1rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        display: none;
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        line-height: 1.4;
+    }
+
+    /* Playback Toolbar */
+    .sim-playbar {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        background: rgba(14, 16, 23, 0.45);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* HUD Controls */
+    .hud-controls-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background: rgba(14, 16, 23, 0.45);
+        padding: 1.25rem;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .hud-subgroup {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hud-subgroup-title {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--neon-amber);
+        margin-bottom: 0.25rem;
+    }
+
+    /* Sliders and radio selectors styling */
+    .lab-slider-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 45px;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .hud-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        outline: none;
+        transition: background 0.2s;
+    }
+
+    .hud-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--neon-cyan);
+        cursor: pointer;
+        box-shadow: 0 0 8px var(--neon-cyan-glow);
+        transition: transform 0.1s ease;
+    }
+
+    .hud-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.3);
+    }
+
+    .hud-slider:focus-visible {
+        outline: 2px solid var(--neon-cyan);
+        outline-offset: 6px;
+        border-radius: 2px;
+    }
+
+    .hud-slider:focus-visible::-webkit-slider-thumb {
+        transform: scale(1.4);
+        box-shadow: 0 0 12px var(--neon-cyan-glow);
+    }
+
+    .lab-slider-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .lab-slider-value {
+        font-size: 0.8rem;
+        font-family: var(--font-mono), monospace;
+        color: var(--neon-cyan);
+        text-align: right;
+    }
+
+    /* Radio inputs */
+    .solver-fieldset {
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .solver-radio-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .radio-label:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .radio-label input[type="radio"] {
+        cursor: pointer;
+    }
+
+    /* Right pane (Scrolling narrative text column) */
+    .scrolly-narrative {
+        padding-bottom: 30vh;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+        margin-bottom: 2rem;
+    }
+    .back-link:hover {
+        color: var(--neon-cyan);
+    }
+
+    .header-group {
+        margin-bottom: 3.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 1.5rem;
+    }
+
+    .subtitle-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-amber);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .page-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 2.25rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .page-intro {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .scrolly-chapter {
+        min-height: 60vh;
+        padding: 4rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .scrolly-chapter:last-of-type {
+        border-bottom: none;
+    }
+
+    .chapter-num {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .chapter-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.65rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .chapter-prose {
+        color: var(--text-muted);
+        font-size: 0.98rem;
+        line-height: 1.625;
+    }
+    .chapter-prose p {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Math Card callout */
+    .physics-math-card {
+        background: rgba(99, 102, 241, 0.03);
+        border: 1px dashed rgba(99, 102, 241, 0.15);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin: 1.5rem 0;
+        font-size: 1.02rem;
+        color: #ffffff;
+        text-align: center;
+    }
+
+    /* Quiz widgets */
+    .quiz-container {
+        margin-top: 1.5rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .quiz-question-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .lab-question-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .lab-question-option:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .lab-question-option input[type="radio"] {
+        margin-top: 0.25rem;
+        cursor: pointer;
+    }
+
+    .lab-question-option.correct {
+        background: rgba(16, 185, 129, 0.08) !important;
+        border-color: rgba(16, 185, 129, 0.3) !important;
+        color: #a7f3d0;
+    }
+
+    .lab-question-option.incorrect {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+        color: #fca5a5;
+    }
+
+    .lab-feedback-banner {
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: none;
+        line-height: 1.5;
+    }
+
+    .lab-feedback-banner.success {
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #34d399;
+    }
+
+    .lab-feedback-banner.error {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+    }
+
+    /* Screen reader offscreen helper */
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Responsive mobile formatting override */
+    @media (max-width: 900px) {
+        .scrolly-layout {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .scrolly-visuals {
+            position: sticky;
+            top: 0;
+            height: 52vh;
+            z-index: 50;
+            background: var(--space-bg);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            padding-bottom: 0.5rem;
+            justify-content: flex-start;
+        }
+
+        .scrolly-chapter {
+            min-height: 40vh;
+            padding: 2rem 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<div class="scrolly-layout">
+    <!-- Sticky Visual Container (Left on desktop, Top on mobile) -->
+    <div class="scrolly-visuals">
+        <div class="canvas-sticky-wrapper">
+            <div id="instability-alert" class="sim-alert-overlay"></div>
+            <canvas id="physics-canvas" aria-label="Physics animation: mass-spring harmonic oscillator"></canvas>
+            <canvas id="charts-canvas" aria-label="Numerical tracking chart: scrolling energy graph or phase space plot"></canvas>
+        </div>
+
+        <!-- Playback toolbar -->
+        <div class="sim-playbar" role="toolbar" aria-label="Simulation playback controls">
+            <button id="btn-play-pause" class="lab-btn" aria-label="Play/Pause simulation">Play</button>
+            <button id="btn-step" class="lab-btn" aria-label="Step simulation forward one frame">Step</button>
+            <button id="btn-reset" class="lab-btn" aria-label="Reset simulation to start">Reset</button>
+            <button id="btn-chart-toggle" class="lab-btn lab-btn-secondary" aria-label="Toggle chart between Energy over time and Phase Space">Phase Space</button>
+        </div>
+
+        <!-- Parameters Adjuster HUD Panel -->
+        <div id="hud-control-panel" class="hud-controls-column" aria-label="Control settings">
+            <!-- Step Size Slider -->
+            <div id="dt-slider-row" class="hud-subgroup" style="display: none;">
+                <span class="hud-subgroup-title">Simulation Parameters</span>
+                <div class="lab-slider-row">
+                    <label for="slider-dt" class="lab-slider-label">Step Size ($\Delta t$):</label>
+                    <input type="range" id="slider-dt" class="hud-slider" min="0.05" max="2.5" step="0.05" value="0.1" aria-valuemin="0.05" aria-valuemax="2.5" aria-valuenow="0.1">
+                    <span id="slider-dt-val" class="lab-slider-value">0.10s</span>
+                </div>
+            </div>
+
+            <!-- Solver Selection Radio buttons -->
+            <fieldset id="solver-selectors-fieldset" class="solver-fieldset" style="display: none;" aria-describedby="solver-desc">
+                <legend class="visually-hidden">Choose numerical integrator solver</legend>
+                <div id="solver-desc" class="hud-subgroup-title">Integrator Solver</div>
+                <div class="solver-radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="solver" value="forwardEuler" checked>
+                        <span>Forward Euler</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="solver" value="eulerCromer">
+                        <span>Euler-Cromer</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="solver" value="velocityVerlet">
+                        <span>Velocity Verlet</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="solver" value="rk4">
+                        <span>RK4</span>
+                    </label>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    <!-- Narrative Scrolling Column -->
+    <div class="scrolly-narrative">
+        <a href="/space-physics/" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to Space &amp; Physics
+        </a>
+
+        <div class="header-group">
+            <span class="subtitle-badge">Connective Energy Pathway | Part 4</span>
+            <h1 class="page-title">{{ metadata.title }}</h1>
+            <p class="page-intro">{{ metadata.description }}</p>
+        </div>
+
+        <!-- Chapter 1 -->
+        <section class="scrolly-chapter" data-step="1">
+            <span class="chapter-num">Chapter 1</span>
+            <h2 class="chapter-title">The Exploding Spring</h2>
+            <div class="chapter-prose">
+                <p>
+                    When we simulate physics on a computer, the computer does not solve differential equations continuously. Instead, it approximates motion by jumping forward in discrete steps of time ($\Delta t$).
+                </p>
+                <p>
+                    Observe this simple mass attached to a spring ($F = -kx$). It is currently being simulated using the standard **Forward Euler** method.
+                </p>
+                <p>
+                    Click **Play**. Watch the particle's movement. It swings wider and wider, and the red line on the energy graph curves upward exponentially.
+                </p>
+                <p>
+                    Without any external forces or energy inputs, the computer is creating energy from nothing, violating the conservation of energy!
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 2 -->
+        <section class="scrolly-chapter" data-step="2">
+            <span class="chapter-num">Chapter 2</span>
+            <h2 class="chapter-title">Step Size &amp; Drift</h2>
+            <div class="chapter-prose">
+                <p>
+                    A **Step Size Slider ($\Delta t$)** has been unlocked on the left.
+                </p>
+                <p>
+                    Experiment with this slider. If you make the step size larger, the spring explodes almost immediately, forcing the guardrails to halt the simulation.
+                </p>
+                <p>
+                    If you make the step size extremely small, the spring still explodes, but it takes longer. This reveals a key insight: the energy leak is a fundamental property of the algorithm, not just a minor rounding error.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 3 -->
+        <section class="scrolly-chapter" data-step="3">
+            <span class="chapter-num">Chapter 3</span>
+            <h2 class="chapter-title">The Geometry of the Overshoot</h2>
+            <div class="chapter-prose">
+                <p>
+                    Why does Forward Euler fail? The mathematics explains it exactly.
+                </p>
+                <p>
+                    At each step, Forward Euler uses the velocity and force at the *beginning* of the step to project the state forward:
+                    <div class="physics-math-card">
+                        $$x_{n+1} = x_n + v_n \Delta t$$
+                        $$v_{n+1} = v_n - \omega^2 x_n \Delta t$$
+                    </div>
+                </p>
+                <p>
+                    For a spring oscillator, calculating the total energy $E_{n+1}$ at the next step reveals:
+                    <div class="physics-math-card">
+                        $$E_{n+1} = E_n (1 + \omega^2 \Delta t^2)$$
+                    </div>
+                </p>
+                <p>
+                    Because $(1 + \omega^2 \Delta t^2) > 1$ for any step size, energy **must grow** at every step.
+                </p>
+                <p>
+                    Geometrically, the solver projects the state along a tangent vector in phase space, stepping outward from the constant energy ellipse.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 4 -->
+        <section class="scrolly-chapter" data-step="4">
+            <span class="chapter-num">Chapter 4</span>
+            <h2 class="chapter-title">Euler-Cromer &amp; Symplectic Fix</h2>
+            <div class="chapter-prose">
+                <p>
+                    We can fix this by updating the velocity first, and then using the *new* velocity to update the position:
+                    <div class="physics-math-card">
+                        $$v_{n+1} = v_n - \omega^2 x_n \Delta t$$
+                        $$x_{n+1} = x_n + v_{n+1} \Delta t$$
+                    </div>
+                </p>
+                <p>
+                    Select **Euler-Cromer** in the solver menu on the left.
+                </p>
+                <p>
+                    Look at the energy graph. It is no longer exploding! The blue line wiggles periodically, but does not drift upward over time.
+                </p>
+                <p>
+                    Euler-Cromer is a **symplectic (area-preserving)** integrator. It conserves a modified "shadow energy" exactly:
+                    <div class="physics-math-card">
+                        $$E_{\text{shadow}} = E_{\text{mech}} - \frac{1}{2} k \Delta t x v$$
+                    </div>
+                </p>
+                <p>
+                    The wiggles in mechanical energy correspond to the final cross-term oscillating as the particle slides back and forth.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 5 -->
+        <section class="scrolly-chapter" data-step="5">
+            <span class="chapter-num">Chapter 5</span>
+            <h2 class="chapter-title">Verlet vs. RK4 (The Long-Term Trap)</h2>
+            <div class="chapter-prose">
+                <p>
+                    Let's compare two advanced solvers: **Velocity Verlet** (glowing green) and **Runge-Kutta 4 (RK4)** (purple).
+                </p>
+                <p>
+                    Velocity Verlet is a second-order symplectic solver. Like Euler-Cromer, it preserves phase-space area, but its energy wiggles are much smaller (scaling as $\mathcal{O}(\Delta t^2)$).
+                </p>
+                <p>
+                    RK4 is a fourth-order explicit solver. It is incredibly accurate in the short term, but because it is non-symplectic, it slowly bleeds energy over time.
+                </p>
+                <p>
+                    Click **"Phase Space"** below the canvas to compare them. Velocity Verlet draws a perfectly closed ellipse, while RK4 slowly spirals inward (artificial damping).
+                </p>
+                <p>
+                    <strong>The Lesson:</strong> High short-term accuracy does not guarantee long-term stability. For planetary orbits or molecular bonds, symplectic integrators are essential.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 6 -->
+        <section class="scrolly-chapter" data-step="6">
+            <span class="chapter-num">Chapter 6</span>
+            <h2 class="chapter-title">Concept Check</h2>
+            <div class="chapter-prose">
+                <p>Let's check your understanding of numerical physics solvers.</p>
+
+                <div class="quiz-container" id="check-quiz">
+                    <!-- Q1 -->
+                    <div class="quiz-q-group" id="q-group-1">
+                        <h4 class="quiz-question-title">Question 1 (Model vs. Implementation):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            A physical mass-spring system without friction is mathematically conservative (energy stays constant). If a simulation shows the energy growing, what is the cause?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-1" id="q1-o1">
+                            <label for="q1-o1" style="font-size: 0.88rem; cursor: pointer;">The physical model is incorrect; ideal springs naturally create energy.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-1" id="q1-o2">
+                            <label for="q1-o2" style="font-size: 0.88rem; cursor: pointer;">The numerical algorithm introduces approximation errors that violate the continuous model's conservation laws.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-1" id="q1-o3">
+                            <label for="q1-o3" style="font-size: 0.88rem; cursor: pointer;">The computer's processor is overheating, leading to floating-point rounding errors.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q1-feedback"></div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="quiz-q-group" id="q-group-2" style="margin-top: 1.5rem;">
+                        <h4 class="quiz-question-title">Question 2 (Forward Euler overshoot):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            Why does the Forward Euler method cause the spring oscillator's energy to grow exponentially?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-2" id="q2-o1">
+                            <label for="q2-o1" style="font-size: 0.88rem; cursor: pointer;">It projects along the tangent vector of the trajectory, stepping outside the constant energy boundary at each step.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-2" id="q2-o2">
+                            <label for="q2-o2" style="font-size: 0.88rem; cursor: pointer;">It rounds all values up to the nearest integer at each step.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-2" id="q2-o3">
+                            <label for="q2-o3" style="font-size: 0.88rem; cursor: pointer;">It assumes the spring stiffness increases with speed.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q2-feedback"></div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="quiz-q-group" id="q-group-3" style="margin-top: 1.5rem;">
+                        <h4 class="quiz-question-title">Question 3 (Symplectic wiggles):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            In the Euler-Cromer simulation, you observe the total energy oscillating slightly over each cycle. Does this mean the solver is broken or unstable?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-3" id="q3-o1">
+                            <label for="q3-o1" style="font-size: 0.88rem; cursor: pointer;">Yes, any variation in energy means the system will eventually explode.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-3" id="q3-o2">
+                            <label for="q3-o2" style="font-size: 0.88rem; cursor: pointer;">No, it is stable because it conserves a modified shadow energy exactly; the true energy fluctuations stay strictly bounded.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-3" id="q3-o3">
+                            <label for="q3-o3" style="font-size: 0.88rem; cursor: pointer;">Yes, it means the step size is too small and is causing rounding errors.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q3-feedback"></div>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="quiz-q-group" id="q-group-4" style="margin-top: 1.5rem;">
+                        <h4 class="quiz-question-title">Question 4 (Solver selection):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            If you are simulating a planet orbiting a star for millions of orbits, which solver is the most appropriate choice?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-4" id="q4-o1">
+                            <label for="q4-o1" style="font-size: 0.88rem; cursor: pointer;">Forward Euler, because it is the fastest to calculate per step.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-4" id="q4-o2">
+                            <label for="q4-o2" style="font-size: 0.88rem; cursor: pointer;">Runge-Kutta 4 (RK4), because its fourth-order accuracy means it has zero drift over long times.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-4" id="q4-o3">
+                            <label for="q4-o3" style="font-size: 0.88rem; cursor: pointer;">Velocity Verlet, because it is symplectic and guarantees bounded energy error without long-term drift.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q4-feedback"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Screen Reader live live announcer -->
+<div id="sim-live-announcer" class="visually-hidden" aria-live="polite"></div>
+
+<!-- Offscreen Keyboard Sliders -->
+<div class="visually-hidden">
+    <h2>Accessibility Range Controls</h2>
+    <label for="acc-dt-slider">Simulation Step Size (seconds):</label>
+    <input type="range" id="acc-dt-slider" min="0.05" max="2.5" step="0.05" value="0.1">
+    <label for="acc-particle-slider">Mass Position (meters):</label>
+    <input type="range" id="acc-particle-slider" min="-10" max="10" step="0.2" value="3.5">
+</div>
+
+<!-- Offscreen Live Data Table -->
+<div class="visually-hidden">
+    <table id="accessible-data-table" summary="Live numeric readouts of the running physics animation with solvers">
+        <caption>Current Simulation State Variables</caption>
+        <thead>
+            <tr>
+                <th scope="col">Variable</th>
+                <th scope="col">Value</th>
+                <th scope="col">Unit</th>
+            </tr>
+        </thead>
+        <tbody id="accessible-data-body">
+            <tr><td>Time</td><td id="val-time">0.0</td><td>seconds</td></tr>
+            <tr><td>Position (x)</td><td id="val-x">0.00</td><td>meters</td></tr>
+            <tr><td>Velocity (v)</td><td id="val-v">0.00</td><td>meters/second</td></tr>
+            <tr><td>Kinetic Energy (K)</td><td id="val-ke">0.00</td><td>joules</td></tr>
+            <tr><td>Potential Energy (U)</td><td id="val-pe">0.00</td><td>joules</td></tr>
+            <tr><td>Total Energy (E)</td><td id="val-te">0.00</td><td>joules</td></tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- MathJax Configuration for inline math -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            processEscapes: true
+        }
+    };
+</script>
+<!-- MathJax for rendering equations in scrollytelling -->
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="module" src="{{ url_for('static', filename='js/space_physics/numerical_conservation.js') }}"></script>
+
+<script>
+    // Quiz client validation logic
+    document.addEventListener("DOMContentLoaded", () => {
+        setupConceptCheckQuiz();
+    });
+
+    function setupConceptCheckQuiz() {
+        // Q1
+        setupQHandler('q-group-1', 'q1-feedback', '2',
+            "Correct! Continuous systems conserve energy, but representing them discretely on a computer introduces truncation and approximation errors that can create or destroy energy.",
+            "Incorrect. Continuous models are mathematically conservative; the growth is a computational artifact of the discretization algorithm.");
+
+        // Q2
+        setupQHandler('q-group-2', 'q2-feedback', '1',
+            "Correct! At each step, Forward Euler projects along the tangent vector of the trajectory, which points outward from the constant-energy ellipse in phase space, causing energy to grow by a factor of (1 + w^2 * dt^2) per step.",
+            "Incorrect. The error is geometric and analytical: projecting along the tangent vector always steps outside the closed energy bounds.");
+
+        // Q3
+        setupQHandler('q-group-3', 'q3-feedback', '2',
+            "Correct! Euler-Cromer is symplectic (area-preserving) and conserves a modified shadow energy exactly. The wiggles are periodic fluctuations around this shadow energy and never grow.",
+            "Incorrect. The energy wiggles do not grow over time; they are bounded periodic fluctuations around a shadow invariant.");
+
+        // Q4
+        setupQHandler('q-group-4', 'q4-feedback', '3',
+            "Correct! Planetary orbits require long-term stability. Symplectic solvers like Velocity Verlet preserve the phase-space geometry and keep energy error strictly bounded without drift.",
+            "Incorrect. While RK4 has high short-term accuracy, it is non-symplectic and slowly bleeds energy over millions of steps, causing the planet to spiral into the star.");
+    }
+
+    function setupQHandler(groupId, feedbackId, correctAns, successMsg, failMsg) {
+        const group = document.getElementById(groupId);
+        const feedback = document.getElementById(feedbackId);
+        const options = group.querySelectorAll('.lab-question-option');
+
+        options.forEach(opt => {
+            opt.addEventListener('click', () => {
+                const choice = opt.getAttribute('data-ans');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'incorrect');
+                    o.querySelector('input').checked = false;
+                });
+
+                opt.querySelector('input').checked = true;
+                feedback.style.display = 'block';
+
+                if (choice === correctAns) {
+                    opt.classList.add('correct');
+                    feedback.className = 'lab-feedback-banner success';
+                    feedback.textContent = successMsg;
+                } else {
+                    opt.classList.add('incorrect');
+                    feedback.className = 'lab-feedback-banner error';
+                    feedback.textContent = failMsg;
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

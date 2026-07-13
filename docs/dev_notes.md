@@ -39,6 +39,13 @@ This log is used to brainstorm new features, track project updates, and maintain
   - **Sticky Bottom bar**: Global track display that polls currently playing status, hides BPM values prior to guess submission, and supports quick inline guesses (input + Enter).
   - **Instant Score & Persistence**: Dynamically reveals rating badges (e.g. Perfect, Excellent) and true BPM inline, populating detail modals, and synchronizing guess attempts over page loads/refresh checks.
 
+### 5. Space & Physics Explorable Explanations
+- **Goal**: Help users develop intuitive mental models of physics and cosmology through inline dynamic simulations, real-time graphs, and scrollytelling.
+- **Features**:
+  - **4 Interactive Modules**: Built 1D Particle Dynamics, Galilean Relativity, Expanding Space Cosmology, and the **Connective Energy Pathway** (Coaster exchange, Double-well potential landscapes, Coulomb-projected friction, and numerical conservation).
+  - **Symplectic Integration**: Leverages solvers from `solvers.js` (Euler-Cromer, Velocity Verlet) to maintain stable conserved states (shadow Hamiltonians) over long-term runs.
+  - **Advanced Labs**: Implements patched-conics orbital mechanics, special relativity (Minkowski diagrams, Doppler shifts), and 1D Time-Dependent Schrödinger Equation quantum wavefunction solvers (split-step Fourier transforms).
+
 ---
 
 ## 🏗️ Upcoming Ideas & Projects

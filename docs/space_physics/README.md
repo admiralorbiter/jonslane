@@ -6,7 +6,7 @@ This directory contains the documentation and technical specifications for the *
 
 ## 1. Project Purpose
 
-The Space & Physics module provides high-fidelity, interactive "explorable explanations" (inspired by the work of Brett Victor) to help learners develop intuitive mental models of fundamental physics concepts. 
+The Space & Physics module provides high-fidelity, interactive "explorable explanations" (inspired by the work of Brett Victor) to help learners develop intuitive mental models of fundamental physics concepts.
 
 Instead of presenting formulas statically, concepts unfold dynamically as the user scrolls, merging inline interactive simulations, mathematical equations, and real-time graphs directly with the narrative prose.
 
@@ -58,6 +58,13 @@ Covers comoving and physical coordinate kinematics, expansion histories, and rat
 *   **Chapter 6: No Preferred Center** (Re-centering observers with live-updating Hubble diagrams)
 *   **Chapter 7: Hubble Flow vs. Peculiar Motion** (Andromeda velocity vector boundary game)
 *   **Chapter 8: Model Scope & Limitations** (Consensus, model-dependent, and open questions)
+
+### Module 4: The Connective Energy Pathway (Pages: `energy_exchange.html`, `potential_landscapes.html`, `energy_transfer.html`, `numerical_conservation.html`)
+Explores energy conservation, landscape diagrams, nonconservative transfer boundaries, and numerical stability:
+*   **Page 1: Energy Exchange** — A Bezier coaster track demonstrating Kinetic ($K$) vs. Gravitational Potential ($U$) energy exchange. Draggable zero potential reference lines ($C$) verify zero-reference shift invariance.
+*   **Page 2: Potential Landscapes** — A polynomial double-well landscape illustrating Allowed ($E \ge U$) and classically Forbidden ($E < U$) regions, turning points, and a Quantum Preview wavefunction preview.
+*   **Page 3: Friction & Energy Transfer** — Deploys dry sliding friction, Coulomb velocity projection, and heat spark animations to trace negative work crossing system boundaries into surroundings' thermal energy stores ($E_{\text{thermal}}$).
+*   **Page 4: Numerical Conservation** — Compares spring oscillators under Forward Euler (explodes), Euler-Cromer (symplectic wiggles), Velocity Verlet (highly stable), and RK4 (numerical damping) on toggleable time-series and phase-space charts.
 
 ### Advanced Physics Sandbox Labs
 
