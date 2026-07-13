@@ -70,6 +70,12 @@ These are immersive, fullscreen simulator applications that teach astrophysics, 
     *   *Features:* Minkowski spacetime diagrams, Lorentz boosts, length contraction, time dilation, and relativistic Doppler color-shifts.
 *   **Quantum Wavefunction Spec ([lab_quantum_wavefunction.md](file:///c:/Users/admir/Github/jonslane/docs/space_physics/lab_quantum_wavefunction.md))**
     *   *Features:* 1D Time-Dependent Schrödinger Equation solver using split-step Fourier transforms, quantum tunneling barriers, measurement collapse, and uncertainty readouts.
+*   **Lagrange Point Juggler Spec ([lab_lagrange_juggler.md](file:///c:/Users/admir/Github/jonslane/docs/space_physics/lab_lagrange_juggler.md))**
+    *   *Features:* Circular restricted three-body problem solver (CRTBP), Coriolis and centrifugal force simulation, Jacobi energy constant conservation checks, and effective potential topographic overlays.
+*   **Gravity Wave Sculptor Spec ([lab_gravity_sculptor.md](file:///c:/Users/admir/Github/jonslane/docs/space_physics/lab_gravity_sculptor.md))**
+    *   *Features:* Gravitational lensing light deflection solvers, Kerr metric frame-dragging ergosurfaces, Schwarzschild event horizon limits, and dynamic 3D spacetime grid warping.
+*   **Supernova Detonator Spec ([lab_supernova_detonator.md](file:///c:/Users/admir/Github/jonslane/docs/space_physics/lab_supernova_detonator.md))**
+    *   *Features:* Onion-skin star structure, neutrino-driven shock revival solvers, Standing Accretion Shock Instabilities (SASI), and branching nucleosynthesis endstates.
 
 ---
 
