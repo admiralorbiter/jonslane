@@ -64,6 +64,13 @@ PHYSICS_METADATA = {
         "icon": "Δ",
         "status": "active",
     },
+    "orbital-mechanics": {
+        "title": "Orbital Mechanics",
+        "category": "Space Physics",
+        "description": "Pilot a spacecraft using gravitational assists, Hohmann transfers, and patched conics in this 3D orbit simulator.",
+        "icon": "⟲",
+        "status": "active",
+    },
 }
 
 # Allowlist for valid URL path segments

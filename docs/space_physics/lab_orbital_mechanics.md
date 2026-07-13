@@ -1,4 +1,4 @@
-﻿# Orbital Mechanics Sandbox — Full Technical Specification
+# Orbital Mechanics Sandbox — Full Technical Specification
 
 > **Document version:** 1.0  
 > **Target file:** `portfolio/templates/space_physics/pages/orbital_mechanics.html`  
@@ -513,6 +513,22 @@ const soiMesh = new THREE.Mesh(
 );
 ```
 
+### 3.8 Cinematic Visual Polish (Phase 1, 2 & 3 Upgrades)
+
+To elevate visual game feel and graphics fidelity, a 3-phase visual polish pipeline is integrated directly into the WebGL scene renderer:
+
+1. **Parallax Starfield**: Rendered as a `THREE.Points` particle cloud of 3,000 vertices scattered on a spherical shell ($r = 1200$). Point sizes attenuate with camera distance. Parallax depth is achieved natively by the perspective camera moving relative to the background shell.
+2. **Atmosphere Limb Glow**: Added around Earth and Mars meshes as a slightly scaled ($1.08\times$) `THREE.BackSide` sphere running a Fresnel GLSL shader:
+   $$\text{rim} = 1.0 - \max(0.0, \hat{\mathbf{n}} \cdot \hat{\mathbf{v}})$$
+   $$\text{opacity} = \text{rim}^{3.5}$$
+3. **Orbit Line Eccentricity Color Coding**: The Keplerian prediction path dynamically shifts hex colors:
+   - Circular ($e < 0.01$): Emerald Green (`0x10b981`)
+   - Elliptical ($0.01 \le e < 1$): Amber (`0xf59e0b`)
+   - Hyperbolic Escape ($e \ge 1$): Red (`0xef4444`)
+   - Decaying / Atmosphere Intersecting ($h_\text{peri} < h_\text{atmos}$): Magenta/Pink (`0xff007f`)
+4. **Engine Particle Plume**: Swaps the static engine flame geometry with a pre-allocated 128-particle circular ring buffer. Spawns 3 particles per frame at the engine nozzle opposite to the spacecraft heading vector with a $\pm 10^\circ$ angular dispersion. Particles expand in size and transition from yellow to orange-red before fading out.
+5. **Full-screen Bloom Post-Processing**: Orchestrated via a `THREE.EffectComposer` chain running a `RenderPass` and an `UnrealBloomPass` (selective bloom threshold $0.15$, strength $0.6$). This causes the neon cyan orbits, star points, and engine exhaust fire to glow against the dark space background.
+
 ---
 
 ## 4. Game Mechanics & Mission Structure
@@ -802,6 +818,23 @@ Get to GEO (35,786 km) using exactly 2 burns. Optimal ΔV: 3.92 km/s
 ```
 
 Hints unlock sequentially after 60 s / 90 s / 120 s. Physics Notes opens a side drawer with MathJax-rendered equations. Reset saves the current trail as a ghost orbit before clearing.
+
+### 5.6 2D Navball Compass Instrument
+
+To assist pilot orientation in a 2D orbital flight environment, a custom HTML5 canvas element (`#navball-canvas`, 120×120px) is overlaid in the bottom-left corner of the visualizer.
+
+* **Attitude Rotation**: The background dial rotates dynamically based on the spacecraft's heading angle ($\theta_\text{ship}$). The top index of the navball always indicates the forward nose vector of the spacecraft.
+* **Vector Projections**: Prograde and Retrograde angles are calculated dynamically relative to the ship frame:
+  $$\theta_\text{prog\_rel} = \text{atan2}(v_y, v_x) - \theta_\text{ship}$$
+  $$\theta_\text{retro\_rel} = \theta_\text{prog\_rel} + \pi$$
+* **Markers**: Draw a cyan target circle labeled `PRO` at $\theta_\text{prog\_rel}$ and an amber dashed circle labeled `RET` at $\theta_\text{retro\_rel}$. The player circularizes an orbit by rotating their ship pointer (static white arrow at top center) to align with these markers.
+
+### 5.7 HUD State Machine & Vignettes
+
+To provide tactile telemetry alerts without text clutter, the document body toggles visual classes:
+
+* `state-thrusting`: Active while holding Shift. Triggers a neon-cyan pulsing glow on the active fuel capacity bar.
+* `state-danger`: Active when altitude drops below the parent body's atmospheric boundary limit (120 km for Earth). Applies a pulsing crimson vignette overlay (`box-shadow: inset 0 0 45px rgba(239, 68, 68, 0.45)`) along the visualizer viewport edges.
 
 ---
 

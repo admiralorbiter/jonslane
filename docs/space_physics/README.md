@@ -59,6 +59,18 @@ Covers comoving and physical coordinate kinematics, expansion histories, and rat
 *   **Chapter 7: Hubble Flow vs. Peculiar Motion** (Andromeda velocity vector boundary game)
 *   **Chapter 8: Model Scope & Limitations** (Consensus, model-dependent, and open questions)
 
+### Advanced Physics Sandbox Labs
+
+These are immersive, fullscreen simulator applications that teach astrophysics, special relativity, and quantum dynamics through progressive checklists and interactive controls:
+
+*   **Orbital Mechanics Spec ([lab_orbital_mechanics.md](file:///c:/Users/admir/Github/jonslane/docs/space_physics/lab_orbital_mechanics.md))**
+    *   *Lab:* *I Need to Get Out of This Place* (`play.html`)
+    *   *Features:* Patched conics RK4 gravity, maneuver nodes, 2D Navball orientation HUD, engine particle plumes, atmospheric limb shaders, and full-screen bloom.
+*   **Special Relativity Spec ([lab_special_relativity.md](file:///c:/Users/admir/Github/jonslane/docs/space_physics/lab_special_relativity.md))**
+    *   *Features:* Minkowski spacetime diagrams, Lorentz boosts, length contraction, time dilation, and relativistic Doppler color-shifts.
+*   **Quantum Wavefunction Spec ([lab_quantum_wavefunction.md](file:///c:/Users/admir/Github/jonslane/docs/space_physics/lab_quantum_wavefunction.md))**
+    *   *Features:* 1D Time-Dependent Schrödinger Equation solver using split-step Fourier transforms, quantum tunneling barriers, measurement collapse, and uncertainty readouts.
+
 ---
 
 ## 3. UI/UX Paradigm

@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}I Need to Get Out of This Place | Orbital Mechanics Game{% endblock %}
+{% block meta_description %}Pilot a spacecraft in this 3D patched-conic orbital sandbox. Design Hohmann transfers, perform lunar returns, calculate launch windows, and execute gravitational assists.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@300;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+    /* Styling for the Game Entry Dashboard */
+    .game-card-wrapper {
+        max-width: 900px;
+        margin: 60px auto;
+        padding: 0 20px;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .game-hero {
+        background: rgba(10, 11, 22, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 242, 254, 0.25);
+        border-radius: 16px;
+        padding: 3rem 2rem;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 0 30px rgba(0, 242, 254, 0.05);
+        margin-bottom: 2rem;
+    }
+
+    .game-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.8rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--neon-cyan);
+        text-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+        margin-bottom: 1rem;
+    }
+
+    .game-subtitle {
+        font-size: 1.1rem;
+        color: rgba(255,255,255,0.7);
+        max-width: 600px;
+        margin: 0 auto 2rem;
+        line-height: 1.6;
+    }
+
+    .btn-launch {
+        display: inline-block;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-decoration: none;
+        color: #ffffff;
+        background: rgba(0, 242, 254, 0.15);
+        border: 2px solid var(--neon-cyan);
+        padding: 0.9rem 2.5rem;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+    }
+
+    .btn-launch:hover {
+        background: var(--neon-cyan);
+        color: #000000;
+        box-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
+        transform: scale(1.05);
+    }
+
+    .campaign-section {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+    }
+
+    .stages-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .stage-item-card {
+        background: rgba(10, 11, 22, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+    }
+
+    .stage-item-card:hover {
+        border-color: rgba(0, 242, 254, 0.15);
+        background: rgba(10, 11, 22, 0.75);
+    }
+
+    .stage-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .stage-number {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .stage-name {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .stage-desc {
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.5);
+        margin-top: 0.2rem;
+    }
+
+    .stage-badge {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        border: 1px solid;
+    }
+
+    .stage-badge.unlocked {
+        color: var(--neon-cyan);
+        border-color: var(--neon-cyan);
+        background: rgba(0, 242, 254, 0.05);
+    }
+
+    .stage-badge.completed {
+        color: var(--neon-emerald);
+        border-color: var(--neon-emerald);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .stage-badge.locked {
+        color: rgba(255,255,255,0.3);
+        border-color: rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.01);
+    }
+
+    .sidebar-scoreboard {
+        background: rgba(10, 11, 22, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        height: fit-content;
+    }
+
+    .scoreboard-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--neon-cyan);
+        border-bottom: 1px solid rgba(0, 242, 254, 0.15);
+        padding-bottom: 0.4rem;
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.08em;
+    }
+
+    .score-row {
+        display: flex;
+        justify-content: space-between;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.8rem;
+        padding: 0.35rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .score-row span {
+        color: rgba(255,255,255,0.5);
+    }
+
+    .score-row strong {
+        color: var(--neon-emerald);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<div class="game-card-wrapper">
+    <!-- Back to Hub link -->
+    <a href="{{ url_for('space_physics.index') }}" class="back-link" style="margin-bottom: 1.5rem; display: inline-block;">
+        ← Back to Space & Physics Hub
+    </a>
+
+    <!-- Hero banner -->
+    <div class="game-hero">
+        <h1 class="game-title">I Need to Get Out of This Place</h1>
+        <p class="game-subtitle">
+            Mission Control has gone dark. Your orbital trajectory is decaying rapidly. 
+            Harness real patched-conics gravity wells, calculate transfers, and slingshot your spacecraft to safety in this immersive physical sandbox.
+        </p>
+        <a href="{{ url_for('space_physics.render_page', page_path='orbital-mechanics/play') }}" class="btn-launch">
+            🚀 LAUNCH MISSION CONTROL
+        </a>
+    </div>
+
+    <!-- Campaign layout -->
+    <div class="campaign-section">
+        <div class="stages-list">
+            <h2 class="scoreboard-title" style="font-size: 0.95rem; border-color: rgba(255,255,255,0.05);">Campaign Progression</h2>
+            
+            <div class="stage-item-card">
+                <div class="stage-info">
+                    <span class="stage-number">Stage 1</span>
+                    <span class="stage-name">Decaying Fast</span>
+                    <p class="stage-desc">Raise your orbit out of the upper Earth atmosphere limits before drag pulls you to collision.</p>
+                </div>
+                <span class="stage-badge unlocked" id="badge-st-1">UNLOCKED</span>
+            </div>
+
+            <div class="stage-item-card">
+                <div class="stage-info">
+                    <span class="stage-number">Stage 2</span>
+                    <span class="stage-name">Higher Ground</span>
+                    <p class="stage-desc">Establish a higher circular orbit using two precise maneuver nodes.</p>
+                </div>
+                <span class="stage-badge locked" id="badge-st-2">LOCKED</span>
+            </div>
+
+            <div class="stage-item-card">
+                <div class="stage-info">
+                    <span class="stage-number">Stage 3</span>
+                    <span class="stage-name">The Transfer</span>
+                    <p class="stage-desc">Execute an optimal Hohmann transfer to Geostationary Orbit (GEO).</p>
+                </div>
+                <span class="stage-badge locked" id="badge-st-3">LOCKED</span>
+            </div>
+
+            <div class="stage-item-card">
+                <div class="stage-info">
+                    <span class="stage-number">Stage 4</span>
+                    <span class="stage-name">The Moon Calls</span>
+                    <p class="stage-desc">Navigate out of Earth LEO to enter and orbit within the Moon's gravity well.</p>
+                </div>
+                <span class="stage-badge locked" id="badge-st-4">LOCKED</span>
+            </div>
+
+            <div class="stage-item-card">
+                <div class="stage-info">
+                    <span class="stage-number">Stage 5</span>
+                    <span class="stage-name">Escape Velocity</span>
+                    <p class="stage-desc">Harness hyperbolic escape trajectories to break Earth's sphere of influence completely.</p>
+                </div>
+                <span class="stage-badge locked" id="badge-st-5">LOCKED</span>
+            </div>
+
+            <div class="stage-item-card">
+                <div class="stage-info">
+                    <span class="stage-number">Stage 6</span>
+                    <span class="stage-name">Rendezvous with Mars</span>
+                    <p class="stage-desc">Time-phase Earth and Mars in heliocentric orbits for interplanetary injection.</p>
+                </div>
+                <span class="stage-badge locked" id="badge-st-6">LOCKED</span>
+            </div>
+
+            <div class="stage-item-card">
+                <div class="stage-info">
+                    <span class="stage-number">Stage 7</span>
+                    <span class="stage-name">The Slingshot</span>
+                    <p class="stage-desc">Steal orbital momentum by flying close behind Jupiter to launch out to Saturn.</p>
+                </div>
+                <span class="stage-badge locked" id="badge-st-7">LOCKED</span>
+            </div>
+
+            <div class="stage-item-card">
+                <div class="stage-info">
+                    <span class="stage-number">Stage 8</span>
+                    <span class="stage-name">I Need to Get Out</span>
+                    <p class="stage-desc">Escape the Solar System. Fly into interstellar space and leave this place forever.</p>
+                </div>
+                <span class="stage-badge locked" id="badge-st-8">LOCKED</span>
+            </div>
+        </div>
+
+        <!-- Scoreboard side panel -->
+        <div class="sidebar-scoreboard">
+            <div class="scoreboard-title">Telemetry Record</div>
+            <div class="score-row">
+                <span>Stage 1 Status:</span>
+                <strong id="record-st-1">NOT ATTEMPTED</strong>
+            </div>
+            <div class="score-row">
+                <span>Stage 2 Status:</span>
+                <strong id="record-st-2">LOCKED</strong>
+            </div>
+            <div class="score-row">
+                <span>Stage 3 Status:</span>
+                <strong id="record-st-3">LOCKED</strong>
+            </div>
+            <div class="score-row">
+                <span>Stage 4 Status:</span>
+                <strong id="record-st-4">LOCKED</strong>
+            </div>
+            <div class="score-row">
+                <span>Stage 5 Status:</span>
+                <strong id="record-st-5">LOCKED</strong>
+            </div>
+            <div class="score-row">
+                <span>Stage 6 Status:</span>
+                <strong id="record-st-6">LOCKED</strong>
+            </div>
+            <div class="score-row">
+                <span>Stage 7 Status:</span>
+                <strong id="record-st-7">LOCKED</strong>
+            </div>
+            <div class="score-row">
+                <span>Stage 8 Status:</span>
+                <strong id="record-st-8">LOCKED</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Read progress from LocalStorage and update dashboard locks
+        try {
+            const SAVE_KEY = "jonslane_get_out_progress";
+            const val = localStorage.getItem(SAVE_KEY);
+            if (val) {
+                const stageCompletion = JSON.parse(val);
+                for (let i = 1; i <= 8; i++) {
+                    const badge = document.getElementById(`badge-st-${i}`);
+                    const record = document.getElementById(`record-st-${i}`);
+                    
+                    if (stageCompletion[i]) {
+                        if (badge) {
+                            badge.textContent = "COMPLETED";
+                            badge.className = "stage-badge completed";
+                        }
+                        if (record) {
+                            record.textContent = "COMPLETED";
+                            record.style.color = "var(--neon-emerald)";
+                        }
+                    } else if (i === 1 || stageCompletion[i - 1]) {
+                        if (badge) {
+                            badge.textContent = "UNLOCKED";
+                            badge.className = "stage-badge unlocked";
+                        }
+                        if (record) {
+                            record.textContent = "UNLOCKED";
+                            record.style.color = "var(--neon-cyan)";
+                        }
+                    } else {
+                        if (badge) {
+                            badge.textContent = "LOCKED";
+                            badge.className = "stage-badge locked";
+                        }
+                        if (record) {
+                            record.textContent = "LOCKED";
+                            record.style.color = "rgba(255,255,255,0.3)";
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Failed to read progress from LocalStorage:", e);
+        }
+    });
+</script>
+{% endblock %}

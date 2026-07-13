@@ -109,6 +109,7 @@ def test_space_physics_subpages(client):
         "expanding-universe",
         "redshift-cmb",
         "quantum-wavefunction",
+        "orbital-mechanics",
     ]:
         response = client.get(f"/space-physics/{page}")
         assert response.status_code == 200, f"Expected page {page} to load successfully"
