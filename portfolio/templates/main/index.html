@@ -36,6 +36,37 @@
 .galaxy-card .central-star, .galaxy-card .orbit-line-1, .galaxy-card .orbit-line-2, .galaxy-card .orbit-line-3 {
     transition: var(--transition-smooth);
 }
+/* Experimental Archaeology orrery micro-animations */
+@keyframes arch-orbit-cw {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+@keyframes arch-orbit-ccw {
+    from { transform: rotate(360deg); }
+    to   { transform: rotate(0deg); }
+}
+.arch-preview-card:hover .arch-orbit-1 {
+    animation-duration: 6s !important;
+    border-color: rgba(212, 168, 83, 0.45) !important;
+}
+.arch-preview-card:hover .arch-orbit-2 {
+    animation-duration: 10s !important;
+    border-color: rgba(212, 168, 83, 0.35) !important;
+}
+.arch-preview-card:hover .arch-orbit-3 {
+    animation-duration: 16s !important;
+    border-color: rgba(212, 168, 83, 0.25) !important;
+}
+.arch-preview-card:hover .arch-central-star {
+    box-shadow: 0 0 18px #d4a853, 0 0 36px #8c6d1f !important;
+    transform: scale(1.2);
+}
+.arch-preview-card .arch-central-star,
+.arch-preview-card .arch-orbit-1,
+.arch-preview-card .arch-orbit-2,
+.arch-preview-card .arch-orbit-3 {
+    transition: var(--transition-smooth);
+}
 </style>
 {% endblock %}
 
@@ -129,6 +160,44 @@
         </div>
         <div class="card-links">
             <span class="card-link">Open Lab &rarr;</span>
+        </div>
+    </a>
+
+    <!-- Experimental Archaeology Section -->
+    <a href="{{ url_for('experimental_archaeology.index') }}" class="section-card arch-preview-card" style="max-width: 460px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <!-- Parchment orrery preview -->
+            <div style="height: 180px; display: flex; justify-content: center; align-items: center; background: rgba(26, 22, 14, 0.6); border-radius: 12px; margin-bottom: 1.5rem; border: 1px dashed rgba(196, 169, 125, 0.2); overflow: hidden; position: relative;">
+                <!-- Subtle parchment vignette -->
+                <div style="position: absolute; inset: 0; background: radial-gradient(ellipse 70% 70% at 50% 50%, transparent 40%, rgba(26, 22, 14, 0.6) 100%); pointer-events: none; z-index: 3;"></div>
+                <!-- Orrery -->
+                <div style="position: relative; width: 140px; height: 140px; display: flex; justify-content: center; align-items: center;">
+                    <!-- Central brass star (Sun) -->
+                    <div class="arch-central-star" style="width: 13px; height: 13px; background: #d4a853; border-radius: 50%; box-shadow: 0 0 10px #d4a853, 0 0 22px #8c6d1f; z-index: 5; position: relative;"></div>
+                    <!-- Orbit 1 — Mercury-ish -->
+                    <div class="arch-orbit-1" style="position: absolute; width: 48px; height: 48px; border: 1px solid rgba(212, 168, 83, 0.3); border-radius: 50%; animation: arch-orbit-cw 10s linear infinite;">
+                        <div style="position: absolute; top: -3px; left: 20px; width: 5px; height: 5px; background: #c4a97d; border-radius: 50%; box-shadow: 0 0 4px #c4a97d;"></div>
+                    </div>
+                    <!-- Orbit 2 — Venus-ish -->
+                    <div class="arch-orbit-2" style="position: absolute; width: 84px; height: 84px; border: 1px solid rgba(196, 169, 125, 0.22); border-radius: 50%; animation: arch-orbit-ccw 16s linear infinite;">
+                        <div style="position: absolute; top: 12px; left: 8px; width: 7px; height: 7px; background: #a08060; border-radius: 50%; box-shadow: 0 0 6px #8a6a45;"></div>
+                    </div>
+                    <!-- Orbit 3 — Mars-ish (slightly elliptical via scale) -->
+                    <div class="arch-orbit-3" style="position: absolute; width: 126px; height: 108px; border: 1px solid rgba(180, 150, 100, 0.15); border-radius: 50%; animation: arch-orbit-cw 26s linear infinite;">
+                        <div style="position: absolute; bottom: 10px; right: 28px; width: 6px; height: 6px; background: #8c6040; border-radius: 50%; box-shadow: 0 0 5px #7a5030;"></div>
+                    </div>
+                    <!-- Equant reference point (small cross) -->
+                    <div style="position: absolute; left: 62px; top: 68px; width: 6px; height: 1px; background: rgba(212,168,83,0.25);"></div>
+                    <div style="position: absolute; left: 64px; top: 66px; width: 1px; height: 6px; background: rgba(212,168,83,0.25);"></div>
+                </div>
+            </div>
+            <h2 class="card-title" style="margin-right: 0;">Experimental Archaeology</h2>
+            <p class="card-body">
+                Computational reconstruction of superseded scientific theories — Ptolemy, Carnot, Newton's corpuscles — evaluated on their own terms.
+            </p>
+        </div>
+        <div class="card-links">
+            <span class="card-link">Enter the Archive &rarr;</span>
         </div>
     </a>
 </section>

@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Experimental Archaeology — Jon's Lane{% endblock %}
+{% block meta_description %}Computational reconstruction of historical scientific theories. Executable, honest models of superseded theories — evaluated on their own terms before being compared against their successors.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/experimental_archaeology.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="arch-page">
+
+  {# ── Hero ──────────────────────────────────────────────── #}
+  <section class="arch-hero" aria-labelledby="arch-hero-title">
+
+    <p class="arch-hero-eyebrow">Experimental Archaeology for Ideas</p>
+
+    <h1 class="arch-hero-title" id="arch-hero-title">
+      Here is the world as<br>this theory imagined it.
+    </h1>
+
+    <p class="arch-hero-subtitle">
+      Computational reconstruction of superseded scientific theories —
+      not to mock them, but to understand what made them compelling,
+      where exactly they broke, and what survived them.
+    </p>
+
+    <div class="arch-hero-credo" role="note" aria-label="Project credo">
+      <em>Not:</em> "Here is an old, foolish theory. Watch it fail."<br>
+      <em>But:</em> "Given its assumptions, mathematics, instruments, and
+      observations — what did it explain? What did it predict?
+      Where exactly did it break?"
+    </div>
+
+  </section>
+
+  {# ── Timeline ──────────────────────────────────────────── #}
+  <section aria-label="Case studies" class="arch-timeline-section">
+
+    <p class="arch-section-label">Case Studies — Chronological</p>
+
+    <div class="arch-timeline-wrapper" id="arch-timeline" role="region" aria-label="Scrollable case study timeline">
+      <div class="arch-timeline-inner" id="arch-timeline-inner">
+
+        {# Axis spine (visual only) #}
+        <div class="arch-timeline-axis" aria-hidden="true"></div>
+
+        {% for cs in case_studies %}
+        <article class="arch-study-node"
+                 role="article"
+                 aria-label="{{ cs.title }}">
+
+          {# Stem connecting card to axis dot #}
+          <div class="arch-study-stem" aria-hidden="true"></div>
+
+          {# Dot on the axis #}
+          <div class="arch-study-dot" aria-hidden="true"></div>
+
+          {# Year label on axis #}
+          <div class="arch-study-year" aria-hidden="true">{{ cs.period.split('–')[0].strip() }} CE</div>
+
+          {# The card itself #}
+          <div class="arch-study-card"
+               data-status="{{ cs.status }}"
+               data-slug="{{ cs.slug }}"
+               id="study-{{ cs.slug }}">
+
+            {# Header row: icon + status badge #}
+            <div class="arch-card-header">
+              <span class="arch-card-icon" aria-hidden="true">{{ cs.field_icon }}</span>
+              <span class="arch-card-status"
+                    data-status="{{ cs.status }}"
+                    aria-label="Status: {{ cs.status }}">
+                {% if cs.status == 'live' %}Live
+                {% elif cs.status == 'in-progress' %}In Progress
+                {% else %}Planned{% endif %}
+              </span>
+            </div>
+
+            {# Period #}
+            <p class="arch-card-period">{{ cs.period }}</p>
+
+            {# Title & subtitle #}
+            <h2 class="arch-card-title">{{ cs.title }}</h2>
+            <p class="arch-card-subtitle">{{ cs.subtitle }}</p>
+
+            <div class="arch-card-divider" aria-hidden="true"></div>
+
+            {# Field #}
+            <p class="arch-card-field">{{ cs.field }}</p>
+
+            {# Central question #}
+            <p class="arch-card-question">{{ cs.central_question }}</p>
+
+            {# Teaser paragraph #}
+            <p class="arch-card-teaser">{{ cs.teaser }}</p>
+
+            {# CTA #}
+            {% if cs.status == 'live' %}
+            <a href="{{ url_for('experimental_archaeology.case_study', slug=cs.slug) }}"
+               class="arch-card-cta"
+               aria-label="Open {{ cs.title }} reconstruction">
+              Open reconstruction
+              <span class="arch-card-cta-arrow" aria-hidden="true">→</span>
+            </a>
+            {% elif cs.status == 'in-progress' %}
+            <a href="{{ url_for('experimental_archaeology.case_study', slug=cs.slug) }}"
+               class="arch-card-cta"
+               aria-label="{{ cs.title }} — work in progress">
+              In progress
+              <span class="arch-card-cta-arrow" aria-hidden="true">→</span>
+            </a>
+            {% else %}
+            <span class="arch-card-cta" aria-disabled="true" role="note">
+              Coming soon
+            </span>
+            {% endif %}
+
+          </div>{# /.arch-study-card #}
+
+        </article>
+        {% endfor %}
+
+      </div>{# /.arch-timeline-inner #}
+    </div>{# /.arch-timeline-wrapper #}
+
+  </section>
+
+  {# ── Methodology ───────────────────────────────────────── #}
+  <section class="arch-methodology" aria-labelledby="arch-method-heading">
+
+    <p class="arch-section-label" id="arch-method-heading">Four Reconstruction Modes</p>
+
+    <div class="arch-methodology-grid">
+
+      <div class="arch-method-card" data-num="01">
+        <h3 class="arch-method-title">Historically Faithful</h3>
+        <p class="arch-method-desc">
+          Only the concepts, mathematics, parameters, and observations
+          available at the time. Asks why intelligent people accepted this —
+          and which anomalies were already visible.
+        </p>
+      </div>
+
+      <div class="arch-method-card" data-num="02">
+        <h3 class="arch-method-title">Charitable Modern</h3>
+        <p class="arch-method-desc">
+          Modern mathematics formalizes ambiguous historical claims, while
+          preserving the theory's original ontology. The strongest coherent
+          version — not a straw man.
+        </p>
+      </div>
+
+      <div class="arch-method-card" data-num="03">
+        <h3 class="arch-method-title">Best-Fit</h3>
+        <p class="arch-method-desc">
+          An optimizer tunes every parameter the theory legitimately possesses.
+          Distinguishes a theory that fundamentally cannot work from one that
+          merely had poor historical measurements.
+        </p>
+      </div>
+
+      <div class="arch-method-card" data-num="04">
+        <h3 class="arch-method-title">Counterfactual</h3>
+        <p class="arch-method-desc">
+          Historically plausible modifications only. Could this theory have
+          been repaired without abandoning its central worldview?
+          What would that repair have cost it?
+        </p>
+      </div>
+
+    </div>
+
+  </section>
+
+  {# ── Assumption Ledger legend ──────────────────────────── #}
+  <section class="arch-ledger-legend" aria-labelledby="arch-ledger-heading">
+
+    <p class="arch-ledger-legend-title" id="arch-ledger-heading">
+      Assumption Ledger — Every claim is tagged
+    </p>
+
+    <div class="arch-ledger-legend-grid" role="list">
+
+      <span class="arch-ledger-badge" data-level="EXPLICIT" role="listitem"
+            title="Directly stated in the primary historical source">
+        EXPLICIT
+      </span>
+      <span class="arch-ledger-badge" data-level="HISTORICAL" role="listitem"
+            title="Standard interpretation among historians of science">
+        HISTORICAL
+      </span>
+      <span class="arch-ledger-badge" data-level="RECONSTRUCTION" role="listitem"
+            title="Necessary mathematical formalization of an ambiguous claim">
+        RECONSTRUCTION
+      </span>
+      <span class="arch-ledger-badge" data-level="EXTENSION" role="listitem"
+            title="Modern charitable extension preserving the theory's ontology">
+        EXTENSION
+      </span>
+      <span class="arch-ledger-badge" data-level="COUNTERFACTUAL" role="listitem"
+            title="Speculative modification beyond any historical figure's proposal">
+        COUNTERFACTUAL
+      </span>
+
+    </div>
+
+  </section>
+
+  {# ── Footer strip ──────────────────────────────────────── #}
+  <footer class="arch-footer-strip">
+    <p>
+      Experimental Archaeology for Ideas ·
+      <a href="{{ url_for('experimental_archaeology.about') }}">Methodology &amp; Design</a>
+      · <a href="https://github.com/admiralorbiter/jonslane" target="_blank" rel="noopener">Source</a>
+    </p>
+  </footer>
+
+</div>{# /.arch-page #}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Horizontal drag-to-scroll ─────────────────────────── */
+(function () {
+  const el = document.getElementById('arch-timeline');
+  if (!el) return;
+
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  el.addEventListener('mousedown', (e) => {
+    isDown = true;
+    el.style.cursor = 'grabbing';
+    startX = e.pageX - el.offsetLeft;
+    scrollLeft = el.scrollLeft;
+  });
+
+  el.addEventListener('mouseleave', () => {
+    isDown = false;
+    el.style.cursor = 'grab';
+  });
+
+  el.addEventListener('mouseup', () => {
+    isDown = false;
+    el.style.cursor = 'grab';
+  });
+
+  el.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startX) * 1.4;
+    el.scrollLeft = scrollLeft - walk;
+  });
+
+  /* Touch drag (mobile already vertical-scrolls via overflow-y,
+     so this is a no-op on mobile but harmless) */
+  let touchStartX = 0;
+  let touchScrollLeft = 0;
+
+  el.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].pageX;
+    touchScrollLeft = el.scrollLeft;
+  }, { passive: true });
+
+  el.addEventListener('touchmove', (e) => {
+    const walk = (touchStartX - e.touches[0].pageX) * 1.2;
+    el.scrollLeft = touchScrollLeft + walk;
+  }, { passive: true });
+
+})();
+</script>
+{% endblock %}

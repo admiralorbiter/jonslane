@@ -1,0 +1,100 @@
+<section class="arch-panel arch-dashboard" id="panel-context">
+
+  {# ── SECTION 1: TIMELINE KNOWLEDGE DATE & PLAY CONTROLS ── #}
+  <div class="arch-dashboard-section">
+    <h3 class="arch-panel-title" style="border-bottom:none; padding-bottom:0; margin-bottom:var(--space-sm);">
+      Time &amp; Knowledge Controls
+    </h3>
+
+    <!-- Date Scrubber Slider Box -->
+    <div class="arch-timeline-slider-box">
+      <div class="arch-dashboard-label">Evidence Cutoff Year (Knowledge-Date Switch)</div>
+      <div class="arch-timeline-slider-row">
+        <input type="range" id="knowledge-date-slider" class="arch-slider-input" min="1580" max="1600" step="1" value="1600" oninput="updateKnowledgeDate(this.value)">
+        <div class="arch-timeline-year-badge" id="year-badge">1600 CE</div>
+      </div>
+      <div style="font-family: var(--font-serif); font-size: 0.65rem; color: var(--ink-fade); font-style: italic;">
+        Moving this slider filters which Tycho Brahe observations are used for parameter fitting and residuals.
+      </div>
+    </div>
+
+    <!-- Playback Controls -->
+    <div class="arch-btn-group" style="margin-bottom: 0;">
+      <button class="arch-btn" id="btn-play" onclick="togglePlayback()">Play Simulation</button>
+      <button class="arch-btn" id="btn-step" onclick="stepSimulation()">Step +5 Days</button>
+      <button class="arch-btn" id="btn-reset" onclick="resetSimulation()">Reset</button>
+      
+      <div style="margin-left: auto; display: flex; align-items: center; gap: var(--space-xs);">
+        <span class="arch-dashboard-label" style="margin-bottom:0;">Speed</span>
+        <input type="range" id="speed-slider" class="arch-slider-input" min="1" max="100" step="1" value="10" oninput="setSpeed(this.value)" style="width: 80px;">
+      </div>
+    </div>
+  </div>
+
+  {# ── SECTION 2: MODEL & MODE SELECTOR ── #}
+  <div class="arch-dashboard-section">
+    <div class="arch-dashboard-label">Active Planetary Theory</div>
+    <div class="arch-btn-group">
+      <button class="arch-btn active" id="btn-model-ptolemy" onclick="setActiveModel('ptolemy')">Ptolemy</button>
+      <button class="arch-btn" id="btn-model-copernicus" onclick="setActiveModel('copernicus')">Copernicus</button>
+      <button class="arch-btn" id="btn-model-kepler" onclick="setActiveModel('kepler')">Kepler</button>
+    </div>
+
+    <div class="arch-dashboard-label">Reconstruction Mode</div>
+    <div class="arch-btn-group">
+      <button class="arch-btn active" id="btn-mode-faithful" onclick="setReconstructionMode('faithful')">Historically Faithful</button>
+      <button class="arch-btn" id="btn-mode-bestfit" onclick="setReconstructionMode('bestfit')">Best-Fit (Optimized)</button>
+    </div>
+  </div>
+
+  {# ── SECTION 3: PARAMETER SLIDERS & OPTIMIZER ── #}
+  <div class="arch-dashboard-section" id="parameters-section">
+    <div class="arch-dashboard-label" id="params-title">Theory Adjustable Parameters</div>
+    
+    <div id="sliders-container">
+      <!-- Dynamic sliders injected here by JS depending on active model -->
+    </div>
+
+    <div class="arch-btn-group" style="margin-top: var(--space-md); margin-bottom: var(--space-xs);">
+      <button class="arch-btn" id="btn-fit" onclick="runParameterFit()" style="border-color: var(--brass-bright); color: var(--brass-bright);">
+        ⚡ Run Nelder-Mead Optimizer
+      </button>
+      <button class="arch-btn" id="btn-reset-params" onclick="resetParameters()">
+        Reset Parameters
+      </button>
+    </div>
+
+    <!-- Optimization Stats -->
+    <div class="arch-opt-stats">
+      <div class="arch-opt-row">
+        <span>Active Model Fit Error:</span>
+        <span class="arch-opt-val" id="fit-rms-val">-- arcmin</span>
+      </div>
+      <div class="arch-opt-row">
+        <span>Adjustable Parameters:</span>
+        <span class="arch-opt-val" id="fit-params-count">0</span>
+      </div>
+      <div class="arch-opt-row">
+        <span>Optimizer Status:</span>
+        <span class="arch-opt-val" id="fit-status" style="color: var(--parchment-light);">Idle</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── SECTION 4: HISTORICAL LOG / EXCERPTS ── #}
+  <div class="arch-dashboard-section" style="border-bottom:none; padding-bottom:0;">
+    <div class="arch-dashboard-label">Historical Excerpts &amp; Context</div>
+    <div class="arch-log" id="historical-log">
+      <!-- Dynamic historical notes based on year injected here by JS -->
+      <div class="arch-log-entry">
+        <div class="arch-log-date">c. 150 CE</div>
+        <p>Ptolemy records in the <em>Almagest</em> that for Mars, the center of the epicycle moves around the deferent center, but its angular speed is uniform only when viewed from a third point: the Equant.</p>
+      </div>
+      <div class="arch-log-entry">
+        <div class="arch-log-date">1600 CE</div>
+        <p>Tycho Brahe works at Benátky Castle with his assistant Johannes Kepler. Tycho's massive registry of observations represents the most accurate naked-eye measurements ever recorded.</p>
+      </div>
+    </div>
+  </div>
+
+</section>

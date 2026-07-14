@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ case_study.title }} — Experimental Archaeology{% endblock %}
+{% block meta_description %}{{ case_study.teaser }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/experimental_archaeology.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="arch-page" style="padding-top: 5rem;">
+
+  {# ── Header / Back button ──────────────────────────────── #}
+  <header style="max-width: 1400px; margin: 0 auto; padding: 2rem var(--space-md) 1rem;">
+    <a href="{{ url_for('experimental_archaeology.index') }}" class="arch-card-cta" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+      ← Back to Timeline
+    </a>
+    <p class="arch-hero-eyebrow" style="margin-bottom: 0.5rem;">Case Study 1 · {{ case_study.field }}</p>
+    <h1 class="arch-hero-title" style="font-size: clamp(2rem, 5vw, 3rem); text-align: left; margin-bottom: 0.5rem;">
+      {{ case_study.title }}
+    </h1>
+    <p class="arch-hero-subtitle" style="text-align: left; margin: 0; max-width: 800px; font-size: 0.95rem;">
+      {{ case_study.teaser }}
+    </p>
+  </header>
+
+  {# ── Split Panel Grid ──────────────────────────────────── #}
+  <main class="arch-case-container">
+    
+    {# ── Left Column: Physical & Observable & Residuals ────── #}
+    <div class="arch-case-left">
+      {% include "experimental_archaeology/panels/physical.html" %}
+      {% include "experimental_archaeology/panels/observable.html" %}
+      {% include "experimental_archaeology/panels/residuals.html" %}
+    </div>
+
+    {# ── Right Column: Interactive Dashboard & Context ─────── #}
+    <div class="arch-case-right">
+      {% include "experimental_archaeology/panels/context.html" %}
+    </div>
+
+  </main>
+
+  {# ── Footer ────────────────────────────────────────────── #}
+  <footer class="arch-footer-strip" style="margin-top: 2rem;">
+    <p>
+      Experimental Archaeology for Ideas ·
+      <a href="{{ url_for('experimental_archaeology.about') }}">Methodology &amp; Design</a>
+    </p>
+  </footer>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Load Chart.js for residuals graph -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Load case study logic scripts -->
+<script src="{{ url_for('static', filename='js/experimental_archaeology/models/ptolemy.js') }}"></script>
+<script src="{{ url_for('static', filename='js/experimental_archaeology/models/copernicus.js') }}"></script>
+<script src="{{ url_for('static', filename='js/experimental_archaeology/models/kepler.js') }}"></script>
+<script src="{{ url_for('static', filename='js/experimental_archaeology/optimizer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/experimental_archaeology/theory_runner.js') }}"></script>
+{% endblock %}

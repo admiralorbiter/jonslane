@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}About — Experimental Archaeology{% endblock %}
+{% block meta_description %}The concept, methodology, and design principles behind Experimental Archaeology for Ideas — computational reconstruction of historical scientific theories.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/experimental_archaeology.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="arch-page">
+
+  <section class="arch-hero" aria-labelledby="arch-about-title">
+    <p class="arch-hero-eyebrow">Methodology &amp; Design</p>
+    <h1 class="arch-hero-title" id="arch-about-title">
+      About Experimental Archaeology
+    </h1>
+    <p class="arch-hero-subtitle">
+      Full concept documentation is in
+      <code style="font-family: var(--font-mono); font-size: 0.85em; color: var(--brass-mid);">docs/experimental_archaeology/README.md</code>.
+      This page will become the rendered public version.
+    </p>
+    <a href="{{ url_for('experimental_archaeology.index') }}"
+       class="arch-card-cta" style="display: inline-flex; justify-content: center; margin-top: 1.5rem;">
+      ← Back to case studies
+    </a>
+  </section>
+
+</div>
+{% endblock %}

@@ -121,3 +121,42 @@ def test_space_physics_404_and_traversal(client):
     assert client.get("/space-physics/invalid-subpage").status_code == 404
     assert client.get("/space-physics/particle-1d/../../config").status_code == 404
     assert client.get("/space-physics/bad%00path").status_code == 404
+
+
+def test_experimental_archaeology_index(client):
+    """Verify that the Experimental Archaeology landing page renders successfully."""
+    response = client.get("/experimental-archaeology/")
+    assert response.status_code == 200
+    assert b"Experimental Archaeology for Ideas" in response.data
+    assert b"Ptolemy, Copernicus &amp; Kepler" in response.data or b"Ptolemy, Copernicus & Kepler" in response.data
+
+
+def test_experimental_archaeology_about(client):
+    """Verify that the Experimental Archaeology about page renders successfully."""
+    response = client.get("/experimental-archaeology/about")
+    assert response.status_code == 200
+    assert b"About Experimental Archaeology" in response.data
+
+
+def test_experimental_archaeology_case_study(client):
+    """Verify that the live case study page renders successfully."""
+    response = client.get("/experimental-archaeology/ptolemy-copernicus-kepler")
+    assert response.status_code == 200
+    # Verify our panels exist in the rendered output
+    assert b"orrery-canvas" in response.data
+    assert b"sky-strip-canvas" in response.data
+    assert b"residuals-chart" in response.data
+
+
+def test_experimental_archaeology_planned_redirect(client):
+    """Verify that visiting a planned case study redirects to the landing page."""
+    response = client.get("/experimental-archaeology/caloric-theory")
+    assert response.status_code == 302
+    assert response.location.endswith("/experimental-archaeology/")
+
+
+def test_experimental_archaeology_invalid_slug(client):
+    """Verify that visiting an invalid case study slug returns 404."""
+    response = client.get("/experimental-archaeology/non-existent-theory")
+    assert response.status_code == 404
+

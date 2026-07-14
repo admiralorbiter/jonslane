@@ -62,6 +62,7 @@ def create_app(config_name="development"):
     from portfolio.routes.academy import academy_bp
     from portfolio.routes.ai_literacy_lab import ai_lab_redirect_bp, ai_literacy_lab_bp
     from portfolio.routes.auth import auth_bp
+    from portfolio.routes.experimental_archaeology import experimental_archaeology_bp
     from portfolio.routes.game import game_bp
     from portfolio.routes.main import main_bp
     from portfolio.routes.piano import piano_bp
@@ -81,6 +82,7 @@ def create_app(config_name="development"):
     app.register_blueprint(ai_literacy_lab_bp)
     app.register_blueprint(ai_lab_redirect_bp)
     app.register_blueprint(space_physics_bp)
+    app.register_blueprint(experimental_archaeology_bp)
 
     # Inject current_user dynamically into all templates
     @app.context_processor
