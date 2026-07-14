@@ -43,13 +43,51 @@ This log is used to brainstorm new features, track project updates, and maintain
 
 ## 🏗️ Upcoming Ideas & Projects
 
-### 1. External Audio Importers & Admin Queue
+### 1. Experimental Archaeology for Ideas (New Section)
+- **Goal**: A standalone research section at `/experimental-archaeology` where
+  historical scientific theories are computationally reconstructed, honestly
+  evaluated, and compared — not to mock old ideas, but to understand what
+  made them compelling, what made them fail, and what survived them.
+- **Design doc**: `docs/experimental_archaeology/README.md`
+- **Planned case studies**:
+  1. **Ptolemy, Copernicus & Kepler** — planetary astronomy; deferents/epicycles
+     vs. elliptical orbits. Which observations discriminated them? Could an
+     optimized Ptolemaic model rival early Kepler? (Full design doc: `case_studies/ptolemy_copernicus_kepler.md`)
+  2. **Caloric Theory & Carnot** — How an incorrect theory of heat (conserved
+     fluid) produced a correct result about engine efficiency. Carnot's proof
+     survives caloric's fall because it rests on reversibility, not conservation.
+     (Full design doc: `case_studies/caloric_theory.md`)
+  3. **Corpuscular vs. Wave Light** — Competing models that both explained
+     reflection; opposite predictions about speed in dense media proved decisive.
+  4. **Cartesian Vortex Cosmology** — Fluid simulation of Descartes's contact
+     mechanics; tests whether vortices can generate stable Keplerian orbits.
+  5. **Luminiferous Ether Family Tree** — Successive modifications of ether
+     theory vs. each experiment; culminates in the Lorentz/Einstein equivalence
+     question.
+  6. **Le Sage Mechanical Gravity** — Particle bombardment gravity: generates
+     inverse-square force, also predicts drag, heating, and shielding that
+     are not observed.
+- **Architecture highlights**:
+  - Shared `Theory` interface (ontology, state, dynamics, parameters,
+    observables, sources) reused across all case studies
+  - **Assumption Ledger**: every encoded claim carries a confidence marker
+    (`EXPLICIT`, `HISTORICAL`, `RECONSTRUCTION`, `EXTENSION`, `COUNTERFACTUAL`)
+  - Synchronized four-panel layout: Physical Picture + Observable Instrument
+    + Residual Plot + Historical Context
+  - Knowledge-date switch: evaluate any theory only on evidence available
+    before a user-selected year
+  - Four reconstruction modes per study: Historically Faithful, Charitable
+    Modern, Best-Fit (optimized), Counterfactual
+- **Aesthetic**: Astronomical atlas / 18th-century instrument diagram inspiration.
+  Parchment palette, serif typography, slow deliberate animations.
+
+### 2. External Audio Importers & Admin Queue
 - **Goal**: Integrate licensed or public domain real-world tracks for advanced ear training.
 - **Features**:
   - Freesound/Jamendo API integrations for query pulling.
   - Admin approval page to preview tracks, confirm licenses, and publish approved audio to challenges.
 
-### 2. Count Me In Academy (V4)
+### 3. Count Me In Academy (V4)
 - **Goal**: Restructure Count Me In as an 8-level **Rhythm Intelligence Academy** with a year-long structured learning path grounded in learning science (spaced repetition, interleaving, metacognition).
 - **Features:**
   - Academy Hub page (`/academy`) with visual curriculum map, skill graph, and spaced review queue.
@@ -62,7 +100,7 @@ This log is used to brainstorm new features, track project updates, and maintain
   - Metrical X-Ray Visualizer — educational overlay showing tatum/tactus/measure/phrase layers.
 - **Design doc:** See `docs/count_me_in/roadmap.md` V4 section.
 
-### 3. Piano Lab (V5)
+### 4. Piano Lab (V5)
 - **Goal**: Dedicated piano/instrument practice module (`/piano`) sharing the same user profile, audio engine, and Attempt model as Count Me In.
 - **Features:**
   - Rhythm drills for piano: pulse, subdivision (LH quarters + RH eighths), invisible metronome, phrase counting.
@@ -71,7 +109,7 @@ This log is used to brainstorm new features, track project updates, and maintain
   - Piano + DJ Bridge labs connecting CMI skills (phrase counting, tempo anchors) to piano accompaniment patterns.
 - **Design doc:** See `docs/count_me_in/roadmap.md` V5 section and `docs/count_me_in/technical_spec.md` Sections 8–9.
 
-### 4. MIDI Device Manager
+### 5. MIDI Device Manager
 - **Goal**: Shared JS module (`midi_manager.js`) enabling MIDI controller input across all rhythm labs.
 - **Features:**
   - `navigator.requestMIDIAccess()` with graceful fallback for Firefox/Safari.

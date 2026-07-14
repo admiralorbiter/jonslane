@@ -241,6 +241,125 @@ Applies penalties for combined risks (e.g., unknown BPM, double bad dimensions, 
 
 ---
 
+## 🏺 Section 12: Experimental Archaeology Blueprint
+
+Computational reconstruction of historical scientific theories at
+`/experimental-archaeology`. A research-oriented section distinct from the
+other tools: more computationally intensive, more explicitly philosophical,
+and more documentation-heavy.
+
+Full documentation: [`docs/experimental_archaeology/README.md`](experimental_archaeology/README.md)
+
+### Blueprint Structure (`routes/experimental_archaeology.py`)
+
+Registered at `/experimental-archaeology`. No authentication required.
+
+```
+/experimental-archaeology/              — Case study landing page
+/experimental-archaeology/<slug>/       — Individual interactive reconstruction
+/experimental-archaeology/about         — Concept and methodology description
+```
+
+### Theory Interface Contract
+
+All case study models expose a common Python/JS interface:
+
+```python
+class Theory:
+    ontology: dict          # Entities that exist in this theory's world
+    state: dict             # Variables describing the system
+    dynamics: callable      # How state evolves over time
+    parameters: dict        # Adjustable values + historical estimates
+    observables: callable   # What an instrument would measure
+    domain: str             # Where the theory is intended to apply
+    evidence: list          # Observations that originally supported it
+    anomalies: list         # Known problems at the time
+    sources: list           # Per-claim provenance (→ Assumption Ledger)
+
+    def predict(initial_state, parameters, times) -> Predictions
+    def fit(observations, allowed_parameters) -> FittedParameters
+    def measure(simulated_state, instrument_model) -> Observables
+    def score(predictions, observations) -> Metrics
+    def explain_assumptions() -> AssumptionLedger
+```
+
+This contract allows the same comparison tools, residual plots, and parameter-
+sensitivity analysis to work across astronomy, optics, thermodynamics, and
+other domains without per-case-study duplication.
+
+### Assumption Ledger
+
+Every encoded claim carries a confidence marker stored in a structured JSON
+ledger. Markers:
+
+| Marker | Meaning |
+|---|---|
+| `EXPLICIT` | Directly in the primary historical source |
+| `HISTORICAL` | Standard interpretation among historians of science |
+| `RECONSTRUCTION` | Necessary mathematical formalization of an ambiguous claim |
+| `EXTENSION` | Modern charitable extension, preserving the theory's ontology |
+| `COUNTERFACTUAL` | Speculative modification beyond any historical figure's proposal |
+
+The ledger is rendered as a live panel alongside each simulation so users can
+see exactly what assumptions are encoded and at what confidence level.
+
+### Four Reconstruction Modes (per case study)
+
+1. **Historically Faithful** — Only concepts and parameters available at the time
+2. **Charitable Modern** — Modern math, preserving the original ontology
+3. **Best-Fit** — Optimizer tunes all legitimate parameters; compares error vs. complexity
+4. **Counterfactual** — Historically plausible modifications to the theory
+
+### Four-Panel Interface (per case study)
+
+All reconstructions share a synchronized four-panel layout:
+
+1. **Physical Picture** — The theory's internal model (animated orrery, engine schematic, etc.)
+2. **Observable Instrument** — What a contemporary observer actually measured
+3. **Residual Plot** — Predicted minus observed, over time or parameter space
+4. **Historical Context** — Dated excerpts, instrument descriptions, anomalies
+
+A **knowledge-date switch** lets users evaluate a theory using only evidence
+available before a selected year.
+
+### Design Aesthetic
+
+Deliberately distinct from other sections. Inspired by astronomical atlases,
+18th-century instrument diagrams, and annotated manuscript pages:
+- Palette: deep parchment, iron-gall ink text, brass and verdigris accents
+- Typography: serif body text (Libre Baskerville or IM Fell English) +
+  geometric monospace for data
+- Animation: slow and deliberate (orbital speeds, not game speeds)
+
+### Key Files
+
+```
+docs/experimental_archaeology/
+  README.md                                    — Concept, architecture, case study index
+  case_studies/
+    ptolemy_copernicus_kepler.md               — CS1: full design doc
+    caloric_theory.md                          — CS2: full design doc
+    corpuscular_vs_wave_light.md               — CS3: stub
+    cartesian_vortices.md                      — CS4: stub
+    luminiferous_ether.md                      — CS5: stub
+    le_sage_gravity.md                         — CS6: stub
+
+portfolio/routes/experimental_archaeology.py   — Blueprint, CASE_STUDIES metadata
+portfolio/static/css/experimental_archaeology.css
+portfolio/templates/experimental_archaeology/
+  index.html
+  case_study.html
+portfolio/static/js/experimental_archaeology/
+  theory_runner.js
+  assumption_ledger.js
+  panels.js
+  models/
+    ptolemy.js  copernicus.js  kepler.js
+    caloric.js  carnot.js
+```
+
+---
+
 ## 📚 Section 11: AI Literacy Lab Blueprint
 
 A Windows XP-styled resource hub at `/ai-literacy-lab` for essays, tools notes,
