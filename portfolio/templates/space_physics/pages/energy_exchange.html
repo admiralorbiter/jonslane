@@ -1,0 +1,830 @@
+{% extends "base.html" %}
+
+{% block title %}{{ metadata.title }} | Space & Physics{% endblock %}
+{% block meta_description %}{{ metadata.description }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<style>
+    /* Premium Split-Pane Scrollytelling Layout */
+    .scrolly-layout {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 3.5rem;
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 6rem 1.5rem;
+    }
+
+    /* Left pane (Sticky visualizer and HUD panels) */
+    .scrolly-visuals {
+        position: sticky;
+        top: 6rem;
+        height: calc(100vh - 10rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        justify-content: center;
+    }
+
+    .canvas-sticky-wrapper {
+        width: 100%;
+        aspect-ratio: 16 / 11;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: #020205;
+        box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.5),
+            inset 0 0 30px rgba(0, 0, 0, 0.9);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    #physics-canvas {
+        height: 68%;
+        width: 100%;
+        display: block;
+        cursor: pointer;
+    }
+
+    #charts-canvas {
+        height: 32%;
+        width: 100%;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: block;
+    }
+
+    /* Playback Toolbar */
+    .sim-playbar {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        background: rgba(14, 16, 23, 0.45);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* HUD control lists */
+    .hud-controls-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background: rgba(14, 16, 23, 0.45);
+        padding: 1.25rem;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .hud-subgroup {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hud-subgroup-title {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--neon-amber);
+        margin-bottom: 0.25rem;
+    }
+
+    /* Custom range sliders with explicit focus indicators */
+    .lab-slider-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 45px;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .hud-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        outline: none;
+        transition: background 0.2s;
+    }
+
+    .hud-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--neon-cyan);
+        cursor: pointer;
+        box-shadow: 0 0 8px var(--neon-cyan-glow);
+        transition: transform 0.1s ease;
+    }
+
+    .hud-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.3);
+    }
+
+    .hud-slider:focus-visible {
+        outline: 2px solid var(--neon-cyan);
+        outline-offset: 6px;
+        border-radius: 2px;
+    }
+
+    .hud-slider:focus-visible::-webkit-slider-thumb {
+        transform: scale(1.4);
+        box-shadow: 0 0 12px var(--neon-cyan-glow);
+    }
+
+    .lab-slider-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .lab-slider-value {
+        font-size: 0.8rem;
+        font-family: var(--font-mono), monospace;
+        color: var(--neon-cyan);
+        text-align: right;
+    }
+
+    /* System Boundary Definition Card */
+    .hud-boundary-card {
+        background: rgba(99, 102, 241, 0.04);
+        border: 1px dashed rgba(99, 102, 241, 0.2);
+        border-radius: 8px;
+        padding: 0.85rem 1.25rem;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    /* Right pane (Scrolling narrative text column) */
+    .scrolly-narrative {
+        padding-bottom: 30vh;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+        margin-bottom: 2rem;
+    }
+    .back-link:hover {
+        color: var(--neon-cyan);
+    }
+
+    .header-group {
+        margin-bottom: 3.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 1.5rem;
+    }
+
+    .subtitle-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-amber);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .page-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 2.25rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .page-intro {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .scrolly-chapter {
+        min-height: 60vh;
+        padding: 4rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .scrolly-chapter:last-of-type {
+        border-bottom: none;
+    }
+
+    .chapter-num {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .chapter-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.65rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .chapter-prose {
+        color: var(--text-muted);
+        font-size: 0.98rem;
+        line-height: 1.625;
+    }
+    .chapter-prose p {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Math Card callout */
+    .physics-math-card {
+        background: rgba(99, 102, 241, 0.03);
+        border: 1px dashed rgba(99, 102, 241, 0.15);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin: 1.5rem 0;
+        font-size: 1.05rem;
+        color: #ffffff;
+        text-align: center;
+    }
+
+    /* Prediction & Quiz widgets */
+    .quiz-container {
+        margin-top: 1.5rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .quiz-question-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .lab-question-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .lab-question-option:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .lab-question-option input[type="radio"] {
+        margin-top: 0.25rem;
+        cursor: pointer;
+    }
+
+    .lab-question-option.correct {
+        background: rgba(16, 185, 129, 0.08) !important;
+        border-color: rgba(16, 185, 129, 0.3) !important;
+        color: #a7f3d0;
+    }
+
+    .lab-question-option.incorrect {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+        color: #fca5a5;
+    }
+
+    .lab-feedback-banner {
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: none;
+        line-height: 1.5;
+    }
+
+    .lab-feedback-banner.success {
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #34d399;
+    }
+
+    .lab-feedback-banner.error {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+    }
+
+    /* Screen reader offscreen helper */
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Responsive mobile formatting override */
+    @media (max-width: 900px) {
+        .scrolly-layout {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .scrolly-visuals {
+            position: sticky;
+            top: 0;
+            height: 52vh;
+            z-index: 50;
+            background: var(--space-bg);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            padding-bottom: 0.5rem;
+            justify-content: flex-start;
+        }
+
+        .scrolly-chapter {
+            min-height: 40vh;
+            padding: 2rem 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<div class="scrolly-layout">
+    <!-- Sticky Visual Container (Left on desktop, Top on mobile) -->
+    <div class="scrolly-visuals">
+        <div class="canvas-sticky-wrapper">
+            <canvas id="physics-canvas" aria-label="Physics animation: particle sliding on potential energy landscape"></canvas>
+            <canvas id="charts-canvas" aria-label="Live bar charts tracking kinetic, potential, and total energy"></canvas>
+        </div>
+
+        <!-- Playback toolbar -->
+        <div class="sim-playbar" role="toolbar" aria-label="Simulation playback controls">
+            <button id="btn-play-pause" class="lab-btn" aria-label="Play/Pause simulation">Play</button>
+            <button id="btn-step" class="lab-btn" aria-label="Step simulation forward one frame">Step</button>
+            <button id="btn-reset" class="lab-btn" aria-label="Reset simulation to start">Reset</button>
+        </div>
+
+        <!-- Parameters Adjuster HUD Panel (shown dynamically) -->
+        <div id="hud-control-panel" class="hud-controls-column" aria-label="Control settings">
+            <!-- System boundary Card -->
+            <div id="hud-system-card" class="hud-boundary-card" style="display: none;">
+                <div id="system-boundary-text">
+                    <strong>System:</strong> Particle + Earth + Track (Closed)<br>
+                    <strong>Surroundings:</strong> None<br>
+                    <strong>External Work ($W$):</strong> 0 J
+                </div>
+            </div>
+
+            <!-- Modifiers Sliders (shown dynamically) -->
+            <div id="hud-modifiers-group" class="hud-subgroup" style="display: none;">
+                <span class="hud-subgroup-title">System Parameters</span>
+                <div class="lab-slider-row">
+                    <label for="slider-mass" class="lab-slider-label">Mass ($m$):</label>
+                    <input type="range" id="slider-mass" class="hud-slider" min="0.2" max="3.0" step="0.1" value="1.0" aria-valuemin="0.2" aria-valuemax="3.0" aria-valuenow="1.0">
+                    <span id="slider-mass-val" class="lab-slider-value">1.0kg</span>
+                </div>
+                <div class="lab-slider-row">
+                    <label for="slider-zero" class="lab-slider-label">U Reference ($C$):</label>
+                    <input type="range" id="slider-zero" class="hud-slider" min="-2.0" max="6.0" step="0.2" value="0.0" aria-valuemin="-2.0" aria-valuemax="6.0" aria-valuenow="0.0">
+                    <span id="slider-zero-val" class="lab-slider-value">0.0m</span>
+                </div>
+            </div>
+
+            <!-- Presets Options (shown dynamically) -->
+            <div id="hud-presets-group" class="hud-subgroup" style="display: none;">
+                <span class="hud-subgroup-title">Interaction Potentials</span>
+                <div class="lab-btn-row">
+                    <button id="preset-gravity" class="lab-btn active" aria-label="Switch to Gravity Hill preset">Gravity Hill</button>
+                    <button id="preset-spring" class="lab-btn" aria-label="Switch to Spring preset">Ideal Spring</button>
+                    <button id="preset-free" class="lab-btn" aria-label="Switch to Free Particle preset">Free Space</button>
+                </div>
+                <!-- Spring constant slider (shown only in spring preset) -->
+                <div id="control-k-container" class="lab-slider-row" style="display: none;">
+                    <label for="slider-k" class="lab-slider-label">Stiffness ($k$):</label>
+                    <input type="range" id="slider-k" class="hud-slider" min="0.05" max="0.8" step="0.05" value="0.25" aria-valuemin="0.05" aria-valuemax="0.8" aria-valuenow="0.25">
+                    <span id="slider-k-val" class="lab-slider-value">0.25</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Narrative Scrolling Column -->
+    <div class="scrolly-narrative">
+        <a href="/space-physics/" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to Space &amp; Physics
+        </a>
+
+        <div class="header-group">
+            <span class="subtitle-badge">Connective Energy Pathway | Part 1</span>
+            <h1 class="page-title">{{ metadata.title }}</h1>
+            <p class="page-intro">{{ metadata.description }}</p>
+        </div>
+
+        <!-- Chapter 1 -->
+        <section class="scrolly-chapter" data-step="1">
+            <span class="chapter-num">Chapter 1</span>
+            <h2 class="chapter-title">Same Particle, Different Motion</h2>
+            <div class="chapter-prose">
+                <p>
+                    Let's begin by observing a simple point particle rolling along a smooth track. In our first model, we assume the track is completely <strong>frictionless</strong>.
+                </p>
+                <p>
+                    Use the controls on the left to release the particle from different heights or grab the particle directly with your mouse/touch and drag it to a new location.
+                </p>
+                <p>
+                    Notice how the particle rolls down, picks up speed, crosses the valley, and momentarily stops at the other side before reversing its motion.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 2 -->
+        <section class="scrolly-chapter" data-step="2">
+            <span class="chapter-num">Chapter 2</span>
+            <h2 class="chapter-title">Where Is It Fastest?</h2>
+            <div class="chapter-prose">
+                <p>
+                    Before revealing the underlying mathematics, let's test your physical intuition about this simple trajectory.
+                </p>
+
+                <div class="quiz-container" id="prediction-quiz">
+                    <h4 class="quiz-question-title">Prediction Prompt:</h4>
+                    <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        As the particle rolls back and forth on the hill, at which point on the track will its speed be the greatest?
+                    </p>
+                    <div class="lab-question-option" data-option="1">
+                        <input type="radio" name="predict-speed" id="pred-opt-1">
+                        <label for="pred-opt-1" style="font-size: 0.88rem; cursor: pointer;">At the highest points on the left and right hills.</label>
+                    </div>
+                    <div class="lab-question-option" data-option="2">
+                        <input type="radio" name="predict-speed" id="pred-opt-2">
+                        <label for="pred-opt-2" style="font-size: 0.88rem; cursor: pointer;">At the lowest point of the valley.</label>
+                    </div>
+                    <div class="lab-question-option" data-option="3">
+                        <input type="radio" name="predict-speed" id="pred-opt-3">
+                        <label for="pred-opt-3" style="font-size: 0.88rem; cursor: pointer;">Halfway down the slopes.</label>
+                    </div>
+                    <div class="lab-question-option" data-option="4">
+                        <input type="radio" name="predict-speed" id="pred-opt-4">
+                        <label for="pred-opt-4" style="font-size: 0.88rem; cursor: pointer;">The speed remains constant everywhere on the track.</label>
+                    </div>
+
+                    <div class="lab-feedback-banner" id="prediction-feedback"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter 3 -->
+        <section class="scrolly-chapter" data-step="3">
+            <span class="chapter-num">Chapter 3</span>
+            <h2 class="chapter-title">Two Ways of Storing Energy</h2>
+            <div class="chapter-prose">
+                <p>
+                    If we look at the bar charts on the left, we can now see two calculated quantities updating in sync with the particle's speed and position.
+                </p>
+                <p>
+                    These are two distinct ways our defined <strong>System</strong> (Particle + Earth + Track) stores energy:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Kinetic Energy ($K$):</strong> The energy stored in the particle's active motion:
+                        <div class="physics-math-card">
+                            $$K = \frac{1}{2} m v^2$$
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Potential Energy ($U$):</strong> The energy stored in the configuration of the interacting system (specifically, the gravitational separation between the particle and the Earth):
+                        <div class="physics-math-card">
+                            $$U = m g y$$
+                        </div>
+                    </li>
+                </ul>
+                <p>
+                    Observe how the Cyan bar ($K$) climbs as the particle speeds up, while the Magenta bar ($U$) drops. They act like fluid shifting between two connected cylinders.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 4 -->
+        <section class="scrolly-chapter" data-step="4">
+            <span class="chapter-num">Chapter 4</span>
+            <h2 class="chapter-title">The Invariant Total</h2>
+            <div class="chapter-prose">
+                <p>
+                    While the individual values of $K$ and $U$ oscillate wildly, their sum remains constant.
+                </p>
+                <p>
+                    We define the <strong>Total Mechanical Energy ($E$)</strong> of our system as:
+                    <div class="physics-math-card">
+                        $$E_{\text{mech}} = K + U$$
+                    </div>
+                </p>
+                <p>
+                    Look closely at the horizontal <strong>Amber reference line</strong> on the bar chart. As the particle rolls, the tops of the $K$ and $U$ bars adjust to meet this line exactly.
+                </p>
+                <p>
+                    Because there are no nonconservative forces (like friction) doing work on our closed system, the derivative of total mechanical energy is zero:
+                    <div class="physics-math-card">
+                        $$\frac{dE_{\text{mech}}}{dt} = 0$$
+                    </div>
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 5 -->
+        <section class="scrolly-chapter" data-step="5">
+            <span class="chapter-num">Chapter 5</span>
+            <h2 class="chapter-title">Modifying the System &amp; Invariance</h2>
+            <div class="chapter-prose">
+                <p>
+                    Now let's explore two parameters: the <strong>Mass</strong> of the particle ($m$) and the <strong>Reference Zero</strong> line height ($C$).
+                </p>
+                <p>
+                    Use the slider on the left (or click and drag the horizontal dashed line on the canvas) to change the reference height where $U = 0$.
+                </p>
+                <p>
+                    Notice two critical things:
+                </p>
+                <ol>
+                    <li>
+                        Dragging the $U=0$ line upward subtracts an offset height $C$, causing potential energy $U$ and total energy $E$ to drop (even becoming negative if the zero reference is set above the particle).
+                    </li>
+                    <li>
+                        Despite these numerical shifts, the particle's <strong>actual physical motion is completely unchanged</strong>.
+                    </li>
+                </ol>
+                <p>
+                    This is because classical forces depend only on potential energy *differences* (the slope of the curve), not absolute values:
+                    <div class="physics-math-card">
+                        $$F(x) = -\frac{dU}{dx} = -\frac{d}{dx}\left(U_0(x) + C\right) = -\frac{dU_0}{dx}$$
+                    </div>
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 6 -->
+        <section class="scrolly-chapter" data-step="6">
+            <span class="chapter-num">Chapter 6</span>
+            <h2 class="chapter-title">Generalizing the Potentials</h2>
+            <div class="chapter-prose">
+                <p>
+                    Energy conservation is not unique to gravity. Try toggling the presets on the left:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Ideal Spring:</strong> Elastic potential energy is stored in the deformation of a spring ($U = \frac{1}{2}kx^2$). The force points toward the center anchor ($F = -kx$).
+                    </li>
+                    <li>
+                        <strong>Free Space:</strong> A particle with zero interactions ($U = 0$, $F = 0$). Here, the kinetic energy is equal to total energy and remains constant indefinitely.
+                    </li>
+                </ul>
+                <p>
+                    In all these configurations, the scalar total $E = K + U$ remains conserved, showing energy as a unified accounting language across different physical interactions.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 7 -->
+        <section class="scrolly-chapter" data-step="7">
+            <span class="chapter-num">Chapter 7</span>
+            <h2 class="chapter-title">Concept Check</h2>
+            <div class="chapter-prose">
+                <p>Let's consolidate what we've discovered in this chapter.</p>
+
+                <div class="quiz-container" id="check-quiz">
+                    <!-- Q1 -->
+                    <div class="quiz-q-group" id="q-group-1">
+                        <h4 class="quiz-question-title">Question 1 (Zero Shift Invariance):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            If you drag the U = 0 reference line upward: what happens to the total mechanical energy $E$ and the physical motion of the particle?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-1" id="q1-o1">
+                            <label for="q1-o1" style="font-size: 0.88rem; cursor: pointer;">The total energy decreases, and the particle cannot roll as high.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-1" id="q1-o2">
+                            <label for="q1-o2" style="font-size: 0.88rem; cursor: pointer;">The total energy decreases, but the particle's physical motion remains completely unchanged.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-1" id="q1-o3">
+                            <label for="q1-o3" style="font-size: 0.88rem; cursor: pointer;">The total energy increases, and the particle rolls higher.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="4">
+                            <input type="radio" name="q-1" id="q1-o4">
+                            <label for="q1-o4" style="font-size: 0.88rem; cursor: pointer;">The total energy and the motion both remain exactly the same.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q1-feedback"></div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="quiz-q-group" id="q-group-2" style="margin-top: 1.5rem;">
+                        <h4 class="quiz-question-title">Question 2 (Turning Point Force):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            When the particle reaches its highest point on the hill and momentarily stops (a turning point), which statement is true?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-2" id="q2-o1">
+                            <label for="q2-o1" style="font-size: 0.88rem; cursor: pointer;">Both the velocity of the particle and the net force on it are zero.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-2" id="q2-o2">
+                            <label for="q2-o2" style="font-size: 0.88rem; cursor: pointer;">The velocity is zero, but the net force is non-zero, pointing back down the hill.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-2" id="q2-o3">
+                            <label for="q2-o3" style="font-size: 0.88rem; cursor: pointer;">The velocity is non-zero, but the net force is zero.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="4">
+                            <input type="radio" name="q-2" id="q2-o4">
+                            <label for="q2-o4" style="font-size: 0.88rem; cursor: pointer;">Both the velocity and the net force are at their maximum values.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q2-feedback"></div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="quiz-q-group" id="q-group-3" style="margin-top: 1.5rem;">
+                        <h4 class="quiz-question-title">Question 3 (Energy vs. Velocity Direction):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            If you are told that a particle in a system has a total energy of 10 J and a potential energy of 4 J, does this information tell you which way the particle is currently moving?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-3" id="q3-o1">
+                            <label for="q3-o1" style="font-size: 0.88rem; cursor: pointer;">Yes, it must be moving to the right.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-3" id="q3-o2">
+                            <label for="q3-o2" style="font-size: 0.88rem; cursor: pointer;">Yes, it must be moving to the left.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-3" id="q3-o3">
+                            <label for="q3-o3" style="font-size: 0.88rem; cursor: pointer;">No, it only tells you the speed of the particle, not its direction.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="4">
+                            <input type="radio" name="q-3" id="q3-o4">
+                            <label for="q3-o4" style="font-size: 0.88rem; cursor: pointer;">No, it only tells you that the particle is stopped.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q3-feedback"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Screen Reader live live announcer -->
+<div id="sim-live-announcer" class="visually-hidden" aria-live="polite"></div>
+
+<!-- Offscreen Live Data Table -->
+<div class="visually-hidden">
+    <table id="accessible-data-table" summary="Live numeric readouts of the running physics animation">
+        <caption>Current Simulation State Variables</caption>
+        <thead>
+            <tr>
+                <th scope="col">Variable</th>
+                <th scope="col">Value</th>
+                <th scope="col">Unit</th>
+            </tr>
+        </thead>
+        <tbody id="accessible-data-body">
+            <tr><td>Time</td><td id="val-time">0.0</td><td>seconds</td></tr>
+            <tr><td>Position</td><td id="val-x">0.00</td><td>meters</td></tr>
+            <tr><td>Velocity</td><td id="val-v">0.00</td><td>meters/second</td></tr>
+            <tr><td>Kinetic Energy (K)</td><td id="val-ke">0.00</td><td>joules</td></tr>
+            <tr><td>Potential Energy (U)</td><td id="val-pe">0.00</td><td>joules</td></tr>
+            <tr><td>Total Energy (E)</td><td id="val-te">0.00</td><td>joules</td></tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- MathJax Configuration for inline math -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            processEscapes: true
+        }
+    };
+</script>
+<!-- MathJax for rendering equations in scrollytelling -->
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="module" src="{{ url_for('static', filename='js/space_physics/energy_exchange.js') }}"></script>
+
+<script>
+    // Prediction and Quiz client validation logic
+    document.addEventListener("DOMContentLoaded", () => {
+        // Chapter 2 prediction quiz
+        const predQuiz = document.getElementById('prediction-quiz');
+        const predFeedback = document.getElementById('prediction-feedback');
+        const predOptions = predQuiz.querySelectorAll('.lab-question-option');
+
+        predOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                const choice = opt.getAttribute('data-option');
+                predOptions.forEach(o => {
+                    o.classList.remove('correct', 'incorrect');
+                    o.querySelector('input').checked = false;
+                });
+
+                opt.querySelector('input').checked = true;
+                predFeedback.style.display = 'block';
+
+                if (choice === '2') {
+                    opt.classList.add('correct');
+                    predFeedback.className = 'lab-feedback-banner success';
+                    predFeedback.textContent = "Correct! The particle is fastest at the lowest point. In the next section, we will see how this relates to the exchange of stored energy.";
+                } else {
+                    opt.classList.add('incorrect');
+                    predFeedback.className = 'lab-feedback-banner error';
+                    predFeedback.textContent = "Try again. Remember, speed is related to kinetic energy. Think about where the particle gains the most speed.";
+                }
+            });
+        });
+
+        // Chapter 7 Concept check quiz
+        setupConceptCheckQuiz();
+    });
+
+    function setupConceptCheckQuiz() {
+        // Q1
+        setupQHandler('q-group-1', 'q1-feedback', '2',
+            "Correct! Shifting the reference height C does not change the potential difference (slope), so the force remains identical and the motion is unchanged. However, the absolute value of energy drops.",
+            "Incorrect. Remember that classical forces are calculated from differences in potential energy, not absolute heights.");
+
+        // Q2
+        setupQHandler('q-group-2', 'q2-feedback', '2',
+            "Correct! At a turning point, the particle momentarily stops (v=0), but the track still has a slope, meaning a non-zero gravitational force accelerates it back down the hill.",
+            "Incorrect. If both velocity and force were zero, the particle would remain stuck at the top forever!");
+
+        // Q3
+        setupQHandler('q-group-3', 'q3-feedback', '3',
+            "Correct! Kinetic energy depends on speed squared (v^2). Knowing the magnitude of kinetic energy tells us the speed, but does not provide any direction information (velocity vector).",
+            "Incorrect. Energy is a scalar quantity, which means it represents magnitude but carries no direction information.");
+    }
+
+    function setupQHandler(groupId, feedbackId, correctAns, successMsg, failMsg) {
+        const group = document.getElementById(groupId);
+        const feedback = document.getElementById(feedbackId);
+        const options = group.querySelectorAll('.lab-question-option');
+
+        options.forEach(opt => {
+            opt.addEventListener('click', () => {
+                const choice = opt.getAttribute('data-ans');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'incorrect');
+                    o.querySelector('input').checked = false;
+                });
+
+                opt.querySelector('input').checked = true;
+                feedback.style.display = 'block';
+
+                if (choice === correctAns) {
+                    opt.classList.add('correct');
+                    feedback.className = 'lab-feedback-banner success';
+                    feedback.textContent = successMsg;
+                } else {
+                    opt.classList.add('incorrect');
+                    feedback.className = 'lab-feedback-banner error';
+                    feedback.textContent = failMsg;
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

@@ -71,6 +71,34 @@ PHYSICS_METADATA = {
         "icon": "⟲",
         "status": "active",
     },
+    "energy-exchange": {
+        "title": "Energy Exchange",
+        "category": "Classical Mechanics",
+        "description": "How can an object stop, speed up, or reverse while a single total quantity remains unchanged? Explore kinetic, potential, and total energy.",
+        "icon": "⚖",
+        "status": "active",
+    },
+    "potential-landscapes": {
+        "title": "Potential Landscapes",
+        "category": "Classical Mechanics",
+        "description": "How much can we predict from a landscape diagram without solving the entire trajectory? Discover allowed regions and turning points.",
+        "icon": "⛰",
+        "status": "active",
+    },
+    "energy-transfer": {
+        "title": "Friction & Energy Transfer",
+        "category": "Classical Mechanics",
+        "description": "If friction makes the visible motion stop, has energy disappeared? Trace heat transfer across system boundaries.",
+        "icon": "🔥",
+        "status": "active",
+    },
+    "numerical-conservation": {
+        "title": "Numerical Conservation",
+        "category": "Computational Physics",
+        "description": "Can a numerical algorithm manufacture energy even when the physics model does not? Test Forward Euler vs. symplectic solvers.",
+        "icon": "💻",
+        "status": "active",
+    },
 }
 
 # Allowlist for valid URL path segments

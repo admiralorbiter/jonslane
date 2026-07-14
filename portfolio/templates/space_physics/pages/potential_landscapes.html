@@ -1,0 +1,663 @@
+{% extends "base.html" %}
+
+{% block title %}{{ metadata.title }} | Space & Physics{% endblock %}
+{% block meta_description %}{{ metadata.description }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/space_physics.css') }}">
+<style>
+    /* Split-Pane Sticky Layout */
+    .scrolly-layout {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 3.5rem;
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 6rem 1.5rem;
+    }
+
+    /* Left pane (Sticky visualizer and HUD panels) */
+    .scrolly-visuals {
+        position: sticky;
+        top: 6rem;
+        height: calc(100vh - 10rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        justify-content: center;
+    }
+
+    .canvas-sticky-wrapper {
+        width: 100%;
+        aspect-ratio: 16 / 11;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: #020205;
+        box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.5),
+            inset 0 0 30px rgba(0, 0, 0, 0.9);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    #physics-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        cursor: pointer;
+    }
+
+    /* Playback Toolbar */
+    .sim-playbar {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        background: rgba(14, 16, 23, 0.45);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* HUD Controls */
+    .hud-controls-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background: rgba(14, 16, 23, 0.45);
+        padding: 1.25rem;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .hud-subgroup {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hud-subgroup-title {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--neon-amber);
+        margin-bottom: 0.25rem;
+    }
+
+    /* System Boundary Definition Card */
+    .hud-boundary-card {
+        background: rgba(99, 102, 241, 0.04);
+        border: 1px dashed rgba(99, 102, 241, 0.2);
+        border-radius: 8px;
+        padding: 0.85rem 1.25rem;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    /* Right pane (Scrolling narrative text column) */
+    .scrolly-narrative {
+        padding-bottom: 30vh;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+        margin-bottom: 2rem;
+    }
+    .back-link:hover {
+        color: var(--neon-cyan);
+    }
+
+    .header-group {
+        margin-bottom: 3.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 1.5rem;
+    }
+
+    .subtitle-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-amber);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .page-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 2.25rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .page-intro {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .scrolly-chapter {
+        min-height: 60vh;
+        padding: 4rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .scrolly-chapter:last-of-type {
+        border-bottom: none;
+    }
+
+    .chapter-num {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .chapter-title {
+        font-family: var(--font-serif), Georgia, serif;
+        font-size: 1.65rem;
+        font-style: italic;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .chapter-prose {
+        color: var(--text-muted);
+        font-size: 0.98rem;
+        line-height: 1.625;
+    }
+    .chapter-prose p {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Math Card callout */
+    .physics-math-card {
+        background: rgba(99, 102, 241, 0.03);
+        border: 1px dashed rgba(99, 102, 241, 0.15);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin: 1.5rem 0;
+        font-size: 1.05rem;
+        color: #ffffff;
+        text-align: center;
+    }
+
+    /* Quiz widgets */
+    .quiz-container {
+        margin-top: 1.5rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .quiz-question-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .lab-question-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .lab-question-option:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .lab-question-option input[type="radio"] {
+        margin-top: 0.25rem;
+        cursor: pointer;
+    }
+
+    .lab-question-option.correct {
+        background: rgba(16, 185, 129, 0.08) !important;
+        border-color: rgba(16, 185, 129, 0.3) !important;
+        color: #a7f3d0;
+    }
+
+    .lab-question-option.incorrect {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+        color: #fca5a5;
+    }
+
+    .lab-feedback-banner {
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: none;
+        line-height: 1.5;
+    }
+
+    .lab-feedback-banner.success {
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #34d399;
+    }
+
+    .lab-feedback-banner.error {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+    }
+
+    /* Screen reader offscreen helper */
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Responsive mobile formatting override */
+    @media (max-width: 900px) {
+        .scrolly-layout {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .scrolly-visuals {
+            position: sticky;
+            top: 0;
+            height: 52vh;
+            z-index: 50;
+            background: var(--space-bg);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            padding-bottom: 0.5rem;
+            justify-content: flex-start;
+        }
+
+        .scrolly-chapter {
+            min-height: 40vh;
+            padding: 2rem 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-stars-overlay"></div>
+
+<div class="scrolly-layout">
+    <!-- Sticky Visual Container (Left on desktop, Top on mobile) -->
+    <div class="scrolly-visuals">
+        <div class="canvas-sticky-wrapper">
+            <canvas id="physics-canvas" aria-label="Physics animation: particle sliding on potential energy landscape"></canvas>
+        </div>
+
+        <!-- Playback toolbar -->
+        <div class="sim-playbar" role="toolbar" aria-label="Simulation playback controls">
+            <button id="btn-play-pause" class="lab-btn" aria-label="Play/Pause simulation">Play</button>
+            <button id="btn-step" class="lab-btn" aria-label="Step simulation forward one frame">Step</button>
+            <button id="btn-reset" class="lab-btn" aria-label="Reset simulation to start">Reset</button>
+        </div>
+
+        <!-- Parameters Adjuster HUD Panel -->
+        <div id="hud-control-panel" class="hud-controls-column" aria-label="Control settings">
+            <!-- System boundary Card -->
+            <div id="hud-system-card" class="hud-boundary-card">
+                <div id="system-boundary-text">
+                    <strong>System:</strong> Particle + Track (Closed)<br>
+                    <strong>Surroundings:</strong> None<br>
+                    <strong>External Work ($W$):</strong> 0 J
+                </div>
+            </div>
+
+            <!-- Quantum Preview Toggle (shown dynamically in step 5) -->
+            <div id="hud-quantum-toggle-row" class="hud-subgroup" style="display: none;">
+                <span class="hud-subgroup-title">Quantum Preview</span>
+                <div class="lab-btn-row">
+                    <button id="btn-quantum-toggle" class="lab-btn" aria-label="Toggle Quantum Wavefunction Preview">Enable Wave</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Narrative Scrolling Column -->
+    <div class="scrolly-narrative">
+        <a href="/space-physics/" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to Space &amp; Physics
+        </a>
+
+        <div class="header-group">
+            <span class="subtitle-badge">Connective Energy Pathway | Part 2</span>
+            <h1 class="page-title">{{ metadata.title }}</h1>
+            <p class="page-intro">{{ metadata.description }}</p>
+        </div>
+
+        <!-- Chapter 1 -->
+        <section class="scrolly-chapter" data-step="1">
+            <span class="chapter-num">Chapter 1</span>
+            <h2 class="chapter-title">The Multi-Hump Track</h2>
+            <div class="chapter-prose">
+                <p>
+                    In physical systems, potential energy landscapes are rarely simple, symmetrical valleys. They often consist of multiple hills, valleys, and barriers.
+                </p>
+                <p>
+                    Observe this new fourth-degree polynomial landscape, featuring a deep left valley, a shallow right valley, and a central hill barrier.
+                </p>
+                <p>
+                    Release the particle from different heights and observe how it rolls across the landscape. The physics is still frictionless, and total energy is conserved.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 2 -->
+        <section class="scrolly-chapter" data-step="2">
+            <span class="chapter-num">Chapter 2</span>
+            <h2 class="chapter-title">Energy Limits</h2>
+            <div class="chapter-prose">
+                <p>
+                    Let's cap the total energy of our system. An Amber Total Energy Line ($E$) is now displayed on the canvas.
+                </p>
+                <p>
+                    Click and drag this energy line vertically (or grab the particle to adjust its initial release height).
+                </p>
+                <p>
+                    Observe that the particle's maximum vertical reach matches the height of this energy line exactly. The particle rolls up the hill, decelerates, stops at the height of the energy line, and rolls back down.
+                </p>
+                <p>
+                    If you drag the energy line below the top of the central hill, you will notice something interesting: **the particle is trapped** in one valley, unable to cross into the other.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 3 -->
+        <section class="scrolly-chapter" data-step="3">
+            <span class="chapter-num">Chapter 3</span>
+            <h2 class="chapter-title">Allowed vs. Forbidden Regions</h2>
+            <div class="chapter-prose">
+                <p>
+                    Because total energy is $E = K + U$, and kinetic energy cannot be negative ($K \ge 0$), the particle can only exist where the potential energy is less than or equal to the total energy ($U \le E$).
+                </p>
+                <p>
+                    We can now visualize these zones on the track:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Allowed Regions ($E \ge U$):</strong> Highlighted in solid **Neon Cyan**. Here, the particle is permitted to travel. The translucent cyan shading above the track represents the kinetic energy ($K = E - U$) at each point.
+                    </li>
+                    <li>
+                        <strong>Forbidden Regions ($E < U$):</strong> Highlighted as a **Dashed Grey** line and covered in a diagonal hatch pattern. Classically, the particle is physically barred from entering this zone because it would require negative kinetic energy ($K < 0$, which implies an imaginary velocity).
+                    </li>
+                </ul>
+                <p>
+                    Drag the energy line up and down, and observe how these allowed and forbidden zones dynamically expand, shrink, split, or merge.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 4 -->
+        <section class="scrolly-chapter" data-step="4">
+            <span class="chapter-num">Chapter 4</span>
+            <h2 class="chapter-title">Classical Turning Points</h2>
+            <div class="chapter-prose">
+                <p>
+                    The boundaries between the allowed and forbidden regions are called the **classical turning points**.
+                </p>
+                <p>
+                    At these exact intersections, $E = U$, meaning the kinetic energy is exactly zero:
+                    <div class="physics-math-card">
+                        $$K = 0 \implies v_s = 0$$
+                    </div>
+                </p>
+                <p>
+                    Turning points are represented by **Amber Brackets** `[` and `]`. Observe what happens when the particle reaches a bracket:
+                </p>
+                <ol>
+                    <li>
+                        Its speed shrinks to zero, and the Cyan velocity vector disappears.
+                    </li>
+                    <li>
+                        The **Amber force vector** does *not* disappear. It reaches its local maximum because the track is sloped at the bracket.
+                    </li>
+                </ol>
+                <p>
+                    This is a crucial point: even though the particle stops momentarily, the non-zero force immediately accelerates it back into the allowed region.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 5 -->
+        <section class="scrolly-chapter" data-step="5">
+            <span class="chapter-num">Chapter 5</span>
+            <h2 class="chapter-title">Crossing the Barrier</h2>
+            <div class="chapter-prose">
+                <p>
+                    To cross the central hill, the particle needs enough energy to climb over it. Classically, the central hill acts as a potential barrier.
+                </p>
+                <p>
+                    Drag the Total Energy Line ($E$) above the peak of the central hill. Notice that the allowed regions in the left and right valleys merge into a single, continuous allowed zone. The particle is now free to explore the entire track!
+                </p>
+                <p>
+                    <strong>A Glimpse into Quantum Tunneling:</strong>
+                </p>
+                <p>
+                    In classical mechanics, the forbidden zone is an absolute barrier. But in quantum mechanics, small particles behave like waves.
+                </p>
+                <p>
+                    Click **"Enable Wave"** in the left control panel. You will see a fading purple wavefunction leaking into the forbidden barrier. If the barrier is thin enough, the wave can leak all the way through, allowing the particle to appear on the other side—without ever having enough energy to climb the hill!
+                </p>
+                <p>
+                    Critically, the particle's total energy remains exactly the same on both sides of the barrier.
+                </p>
+            </div>
+        </section>
+
+        <!-- Chapter 6 -->
+        <section class="scrolly-chapter" data-step="6">
+            <span class="chapter-num">Chapter 6</span>
+            <h2 class="chapter-title">Concept Check</h2>
+            <div class="chapter-prose">
+                <p>Let's check your understanding of potential landscapes and turning points.</p>
+
+                <div class="quiz-container" id="check-quiz">
+                    <!-- Q1 -->
+                    <div class="quiz-q-group" id="q-group-1">
+                        <h4 class="quiz-question-title">Question 1 (Turning Point Force):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            A rolling particle reaches its turning point on a sloped track and comes to a momentary stop ($v = 0$). What is the net force on the particle at this instant?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-1" id="q1-o1">
+                            <label for="q1-o1" style="font-size: 0.88rem; cursor: pointer;">Non-zero, pointing back down the slope.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-1" id="q1-o2">
+                            <label for="q1-o2" style="font-size: 0.88rem; cursor: pointer;">Zero, because the particle is temporarily at rest.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-1" id="q1-o3">
+                            <label for="q1-o3" style="font-size: 0.88rem; cursor: pointer;">Infinite, causing the bounce.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q1-feedback"></div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="quiz-q-group" id="q-group-2" style="margin-top: 1.5rem;">
+                        <h4 class="quiz-question-title">Question 2 (Reference Shift Invariance):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            If you shift the arbitrary zero of potential energy upward by +2 Joules ($U \to U + 2$), what happens to the physical locations of the turning points?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-2" id="q2-o1">
+                            <label for="q2-o1" style="font-size: 0.88rem; cursor: pointer;">They shift closer together because the potential energy is higher.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-2" id="q2-o2">
+                            <label for="q2-o2" style="font-size: 0.88rem; cursor: pointer;">They remain in the same physical locations because the total energy $E$ also shifts by +2 J, keeping $E - U$ identical.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-2" id="q2-o3">
+                            <label for="q2-o3" style="font-size: 0.88rem; cursor: pointer;">The particle can no longer turn around.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q2-feedback"></div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="quiz-q-group" id="q-group-3" style="margin-top: 1.5rem;">
+                        <h4 class="quiz-question-title">Question 3 (Tunneling Energy):</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            In quantum tunneling, a wave-particle crosses a forbidden barrier where its total energy is less than the potential energy ($E < U$). What is the energy of the particle after it emerges on the other side?
+                        </p>
+                        <div class="lab-question-option" data-ans="1">
+                            <input type="radio" name="q-3" id="q3-o1">
+                            <label for="q3-o1" style="font-size: 0.88rem; cursor: pointer;">Lower, because it used energy to tunnel.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="2">
+                            <input type="radio" name="q-3" id="q3-o2">
+                            <label for="q3-o2" style="font-size: 0.88rem; cursor: pointer;">Exactly equal to its initial total energy $E$.</label>
+                        </div>
+                        <div class="lab-question-option" data-ans="3">
+                            <input type="radio" name="q-3" id="q3-o3">
+                            <label for="q3-o3" style="font-size: 0.88rem; cursor: pointer;">Zero, because kinetic energy is negative inside the barrier.</label>
+                        </div>
+                        <div class="lab-feedback-banner" id="q3-feedback"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Screen Reader live live announcer -->
+<div id="sim-live-announcer" class="visually-hidden" aria-live="polite"></div>
+
+<!-- Offscreen Keyboard Sliders -->
+<div class="visually-hidden">
+    <h2>Accessibility Range Controls</h2>
+    <label for="acc-energy-slider">Total Energy (Joules):</label>
+    <input type="range" id="acc-energy-slider" min="11.0" max="350.0" step="0.5" value="26.0">
+    <label for="acc-particle-slider">Particle Position (% of track):</label>
+    <input type="range" id="acc-particle-slider" min="0" max="100" step="1" value="27">
+</div>
+
+<!-- Offscreen Live Data Table -->
+<div class="visually-hidden">
+    <table id="accessible-data-table" summary="Live numeric readouts of the running physics animation">
+        <caption>Current Simulation State Variables</caption>
+        <thead>
+            <tr>
+                <th scope="col">Variable</th>
+                <th scope="col">Value</th>
+                <th scope="col">Unit</th>
+            </tr>
+        </thead>
+        <tbody id="accessible-data-body">
+            <tr><td>Time</td><td id="val-time">0.0</td><td>seconds</td></tr>
+            <tr><td>Position</td><td id="val-x">0.00</td><td>meters</td></tr>
+            <tr><td>Velocity</td><td id="val-v">0.00</td><td>meters/second</td></tr>
+            <tr><td>Kinetic Energy (K)</td><td id="val-ke">0.00</td><td>joules</td></tr>
+            <tr><td>Potential Energy (U)</td><td id="val-pe">0.00</td><td>joules</td></tr>
+            <tr><td>Total Energy (E)</td><td id="val-te">0.00</td><td>joules</td></tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- MathJax Configuration for inline math -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            processEscapes: true
+        }
+    };
+</script>
+<!-- MathJax for rendering equations in scrollytelling -->
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="module" src="{{ url_for('static', filename='js/space_physics/potential_landscapes.js') }}"></script>
+
+<script>
+    // Quiz client validation logic
+    document.addEventListener("DOMContentLoaded", () => {
+        setupConceptCheckQuiz();
+    });
+
+    function setupConceptCheckQuiz() {
+        // Q1
+        setupQHandler('q-group-1', 'q1-feedback', '1',
+            "Correct! At a turning point, the particle momentarily stops (v=0), but the track still has a slope, meaning a non-zero gravitational force accelerates it back down the hill.",
+            "Incorrect. If both velocity and force were zero, the particle would remain stuck at the top forever!");
+
+        // Q2
+        setupQHandler('q-group-2', 'q2-feedback', '2',
+            "Correct! Shifting the reference height C shifts both U and E by the same amount, keeping the difference (E - U) identical. Thus, the physical turning points stay in the exact same positions.",
+            "Incorrect. Remember that classical forces and turning points depend on the relative difference (E - U), which is invariant under zero-point shifts.");
+
+        // Q3
+        setupQHandler('q-group-3', 'q3-feedback', '2',
+            "Correct! In quantum tunneling, a wave-particle penetrates a classically forbidden barrier. When it emerges, its total energy E is completely unchanged. It does not 'lose' energy to cross.",
+            "Incorrect. Although the wavefunction amplitude decays inside the barrier, the particle's total energy E remains constant.");
+    }
+
+    function setupQHandler(groupId, feedbackId, correctAns, successMsg, failMsg) {
+        const group = document.getElementById(groupId);
+        const feedback = document.getElementById(feedbackId);
+        const options = group.querySelectorAll('.lab-question-option');
+
+        options.forEach(opt => {
+            opt.addEventListener('click', () => {
+                const choice = opt.getAttribute('data-ans');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'incorrect');
+                    o.querySelector('input').checked = false;
+                });
+
+                opt.querySelector('input').checked = true;
+                feedback.style.display = 'block';
+
+                if (choice === correctAns) {
+                    opt.classList.add('correct');
+                    feedback.className = 'lab-feedback-banner success';
+                    feedback.textContent = successMsg;
+                } else {
+                    opt.classList.add('incorrect');
+                    feedback.className = 'lab-feedback-banner error';
+                    feedback.textContent = failMsg;
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

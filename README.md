@@ -2,7 +2,9 @@
 
 Welcome to my personal portfolio and research workspace! This project is built to showcase custom web projects, technical research, and experiments.
 
-Currently, it features **Count Me In**, a scientifically grounded BPM ear-training program for DJs and musicians.
+Currently, it features:
+* **Count Me In**: A scientifically grounded BPM ear-training program for DJs and musicians.
+* **Space & Physics Explorable Explanations**: A collection of inline scrollytelling visualizers, phase-space plots, and custom physics simulation labs (classical mechanics, relativity, cosmology, and quantum mechanics).
 
 ### 🎧 Count Me In features:
 * **Tap Tempo Input**: Estimate tempo by tapping keys or clicking a tap pad, capturing timing consistency (motor stability).
