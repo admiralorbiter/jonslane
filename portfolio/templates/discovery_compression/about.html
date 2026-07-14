@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}About Discovery Compression | When Could We Have Known?{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/discovery_compression.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dc-page">
+  <section class="dc-hero">
+    <p class="dc-hero-eyebrow">Laboratory B &mdash; Concept &amp; Methodology</p>
+    <h1 class="dc-hero-title">Discovery Compression</h1>
+    <p class="dc-hero-subtitle">
+      A computational investigation of the earliest possible dates for scientific discoveries,
+      and what the pattern of delays reveals about what we cannot yet see.
+    </p>
+  </section>
+
+  <div style="max-width:760px; margin:0 auto; padding:0 var(--space-xl) var(--space-2xl);">
+    <p class="dc-section-label">The Formal Core</p>
+
+    <p style="font-family:var(--font-serif);font-size:0.92rem;color:var(--ink-mid);line-height:1.75;margin-bottom:var(--space-lg);">
+      For a theory T and a calendar year y, define the historical capability inventory
+      <em>A<sub>y</sub></em> &mdash; a structured description of what instruments, materials,
+      mathematics, and institutional organization existed in that year. The
+      <strong style="color:var(--celestial-mid);">discovery horizon</strong> is:
+    </p>
+
+    <div style="background:rgba(18,18,30,0.8);border:1px solid rgba(74,140,204,0.12);border-radius:4px;padding:var(--space-md) var(--space-lg);margin-bottom:var(--space-xl);font-family:var(--font-mono);font-size:0.8rem;color:var(--celestial-mid);line-height:1.8;">
+      y*(T) = min y [ &exist; experiment e &isin; A<sub>y</sub> such that e strongly discriminates T ]
+    </div>
+
+    <p style="font-family:var(--font-serif);font-size:0.88rem;color:var(--ink-mid);line-height:1.75;margin-bottom:var(--space-2xl);">
+      y*(T) is not the year someone could have developed the complete modern theory.
+      It is the earliest point when they could have obtained compelling evidence for
+      one of its important structural claims &mdash; using only what was available at that time.
+    </p>
+
+    <p class="dc-section-label">Relationship to Experimental Archaeology</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);margin-bottom:var(--space-2xl);">
+      <div style="background:rgba(46,37,24,0.4);border:1px solid rgba(196,169,125,0.12);border-radius:4px;padding:var(--space-md) var(--space-lg);">
+        <p style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#b8902a;margin-bottom:var(--space-sm);">Laboratory A</p>
+        <p style="font-family:var(--font-fell);font-size:0.95rem;font-style:italic;color:#f0e0c0;margin-bottom:var(--space-sm);">Experimental Archaeology</p>
+        <p style="font-family:var(--font-serif);font-size:0.78rem;color:#a08060;line-height:1.6;">Given a <em>wrong</em> theory, how did it explain the world on its own terms? Where exactly did it break?</p>
+      </div>
+      <div style="background:rgba(18,18,30,0.7);border:1px solid rgba(74,140,204,0.12);border-radius:4px;padding:var(--space-md) var(--space-lg);">
+        <p style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--celestial-mid);margin-bottom:var(--space-sm);">Laboratory B</p>
+        <p style="font-family:var(--font-fell);font-size:0.95rem;font-style:italic;color:var(--ink-bright);margin-bottom:var(--space-sm);">Discovery Compression</p>
+        <p style="font-family:var(--font-serif);font-size:0.78rem;color:var(--ink-mid);line-height:1.6;">Given a <em>true</em> theory, when was the right answer first reachable? How much earlier could it have been found?</p>
+      </div>
+    </div>
+
+    <a href="{{ url_for('discovery_compression.index') }}"
+       style="display:inline-flex;align-items:center;gap:0.5rem;font-family:var(--font-mono);font-size:0.72rem;color:var(--celestial-mid);text-decoration:none;letter-spacing:0.08em;">
+      &larr; Return to Study Index
+    </a>
+  </div>
+
+  <footer class="dc-footer-strip">
+    <p>
+      Discovery Compression &mdash; Laboratory B &mdash;
+      <a href="{{ url_for('discovery_compression.index') }}">Study Index</a>
+      &mdash;
+      <a href="{{ url_for('experimental_archaeology.index') }}">Laboratory A: Experimental Archaeology</a>
+    </p>
+  </footer>
+</div>
+{% endblock %}

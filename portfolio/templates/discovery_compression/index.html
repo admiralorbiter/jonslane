@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Discovery Compression | When Could We Have Known?{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/discovery_compression.css') }}">
+<meta name="description" content="Discovery Compression — computational investigation of the earliest possible dates for scientific discoveries, and what that reveals about what we cannot yet see.">
+{% endblock %}
+
+{% block content %}
+<div class="dc-page">
+
+  <!-- ── Hero ─────────────────────────────────────────── -->
+  <section class="dc-hero">
+    <p class="dc-hero-eyebrow">Laboratory B &mdash; Discovery Compression</p>
+    <h1 class="dc-hero-title">When Could We Have Known?</h1>
+    <p class="dc-hero-subtitle">
+      For each true modern theory, find the earliest year when a rigorous investigator —
+      using only the tools, observations, and mathematics of that time, but knowing
+      where to look — could have obtained compelling evidence.
+    </p>
+    <p class="dc-hero-credo">
+      Not asked: <em>&ldquo;Given the old theory, why did it fail?&rdquo;</em><br>
+      Asked instead: <em>&ldquo;Given the true theory, how far back in history could part of it have been discovered,
+      provided the investigator knew where to look?&rdquo;</em>
+    </p>
+  </section>
+
+  <!-- ── Three-Date Concept ────────────────────────────── -->
+  <section style="max-width:900px; margin:0 auto var(--space-xl); padding:0 var(--space-xl);">
+    <p class="dc-section-label">The Three Discovery Dates</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:var(--space-md);">
+      <div style="background:rgba(160,112,16,0.06); border:1px solid rgba(160,112,16,0.2); border-radius:4px; padding:var(--space-md) var(--space-lg);">
+        <p style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--amber-mid);margin-bottom:var(--space-sm);">First Observable</p>
+        <p style="font-family:var(--font-serif);font-size:0.82rem;font-style:italic;color:var(--ink-mid);line-height:1.6;">When the relevant phenomenon could have been noticed with existing instruments &mdash; even if misclassified.</p>
+      </div>
+      <div style="background:rgba(74,140,204,0.05); border:1px solid rgba(74,140,204,0.15); border-radius:4px; padding:var(--space-md) var(--space-lg);">
+        <p style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--celestial-mid);margin-bottom:var(--space-sm);">First Testable</p>
+        <p style="font-family:var(--font-serif);font-size:0.82rem;font-style:italic;color:var(--ink-mid);line-height:1.6;">When available tools could distinguish competing explanations with adequate precision. The <em>discovery horizon</em> y*(T).</p>
+      </div>
+      <div style="background:rgba(74,153,128,0.05); border:1px solid rgba(74,153,128,0.12); border-radius:4px; padding:var(--space-md) var(--space-lg);">
+        <p style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--verdigris-mid);margin-bottom:var(--space-sm);">First Comprehensible</p>
+        <p style="font-family:var(--font-serif);font-size:0.82rem;font-style:italic;color:var(--ink-mid);line-height:1.6;">When the mathematical or conceptual framework existed to correctly interpret the result. Often centuries later.</p>
+      </div>
+    </div>
+    <p style="font-family:var(--font-serif);font-size:0.8rem;font-style:italic;color:var(--ink-ghost);text-align:center;margin-top:var(--space-lg);line-height:1.65;">
+      The gap between First Testable and Actual Discovery is the <strong style="color:var(--celestial-dark);">compression gap</strong> —
+      the measure of how much earlier a discovery could have happened.
+    </p>
+  </section>
+
+  <!-- ── Hint Level Legend ─────────────────────────────── -->
+  <section class="dc-hint-legend">
+    <p class="dc-hint-legend-title">The Six Hint Levels</p>
+    <div class="dc-hint-legend-grid">
+      {% set hints = [
+        (0, "lvl-0", "No Hint",        "Only the actual literature and instruments of the period."),
+        (1, "lvl-1", "Attention",       "\"Compare these two groups\" — redirecting where to look."),
+        (2, "lvl-2", "Measurement",     "\"Measure this specific variable\" — what to track."),
+        (3, "lvl-3", "Experimental",    "The full experimental design, without the explanation."),
+        (4, "lvl-4", "Structural",      "The mathematical relationship between variables."),
+        (5, "lvl-5", "Ontological",     "What hidden entities or structures exist."),
+        (6, "lvl-6", "Full Theory",     "Complete equations, mechanism, and interpretation.")
+      ] %}
+      {% for num, cls, name, desc in hints %}
+      <div class="dc-hint-level-card">
+        <span class="dc-hint-level-num {{ cls }}">{{ num }}</span>
+        <div class="dc-hint-level-body">
+          <p class="dc-hint-level-name">{{ name }}</p>
+          <p class="dc-hint-level-desc">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── Timeline ──────────────────────────────────────── -->
+  <section style="padding:0 0 var(--space-xl);">
+    <p class="dc-section-label">Studies</p>
+
+    <div class="dc-timeline-wrapper" id="dc-timeline-wrapper">
+      <div class="dc-timeline-inner">
+        <div class="dc-timeline-axis"></div>
+
+        {% for study in studies %}
+        <div class="dc-study-node">
+          <a
+            href="{% if study.status == 'live' %}{{ url_for('discovery_compression.study', slug=study.slug) }}{% else %}#{% endif %}"
+            class="dc-study-card"
+            data-status="{{ study.status }}"
+            {% if study.status != 'live' %}aria-disabled="true" tabindex="-1" style="text-decoration:none;"{% else %}style="text-decoration:none;"{% endif %}
+          >
+            <!-- Header row -->
+            <div class="dc-card-header">
+              <span class="dc-card-icon">{{ study.field_icon }}</span>
+              <span class="dc-card-status" data-status="{{ study.status }}">
+                {{ study.status | replace('in-progress', 'in progress') | title }}
+              </span>
+            </div>
+
+            <!-- Period / horizon -->
+            <p class="dc-card-horizon">y* &asymp; {{ study.horizon }}</p>
+
+            <!-- Titles -->
+            <h2 class="dc-card-title">{{ study.title }}</h2>
+            <p class="dc-card-subtitle">{{ study.subtitle }}</p>
+
+            <div class="dc-card-divider"></div>
+
+            <p class="dc-card-field">{{ study.field }}</p>
+            <p class="dc-card-question">{{ study.central_question }}</p>
+            <p class="dc-card-teaser">{{ study.teaser }}</p>
+
+            <!-- Hint level indicator -->
+            <div class="dc-card-hint">
+              <div class="dc-card-hint-dots">
+                {% for i in range(7) %}
+                <div class="dc-hint-dot {% if i <= study.min_hint_level %}active-{{ i }}{% endif %}"></div>
+                {% endfor %}
+              </div>
+              <span class="dc-hint-label">Level {{ study.min_hint_level }} min. hint</span>
+            </div>
+
+            <!-- CTA -->
+            {% if study.status == 'live' %}
+            <span class="dc-card-cta">
+              Open Study <span class="dc-card-cta-arrow">&rarr;</span>
+            </span>
+            {% else %}
+            <span class="dc-card-cta" aria-disabled="true">
+              Forthcoming
+            </span>
+            {% endif %}
+          </a>
+
+          <!-- Axis connector -->
+          <div class="dc-study-stem"></div>
+          <div class="dc-study-dot"></div>
+          <p class="dc-study-year">{{ study.horizon }}</p>
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Four System Components ────────────────────────── -->
+  <section class="dc-methodology">
+    <p class="dc-section-label">Four System Components</p>
+
+    <div class="dc-methodology-grid">
+      <div class="dc-method-card" data-num="01">
+        <h3 class="dc-method-title">Historical Capability Model <em>A<sub>y</sub></em></h3>
+        <p class="dc-method-desc">For a selected year, a structured inventory of instruments, materials, mathematics, and institutional organization — including noise floors, tolerances, and social constraints. What was measurable, buildable, and computable?</p>
+      </div>
+      <div class="dc-method-card" data-num="02">
+        <h3 class="dc-method-title">Theory Compiler</h3>
+        <p class="dc-method-desc">Translates the modern theory into observable predictions that do not require modern instruments or vocabulary. Traces: hidden mechanism &rarr; intermediate process &rarr; period-measurable observable.</p>
+      </div>
+      <div class="dc-method-card" data-num="03">
+        <h3 class="dc-method-title">Experiment Search</h3>
+        <p class="dc-method-desc">Searches the historically feasible experiment space. Scores each candidate by: expected discrimination among theories, divided by cost + duration + measurement difficulty. Finds the cheapest experiment that changes what a reasonable observer should believe.</p>
+      </div>
+      <div class="dc-method-card" data-num="04">
+        <h3 class="dc-method-title">Hindsight-Leak Detector</h3>
+        <p class="dc-method-desc">Audits every proposed experiment for smuggled modern knowledge: anachronistic materials, modern statistical conventions, calibration dependencies on later science, and hidden spatial or conceptual maps only available in hindsight.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Companion note ────────────────────────────────── -->
+  <p class="dc-companion-note">
+    Discovery Compression is a companion laboratory to
+    <a href="{{ url_for('experimental_archaeology.index') }}">Experimental Archaeology</a>.
+    Where Archaeology asks &ldquo;how did a wrong theory explain the world?&rdquo; &mdash;
+    this laboratory asks &ldquo;when was the right answer first reachable?&rdquo;
+  </p>
+
+  <!-- ── Footer ────────────────────────────────────────── -->
+  <footer class="dc-footer-strip">
+    <p>
+      Discovery Compression &mdash; Laboratory B &mdash;
+      <a href="{{ url_for('discovery_compression.about') }}">Concept &amp; Methodology</a>
+      &mdash;
+      <a href="{{ url_for('experimental_archaeology.index') }}">Laboratory A: Experimental Archaeology</a>
+    </p>
+  </footer>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Horizontal timeline drag-scroll ─────────────────── */
+(function () {
+  const wrapper = document.getElementById('dc-timeline-wrapper');
+  if (!wrapper) return;
+
+  let isDown = false;
+  let startX, scrollLeft;
+
+  wrapper.addEventListener('mousedown', (e) => {
+    isDown = true;
+    wrapper.classList.add('active');
+    startX = e.pageX - wrapper.offsetLeft;
+    scrollLeft = wrapper.scrollLeft;
+  });
+
+  ['mouseleave', 'mouseup'].forEach(ev =>
+    wrapper.addEventListener(ev, () => {
+      isDown = false;
+      wrapper.classList.remove('active');
+    })
+  );
+
+  wrapper.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - wrapper.offsetLeft;
+    const walk = (x - startX) * 1.2;
+    wrapper.scrollLeft = scrollLeft - walk;
+  });
+})();
+</script>
+{% endblock %}

@@ -360,6 +360,141 @@ portfolio/static/js/experimental_archaeology/
 
 ---
 
+## 🔭 Section 13: Discovery Compression Blueprint
+
+Counterfactual investigation of the earliest possible dates for scientific
+discoveries at `/discovery-compression`. A companion laboratory to Experimental
+Archaeology: where Archaeology asks *"how did a wrong theory explain the world?"*,
+Discovery Compression asks *"when was the right answer first reachable?"*
+
+Full documentation: [`docs/discovery_compression/README.md`](discovery_compression/README.md)
+
+### Blueprint Structure (`routes/discovery_compression.py`)
+
+Registered at `/discovery-compression`. No authentication required.
+
+```
+/discovery-compression/              — Study landing page
+/discovery-compression/<slug>/       — Individual interactive study
+/discovery-compression/about         — Concept and methodology description
+```
+
+### Study Interface Contract
+
+Every study exposes a common interface. Conceptually, each study contains:
+
+```
+Study
+├── modern_theory       The true theory being investigated
+├── horizon             y*(T) — the earliest testable year
+├── compression_gap     Actual discovery year minus y*(T)
+├── capability_model    A_y — historical instrument/math/material inventory
+├── hint_levels         Levels 0–6 with expected recovery at each level
+├── hindsight_audit     Per-assumption leak classification
+└── min_hint_experiment The minimum-information experiment
+```
+
+Every computational study exposes:
+
+```python
+def capability_inventory(year: int) -> CapabilityModel
+def compile_theory(year: int, hint_level: int) -> ObservablePredictions
+def search_experiments(year: int) -> RankedExperiments
+def audit_hindsight(experiment: Experiment) -> HindsightReport
+def score(experiment: Experiment) -> float  # discrimination / cost
+```
+
+### The Six Hint Levels
+
+| Level | Name | Description |
+|---|---|---|
+| **0** | No hint | Only actual literature and tools of the period |
+| **1** | Attention | *"Compare these two groups"* — where to look |
+| **2** | Measurement | *"Measure this specific variable"* — what to track |
+| **3** | Experimental | The design, but not the explanation |
+| **4** | Structural | The mathematical relationship |
+| **5** | Ontological | What hidden entities exist |
+| **6** | Full theory | Complete equations, mechanism, and interpretation |
+
+### Historical Capability Model
+
+For each study, a structured `A_y` inventory describes what was measurable,
+buildable, and computable in a given year. Components:
+
+- Instrument noise floors and systematic errors (angles, masses, temperatures, voltages)
+- Available materials and manufacturing tolerances
+- Mathematical techniques available
+- Data storage and communication capacity
+- Institutional organization constraints (sample sizes, expedition duration)
+
+Social and institutional constraints are first-class. An experiment requiring
+twenty observatories for forty years may be technically possible but practically
+implausible.
+
+### Hindsight-Leak Detector
+
+Every proposed "early" experiment is audited for smuggled modern knowledge:
+- Anachronistic materials (purified chemicals, precision-machined parts)
+- Modern statistical conventions (null hypothesis, p-value)
+- Calibration dependencies on later science
+- Knowledge of *where* to look only available in hindsight
+- Conceptual vocabulary that presupposes the conclusion
+
+### Four-Panel Interface (per study)
+
+All studies share a synchronized four-panel layout:
+
+1. **Capability Inventory** — `A_y`: what was measurable, buildable, computable in the selected year
+2. **Optimal Experiment** — the best discriminating experiment buildable from `A_y`
+3. **Discovery Horizon Plot** — the y*(T) timeline with first-observable, first-testable, first-comprehensible dates
+4. **Hindsight Audit** — per-assumption leak classification for the proposed experiment
+
+A **year slider** lets users sweep through history and watch which components of the
+minimum-hint experiment become available.
+
+### Design Aesthetic
+
+Shares the parchment / atlas aesthetic of Experimental Archaeology (companion projects),
+but emphasizes **timeline and inventory** over orbit and residuals:
+
+- Primary navigation metaphor: a horizontal discovery timeline
+- Capability inventory cards (instrument + math + material per year)
+- A "compression dial" showing how many hint levels are needed
+- Three-date system (observable / testable / comprehensible) as overlapping timeline bands
+
+### Key Files
+
+```
+docs/discovery_compression/
+  README.md                                     — Concept, architecture, study index
+  studies/
+    discrete_inheritance.md                     — S1: Mendelian genetics
+    transmissible_infection.md                  — S2: Germ theory
+    greenhouse_warming.md                       — S3: Radiative forcing
+    molecular_motion.md                         — S4: Kinetic theory / Brownian
+    continental_motion.md                       — S5: Plate tectonics
+    relativistic_invariance.md                  — S6: Special relativity
+
+portfolio/routes/discovery_compression.py       — Blueprint, STUDIES metadata (future)
+portfolio/static/css/discovery_compression.css
+portfolio/templates/discovery_compression/
+  index.html
+  study.html
+  panels/
+    capability_model.html
+    experiment_search.html
+    horizon_plot.html
+    hindsight_audit.html
+portfolio/static/js/discovery_compression/
+  capability_model.js
+  theory_compiler.js
+  experiment_search.js
+  hindsight_detector.js
+  study_runner.js
+```
+
+---
+
 ## 📚 Section 11: AI Literacy Lab Blueprint
 
 A Windows XP-styled resource hub at `/ai-literacy-lab` for essays, tools notes,

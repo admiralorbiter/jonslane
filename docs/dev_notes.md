@@ -46,47 +46,64 @@ This log is used to brainstorm new features, track project updates, and maintain
   - **Symplectic Integration**: Leverages solvers from `solvers.js` (Euler-Cromer, Velocity Verlet) to maintain stable conserved states (shadow Hamiltonians) over long-term runs.
   - **Advanced Labs**: Implements patched-conics orbital mechanics, special relativity (Minkowski diagrams, Doppler shifts), and 1D Time-Dependent Schrödinger Equation quantum wavefunction solvers (split-step Fourier transforms).
 
----
-
-## 🏗️ Upcoming Ideas & Projects
-
-### 1. Experimental Archaeology for Ideas (New Section)
+### 6. Experimental Archaeology for Ideas
 - **Goal**: A standalone research section at `/experimental-archaeology` where
   historical scientific theories are computationally reconstructed, honestly
   evaluated, and compared — not to mock old ideas, but to understand what
   made them compelling, what made them fail, and what survived them.
 - **Design doc**: `docs/experimental_archaeology/README.md`
-- **Planned case studies**:
+- **Case studies implemented/designed**:
   1. **Ptolemy, Copernicus & Kepler** — planetary astronomy; deferents/epicycles
-     vs. elliptical orbits. Which observations discriminated them? Could an
-     optimized Ptolemaic model rival early Kepler? (Full design doc: `case_studies/ptolemy_copernicus_kepler.md`)
+     vs. elliptical orbits. Which observations discriminated them?
+     (Full design doc: `case_studies/ptolemy_copernicus_kepler.md`)
   2. **Caloric Theory & Carnot** — How an incorrect theory of heat (conserved
-     fluid) produced a correct result about engine efficiency. Carnot's proof
-     survives caloric's fall because it rests on reversibility, not conservation.
+     fluid) produced a correct result about engine efficiency.
      (Full design doc: `case_studies/caloric_theory.md`)
-  3. **Corpuscular vs. Wave Light** — Competing models that both explained
-     reflection; opposite predictions about speed in dense media proved decisive.
-  4. **Cartesian Vortex Cosmology** — Fluid simulation of Descartes's contact
-     mechanics; tests whether vortices can generate stable Keplerian orbits.
-  5. **Luminiferous Ether Family Tree** — Successive modifications of ether
-     theory vs. each experiment; culminates in the Lorentz/Einstein equivalence
-     question.
-  6. **Le Sage Mechanical Gravity** — Particle bombardment gravity: generates
-     inverse-square force, also predicts drag, heating, and shielding that
-     are not observed.
+  3. **Corpuscular vs. Wave Light** — opposite predictions about speed in dense media.
+  4. **Cartesian Vortex Cosmology** — Fluid simulation of Descartes's contact mechanics.
+  5. **Luminiferous Ether Family Tree** — Successive modifications vs. experiments.
+  6. **Le Sage Mechanical Gravity** — Push-gravity particle model vs. drag and heating.
+
+---
+
+## 🏗️ Upcoming Ideas & Projects
+
+### 1. Discovery Compression
+- **Goal**: A companion laboratory to Experimental Archaeology at `/discovery-compression`.
+  Where Archaeology asks *"how did a wrong theory explain the world?"*, Discovery
+  Compression asks *"when was the right answer first reachable?"* For each modern theory,
+  find the earliest year y*(T) when a historically available experiment could have compelled
+  belief in at least one structural claim — and quantify how many "bits of hindsight" would
+  have accelerated the discovery.
+- **Design doc**: `docs/discovery_compression/README.md`
+- **Planned studies**:
+  1. **Discrete Inheritance** — Mendelian genetics; estimated horizon ~500 BCE; minimum hint: Level 2
+     (Full design doc: `studies/discrete_inheritance.md`)
+  2. **Transmissible Infection** — Germ theory; estimated horizon ~1000 CE; minimum hint: Level 1
+     (Full design doc: `studies/transmissible_infection.md`)
+  3. **Greenhouse Warming** — Radiative forcing / CO₂ absorption; estimated horizon ~1750 CE; minimum hint: Level 2
+     (Full design doc: `studies/greenhouse_warming.md`)
+  4. **Molecular Motion** — Kinetic theory / Brownian statistics; estimated horizon ~1700 CE; minimum hint: Level 3
+     (Full design doc: `studies/molecular_motion.md`)
+  5. **Continental Motion** — Plate tectonics; estimated horizon ~1780 CE; minimum hint: Level 1
+     (Full design doc: `studies/continental_motion.md`)
+  6. **Relativistic Invariance** — Special relativity; estimated horizon ~1887 CE; minimum hint: Level 5
+     (Full design doc: `studies/relativistic_invariance.md`)
 - **Architecture highlights**:
-  - Shared `Theory` interface (ontology, state, dynamics, parameters,
-    observables, sources) reused across all case studies
-  - **Assumption Ledger**: every encoded claim carries a confidence marker
-    (`EXPLICIT`, `HISTORICAL`, `RECONSTRUCTION`, `EXTENSION`, `COUNTERFACTUAL`)
-  - Synchronized four-panel layout: Physical Picture + Observable Instrument
-    + Residual Plot + Historical Context
-  - Knowledge-date switch: evaluate any theory only on evidence available
-    before a user-selected year
-  - Four reconstruction modes per study: Historically Faithful, Charitable
-    Modern, Best-Fit (optimized), Counterfactual
-- **Aesthetic**: Astronomical atlas / 18th-century instrument diagram inspiration.
-  Parchment palette, serif typography, slow deliberate animations.
+  - **Historical Capability Model** `A_y`: structured per-year inventory of instruments,
+    materials, mathematics, and institutional constraints
+  - **Theory Compiler**: translates modern theory into period-measurable observables
+  - **Experiment Search**: scores candidate experiments by discrimination / cost
+  - **Hindsight-Leak Detector**: audits proposed experiments for smuggled modern knowledge
+  - **Six Hint Levels** (0–6): from no hint to full theory — each mapped to recovery percentage
+  - Synchronized four-panel layout: Capability Inventory + Optimal Experiment
+    + Discovery Horizon Plot + Hindsight Audit
+  - **Year slider**: sweeps from ancient history to present; updates all panels live
+- **Forward-looking component**: Five candidate blind spots in 2026 science
+  (averaging away structure, siloed disciplines, signal treated as noise,
+  measuring the convenient rather than discriminating, equations without ontology)
+- **Aesthetic**: Companion parchment/atlas palette; timeline-first navigation;
+  "compression dial" and three-date band visualization as signature elements.
 
 ### 2. External Audio Importers & Admin Queue
 - **Goal**: Integrate licensed or public domain real-world tracks for advanced ear training.

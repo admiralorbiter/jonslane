@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block title %}Study: Discrete Inheritance | Discovery Compression{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/discovery_compression.css') }}">
+<style>
+/* Game-like Greenhouse & Plinko Styles */
+.dc-study-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--space-md) var(--space-2xl);
+}
+@media (min-width: 1000px) {
+  .dc-study-grid {
+    grid-template-columns: 6.5fr 4.5fr;
+    padding: 0 var(--space-lg) var(--space-2xl);
+  }
+}
+
+.dc-panel {
+  background: linear-gradient(135deg, rgba(25, 25, 45, 0.5) 0%, rgba(18, 18, 30, 0.55) 100%);
+  border: 1px solid rgba(74, 140, 204, 0.12);
+  border-radius: 6px;
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dc-panel-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--celestial-mid);
+  margin: 0 0 var(--space-md);
+  border-bottom: 1px dashed rgba(74, 140, 204, 0.1);
+  padding-bottom: var(--space-xs);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Greenhouse slot grid */
+.garden-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  background: rgba(9, 9, 15, 0.4);
+  border: 1px solid rgba(74, 140, 204, 0.08);
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: var(--space-md);
+  min-height: 180px;
+}
+
+.garden-slot {
+  aspect-ratio: 1;
+  background: rgba(25, 25, 45, 0.3);
+  border: 1px dashed rgba(74, 140, 204, 0.15);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--dur-fast);
+}
+
+.garden-slot.active {
+  border: 1px solid rgba(74, 140, 204, 0.3);
+  background: rgba(25, 25, 45, 0.6);
+}
+
+.garden-slot.selected {
+  border-color: var(--amber-glow);
+  box-shadow: 0 0 10px rgba(245, 200, 66, 0.2);
+}
+
+.garden-slot:hover {
+  background: rgba(74, 140, 204, 0.08);
+  border-color: rgba(74, 140, 204, 0.3);
+}
+
+.plant-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.plant-label {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--ink-fade);
+  margin-top: 4px;
+}
+
+/* Emasculation close-up overlay */
+.emasculation-box {
+  background: rgba(18, 18, 30, 0.95);
+  border: 2px solid var(--amber-glow);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: var(--space-md);
+  display: none; /* hidden until triggered */
+  position: relative;
+}
+
+.emasculation-arena {
+  width: 220px;
+  height: 220px;
+  background: #131320;
+  border-radius: 50%;
+  margin: 15px auto;
+  border: 1px solid rgba(245, 200, 66, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.bud-center {
+  width: 50px;
+  height: 50px;
+  background: #6bbba0;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(107, 187, 160, 0.4);
+}
+
+.anther-node {
+  width: 16px;
+  height: 24px;
+  background: #f5c842;
+  border-radius: 8px;
+  position: absolute;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(245, 200, 66, 0.5);
+  transition: transform 0.1s;
+}
+
+.anther-node:hover {
+  transform: scale(1.15);
+}
+
+.anther-node.plucked {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* Tally medium */
+.tally-tablet {
+  background-image:
+    linear-gradient(135deg, rgba(74, 50, 30, 0.9) 0%, rgba(50, 35, 20, 0.95) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  border: 4px solid #3c2a18;
+  border-radius: 6px;
+  padding: 15px;
+  color: #eeddbb;
+  font-family: var(--font-fell);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.6), 0 4px 15px rgba(0,0,0,0.4);
+  min-height: 150px;
+  margin-bottom: var(--space-md);
+  transition: all var(--dur-med);
+}
+
+.tally-tablet.paper {
+  background: #dfd7c0;
+  border: 1px solid #c0b8a0;
+  color: #201a15;
+  font-family: var(--font-serif);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.tally-tablet-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 0.7;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+}
+
+.tally-tablet.paper .tally-tablet-title {
+  border-bottom-color: rgba(0,0,0,0.15);
+}
+
+/* Plinko Physics Board */
+.plinko-container {
+  width: 100%;
+  height: 280px;
+  background: rgba(9, 9, 15, 0.6);
+  border: 1px solid rgba(74, 140, 204, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.plinko-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dc-page" style="padding-top: 5rem;">
+
+  <!-- ── Header / Back button ──────────────────────────────── -->
+  <header style="max-width: 1400px; margin: 0 auto; padding: 2rem var(--space-md) 1rem;">
+    <a href="{{ url_for('discovery_compression.index') }}" class="dc-card-cta" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+      &larr; Back to Timeline
+    </a>
+    <p class="dc-hero-eyebrow" style="margin-bottom: 0.5rem;">Study 1 &middot; {{ study.field }}</p>
+    <h1 class="dc-hero-title" style="font-size: clamp(2rem, 5vw, 3rem); text-align: left; margin-bottom: 0.5rem;">
+      {{ study.title }}
+    </h1>
+    <p class="dc-hero-subtitle" style="text-align: left; margin: 0; max-width: 800px; font-size: 0.95rem;">
+      {{ study.teaser }}
+    </p>
+  </header>
+
+  <!-- ── Split Panel Grid ──────────────────────────────────── -->
+  <main class="dc-study-grid">
+
+    <!-- ── Left Column: Inputs & Breeding Arena ──────────────── -->
+    <div class="dc-column-left">
+
+      <!-- Panel 1: Capability Model (A_y) -->
+      <section class="dc-panel" aria-labelledby="title-capabilities">
+        <h2 class="dc-panel-title" id="title-capabilities">
+          Historical Capabilities <em>A<sub>y</sub></em>
+          <span style="font-size:0.6rem; color:var(--ink-fade);">y* &asymp; ~500 BCE</span>
+        </h2>
+
+        <!-- Year select slider -->
+        <div class="arch-timeline-slider-box" style="background:rgba(18,18,30,0.4); border-color:rgba(74,140,204,0.12);">
+          <div class="arch-timeline-slider-row">
+            <span class="arch-timeline-year-badge" id="year-badge" style="color:var(--amber-glow);">500 BCE</span>
+            <input type="range" id="year-slider" min="0" max="2" value="0" step="1"
+                   style="flex:1; -webkit-appearance:none; height:4px; background:var(--slate-warm); border-radius:2px; outline:none;"
+                   aria-label="Select Historical Era">
+          </div>
+          <p style="font-family:var(--font-serif); font-size:0.75rem; color:var(--ink-fade); margin-top:8px; line-height:1.5;" id="era-desc">
+            Greek agricultural estate. Basic tally marks, small planting capacity, and high cross-contamination rates.
+          </p>
+        </div>
+
+        <!-- Capability Parameters Readout -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); margin-top:10px;">
+          <div>
+            <p class="dc-card-field" style="margin-bottom:2px;">Tooling</p>
+            <p id="cap-tools" style="font-family:var(--font-fell); font-size:0.9rem; color:var(--ink-bright); margin:0;">Bronze surgery needles</p>
+          </div>
+          <div>
+            <p class="dc-card-field" style="margin-bottom:2px;">Emasculation Failure</p>
+            <p id="cap-error" style="font-family:var(--font-mono); font-size:0.8rem; color:var(--amber-glow); margin:0;">15.0% error rate</p>
+          </div>
+          <div>
+            <p class="dc-card-field" style="margin-bottom:2px;">Max Capacity</p>
+            <p id="cap-capacity" style="font-family:var(--font-mono); font-size:0.8rem; color:var(--ink-bright); margin:0;">500 plants</p>
+          </div>
+          <div>
+            <p class="dc-card-field" style="margin-bottom:2px;">Recording Medium</p>
+            <p id="cap-medium" style="font-family:var(--font-fell); font-size:0.9rem; color:var(--ink-bright); margin:0;">Clay/Wax Tablets</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: The Breeding Arena -->
+      <section class="dc-panel" aria-labelledby="title-arena">
+        <h2 class="dc-panel-title" id="title-arena">
+          The Greenhouse Garden
+          <span style="font-size:0.6rem; color:var(--ink-fade);">Plant, Emasculate, and Cross</span>
+        </h2>
+
+        <!-- Emasculation Bud interactive overlay (hidden by default) -->
+        <div class="emasculation-box" id="emasculation-box">
+          <p style="font-family:var(--font-fell); font-size:0.95rem; font-style:italic; color:var(--amber-glow); text-align:center; margin:0 0 10px;">
+            Emasculation Bud Close-up
+          </p>
+          <p style="font-family:var(--font-serif); font-size:0.75rem; color:var(--ink-mid); text-align:center; margin:0 0 10px;">
+            Click all 5 yellow anthers to pluck them and prevent self-pollination.
+          </p>
+
+          <div class="emasculation-arena" id="emasculation-arena">
+            <div class="bud-center"></div>
+            <!-- Anthers will be dynamically positioned in JS -->
+          </div>
+
+          <div style="text-align:center;">
+            <button class="arch-btn" id="btn-cancel-emasculation">Abort Cross</button>
+          </div>
+        </div>
+
+        <!-- The Greenhouse Garden grid -->
+        <div class="garden-grid" id="garden-grid">
+          <!-- 10 Slots dynamically generated in JS -->
+        </div>
+
+        <!-- Breeding & Action Buttons -->
+        <div class="arch-btn-group" style="justify-content:center; gap:10px;">
+          <button class="arch-btn" id="btn-purify" title="Grow and filter variants over 2 seasons to get homozygous parents">Purify Parent Lines</button>
+          <button class="arch-btn" id="btn-cross" disabled>Cross Selection</button>
+          <button class="arch-btn" id="btn-self" disabled>Self-Pollinate</button>
+          <button class="arch-btn" id="btn-harvest" disabled>Harvest &amp; Drop</button>
+          <button class="arch-btn" id="btn-clear">Clear Garden</button>
+        </div>
+
+        <p style="font-family:var(--font-serif); font-size:0.75rem; color:var(--ink-ghost); text-align:center; margin-top:10px; line-height:1.5;" id="garden-instructions">
+          Select parent seeds from the bins or click "Purify Parent Lines" to breed homozygous strains.
+        </p>
+      </section>
+
+    </div>
+
+    <!-- ── Right Column: Charts & Tally Records ──────────────── -->
+    <div class="dc-column-right">
+
+      <!-- Panel 3: Recording Tally tablet -->
+      <section class="dc-panel" aria-labelledby="title-tally">
+        <h2 class="dc-panel-title" id="title-tally">
+          Tally Sheet
+          <span style="font-size:0.6rem; color:var(--ink-fade);">Current Generation Counts</span>
+        </h2>
+
+        <!-- Tally Tablet clay/wax simulation -->
+        <div class="tally-tablet" id="tally-tablet">
+          <div class="tally-tablet-title" id="tally-medium-name">Clay Tablet (500 BCE)</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; text-align:center;" id="tally-counts-box">
+            <!-- Tally readouts will be rendered here dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4: Phenotype Gravity Plinko Board -->
+      <section class="dc-panel" aria-labelledby="title-distribution">
+        <h2 class="dc-panel-title" id="title-distribution">
+          Gravity Phenotype Bins
+          <span style="font-size:0.6rem; color:var(--ink-fade);">Particulate vs Blending</span>
+        </h2>
+
+        <!-- Distribution selection -->
+        <div style="display:flex; justify-content:center; gap:15px; margin-bottom:15px;">
+          <button class="arch-btn active" id="btn-theory-particulate">Particulate (Discrete)</button>
+          <button class="arch-btn" id="btn-theory-blending">Blending (Continuous)</button>
+        </div>
+
+        <!-- Plinko Canvas -->
+        <div class="plinko-container">
+          <canvas class="plinko-canvas" id="plinko-canvas"></canvas>
+        </div>
+
+        <p style="font-family:var(--font-serif); font-size:0.72rem; color:var(--ink-fade); text-align:center; margin-top:10px; line-height:1.55;">
+          Particulate seeds fall strictly into Green or Yellow bins. Blending seeds accumulate in intermediate shades in the center.
+        </p>
+      </section>
+
+      <!-- Panel 5: Hindsight Audit Log -->
+      <section class="dc-panel" aria-labelledby="title-audit">
+        <h2 class="dc-panel-title" id="title-audit">
+          Hindsight Cheat Detector
+          <span style="font-size:0.6rem; color:var(--ink-fade); text-transform:none;">Rule violations</span>
+        </h2>
+
+        <div class="arch-log" id="audit-log" style="max-height:160px;">
+          <!-- Audit violations logged here -->
+          <div class="arch-log-entry" style="border-bottom:none;">
+            <p style="font-style:italic; color:var(--ink-ghost); text-align:center;">No violations detected. The experiment respects historical bounds.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- ── Footer ────────────────────────────────────────────── -->
+  <footer class="dc-footer-strip">
+    <p>
+      Discovery Compression &mdash; Laboratory B &mdash;
+      <a href="{{ url_for('discovery_compression.index') }}">Study Index</a>
+      &mdash;
+      <a href="{{ url_for('experimental_archaeology.index') }}">Laboratory A: Experimental Archaeology</a>
+    </p>
+  </footer>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Core logic script -->
+<script src="{{ url_for('static', filename='js/discovery_compression/discrete_inheritance.js') }}"></script>
+{% endblock %}

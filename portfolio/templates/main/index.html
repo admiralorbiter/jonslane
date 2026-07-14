@@ -67,6 +67,21 @@
 .arch-preview-card .arch-orbit-3 {
     transition: var(--transition-smooth);
 }
+/* Discovery Compression card — timeline + compression dial micro-animations */
+@keyframes dc-pulse {
+    0%, 100% { opacity: 0.7; box-shadow: 0 0 6px var(--dc-dot-color, #4a8ccc); }
+    50%       { opacity: 1.0; box-shadow: 0 0 14px var(--dc-dot-color, #4a8ccc), 0 0 28px var(--dc-dot-color, #4a8ccc); }
+}
+.dc-card-preview:hover .dc-tl-dot-live {
+    animation-duration: 1.2s !important;
+}
+.dc-card-preview:hover .dc-tl-line {
+    opacity: 0.6 !important;
+}
+.dc-card-preview .dc-tl-dot-live,
+.dc-card-preview .dc-tl-line {
+    transition: var(--transition-smooth);
+}
 </style>
 {% endblock %}
 
@@ -198,6 +213,53 @@
         </div>
         <div class="card-links">
             <span class="card-link">Enter the Archive &rarr;</span>
+        </div>
+    </a>
+
+    <!-- Discovery Compression Section -->
+    <a href="{{ url_for('discovery_compression.index') }}" class="section-card dc-card-preview" style="max-width: 460px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none;">
+        <div>
+            <!-- Timeline preview visual -->
+            <div style="height: 180px; display: flex; justify-content: center; align-items: center; background: rgba(9, 9, 15, 0.75); border-radius: 12px; margin-bottom: 1.5rem; border: 1px dashed rgba(74, 140, 204, 0.18); overflow: hidden; position: relative;">
+                <!-- Star field background -->
+                <div style="position:absolute;inset:0;overflow:hidden;">
+                    {% for s in [(8,20,'#c8c8e0',0.4),(15,55,'#c8c8e0',0.25),(22,80,'#c8c8e0',0.35),(35,35,'#6ab0e8',0.3),(42,72,'#c8c8e0',0.2),(55,18,'#c8c8e0',0.3),(63,60,'#f5c842',0.3),(70,40,'#c8c8e0',0.2),(78,85,'#c8c8e0',0.35),(88,28,'#c8c8e0',0.25)] %}
+                    <div style="position:absolute;top:{{ s[1] }}%;left:{{ s[0] }}%;width:2px;height:2px;background:{{ s[2] }};border-radius:50%;opacity:{{ s[3] }};"></div>
+                    {% endfor %}
+                </div>
+                <!-- Radial glow -->
+                <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,transparent 50%,rgba(9,9,15,0.7) 100%);pointer-events:none;z-index:3;"></div>
+                <!-- Timeline bar -->
+                <div style="position:relative;width:80%;z-index:4;">
+                    <!-- The horizontal axis -->
+                    <div class="dc-tl-line" style="height:1px;background:linear-gradient(90deg,transparent,rgba(74,140,204,0.5) 20%,rgba(74,140,204,0.7) 50%,rgba(74,140,204,0.5) 80%,transparent);opacity:0.4;position:relative;">
+                        <!-- Compression dot: earliest testable (amber) -->
+                        <div style="--dc-dot-color:#d4a020;position:absolute;top:50%;left:10%;transform:translate(-50%,-50%);width:7px;height:7px;background:#d4a020;border-radius:50%;animation:dc-pulse 2.8s ease-in-out infinite;z-index:5;"></div>
+                        <!-- Gap label -->
+                        <div style="position:absolute;top:-18px;left:10%;font-family:'JetBrains Mono',monospace;font-size:0.52rem;color:#a07010;letter-spacing:0.06em;transform:translateX(-50%);white-space:nowrap;">y*(T)</div>
+                        <!-- Compression gap bar -->
+                        <div style="position:absolute;top:0;left:10%;width:55%;height:100%;background:linear-gradient(90deg,rgba(212,160,32,0.12),rgba(74,140,204,0.08));border-top:1px dashed rgba(74,140,204,0.2);"></div>
+                        <!-- Actual discovery dot (celestial) -->
+                        <div class="dc-tl-dot-live" style="--dc-dot-color:#4a8ccc;position:absolute;top:50%;left:65%;transform:translate(-50%,-50%);width:9px;height:9px;background:#4a8ccc;border-radius:50%;box-shadow:0 0 8px #4a8ccc,0 0 16px rgba(74,140,204,0.4);animation:dc-pulse 2s ease-in-out infinite;z-index:5;"></div>
+                        <div style="position:absolute;top:-18px;left:65%;font-family:'JetBrains Mono',monospace;font-size:0.52rem;color:#4a8ccc;letter-spacing:0.06em;transform:translateX(-50%);white-space:nowrap;">Actual</div>
+                        <!-- End dot -->
+                        <div style="position:absolute;top:50%;right:0;transform:translate(50%,-50%);width:5px;height:5px;background:rgba(74,140,204,0.4);border-radius:50%;"></div>
+                    </div>
+                    <!-- Year labels -->
+                    <div style="display:flex;justify-content:space-between;margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:0.52rem;color:rgba(74,140,204,0.4);letter-spacing:0.06em;">
+                        <span>500 BCE</span><span>1000</span><span>1500</span><span>1900</span>
+                    </div>
+                    <!-- Compression gap label -->
+                    <div style="text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:rgba(245,200,66,0.5);letter-spacing:0.1em;">compression gap</div>
+                </div>
+            </div>
+            <h2 class="card-title" style="margin-right: 0;">Discovery Compression</h2>
+            <p class="card-body">
+                For each true theory, find the earliest year the discovery was reachable &mdash; and measure the gap between when we could have known and when we did.
+            </p>
+        </div>
+        <div class="card-links">
+            <span class="card-link">Enter Laboratory B &rarr;</span>
         </div>
     </a>
 </section>

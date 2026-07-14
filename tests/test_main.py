@@ -160,3 +160,43 @@ def test_experimental_archaeology_invalid_slug(client):
     response = client.get("/experimental-archaeology/non-existent-theory")
     assert response.status_code == 404
 
+
+# ── Discovery Compression Blueprint ──────────────────────────────────────────
+
+
+def test_discovery_compression_index(client):
+    """Verify that the Discovery Compression landing page renders successfully."""
+    response = client.get("/discovery-compression/")
+    assert response.status_code == 200
+    assert b"Discovery Compression" in response.data
+    assert b"When Could We Have Known" in response.data
+
+
+def test_discovery_compression_about(client):
+    """Verify that the Discovery Compression about page renders successfully."""
+    response = client.get("/discovery-compression/about")
+    assert response.status_code == 200
+    assert b"Discovery Compression" in response.data
+
+
+def test_discovery_compression_planned_redirect(client):
+    """Verify that visiting a planned study redirects to the landing page."""
+    # Since we set discrete-inheritance to live, we test transmissible-infection instead
+    response = client.get("/discovery-compression/transmissible-infection")
+    assert response.status_code == 302
+    assert response.location.endswith("/discovery-compression/")
+
+
+def test_discovery_compression_invalid_slug(client):
+    """Verify that visiting an invalid study slug returns 404."""
+    response = client.get("/discovery-compression/non-existent-study")
+    assert response.status_code == 404
+
+
+def test_discovery_compression_discrete_inheritance(client):
+    """Verify that the live Discrete Inheritance study page renders successfully."""
+    response = client.get("/discovery-compression/discrete-inheritance")
+    assert response.status_code == 200
+    assert b"Greenhouse Garden" in response.data
+    assert b"Tally Sheet" in response.data
+    assert b"plinko-canvas" in response.data
